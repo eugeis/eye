@@ -36,23 +36,35 @@ func (s *MySql) Name() string {
 	return s.ServiceName
 }
 
-func (s *MySql) Check(query string, pattern *regexp.Regexp) (ok bool, err error) {
-	err = s.validateQuery(query)
-	if err != nil {
-		return false, err
+type mySqlCheck struct {
+	info    string
+	query   string
+	pattern *regexp.Regexp
+	service *MySql
+}
+
+func (o mySqlCheck) Check() (ret bool, err error) {
+	err = o.service.Init()
+	if err == nil {
+		ret, err = Match(o.info, o.pattern, func() (data []byte, err error) {
+			data, err = o.service.jsonBytes(o.query)
+			return
+		})
 	}
+	return
+}
 
-	err = s.Init()
-	if err != nil {
-		return false, err
+func (s *MySql) NewСheck(query string, expr string) (ret Check, err error) {
+	pattern, err := regexp.Compile(expr)
+	if err == nil {
+		err = s.validateQuery(query)
+		if err == nil {
+			query = s.limitQuery(query)
+			ret = mySqlCheck{info: fmt.Sprintf("q: %s, e: %s", query, expr), query: query, pattern: pattern, service: s}
+		}
+
 	}
-
-	query = s.limitQuery(query)
-
-	return Match(pattern, func() (data []byte, err error) {
-		data, err = s.jsonBytes(query)
-		return
-	})
+	return
 }
 
 func (s *MySql) validateQuery(query string) error {

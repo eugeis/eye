@@ -9,7 +9,9 @@ var Debug = true
 var Info = true
 var Err = true
 
-func New(prefix string) *DebugLogger {
+var Log = NewLogger("[REST] ")
+
+func NewLogger(prefix string) *DebugLogger {
 	return &DebugLogger{Log: log.New(os.Stdout, prefix, log.LstdFlags)}
 }
 

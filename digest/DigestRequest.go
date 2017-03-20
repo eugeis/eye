@@ -2,25 +2,40 @@ package digest
 
 import (
 	"bytes"
-	"crypto/tls"
 	"fmt"
 	"net/http"
 	"time"
 	"net/http/cookiejar"
-	"strings"
+	"crypto/tls"
 )
 
 type Request struct {
-	Body          string
-	Method        string
-	Password      string
-	Uri           string
-	Username      string
-	Auth          *authorization
-	Wa            *wwwAuthenticate
-	ContentType   string
-	SkipTLSVerify bool
-	client        *http.Client
+	Body        string
+	Method      string
+	Password    string
+	Uri         string
+	Username    string
+	Auth        *authorization
+	Wa          *wwwAuthenticate
+	ContentType string
+}
+
+func NewClient(skipTLSVerify bool, timeout time.Duration) (ret *http.Client) {
+	cookieJar, _ := cookiejar.New(nil)
+	if skipTLSVerify {
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+
+		ret = &http.Client{
+			Jar:       cookieJar,
+			Timeout:   timeout,
+			Transport: tr,
+		}
+	} else {
+		ret = &http.Client{Timeout: timeout, Jar: cookieJar}
+	}
+	return
 }
 
 func NewRequest(username string, password string, method string, uri string, body string) Request {
@@ -43,69 +58,32 @@ func (dr *Request) UpdateRequest(username string,
 	return dr
 }
 
-func (dr *Request) generateClient(timeout time.Duration) *http.Client {
-	if dr.client == nil {
-		cookieJar, _ := cookiejar.New(nil)
-		if dr.SkipTLSVerify {
-			tr := &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			}
-
-			dr.client = &http.Client{
-				Jar:       cookieJar,
-				Timeout:   timeout,
-				Transport: tr,
-			}
-		} else {
-			dr.client = &http.Client{Timeout: timeout, Jar: cookieJar}
-		}
-	}
-	return dr.client
-}
-
-func (dr *Request) Execute() (resp *http.Response, err error) {
-	resp, err = dr.auth()
-	resp, err = dr.executeExistingDigest()
-	return resp, err
-}
-
-func (dr *Request) ExecuteQuery(query string) (resp *http.Response, err error) {
-	resp, err = dr.auth()
-	newReq := *dr
-
-	if strings.Contains(newReq.Uri, "?") {
-		newReq.Uri = newReq.Uri + query
-	} else {
-		newReq.Uri = newReq.Uri + "?" + query
-	}
-	resp, err = newReq.executeExistingDigest()
-
-	return resp, err
-}
-
-func (dr *Request) auth() (resp *http.Response, err error) {
+func (dr *Request) Execute(client *http.Client) (resp *http.Response, err error) {
 	if dr.Auth == nil {
 		var req *http.Request
-		if req, err = http.NewRequest(dr.Method, dr.Uri, bytes.NewReader([]byte(dr.Body))); err != nil {
-			return nil, err
+		req, err := http.NewRequest(dr.Method, dr.Uri, bytes.NewReader([]byte(dr.Body)))
+		if err == nil {
+			if dr.ContentType != "" {
+				req.Header.Set("Content-Type", dr.ContentType)
+			}
+
+			resp, err = client.Do(req)
+
+			if resp.StatusCode == 401 {
+				resp, err = dr.executeNewDigest(resp, client)
+			}
 		}
-
-		if dr.ContentType != "" {
-			req.Header.Set("Content-Type", dr.ContentType)
-		}
-
-		client := dr.generateClient(30 * time.Second)
-		resp, err = client.Do(req)
-
+	} else {
+		resp, err = dr.executeExistingDigest(client)
 		if resp.StatusCode == 401 {
-			return dr.executeNewDigest(resp)
+			dr.Auth = nil
+			resp, err = dr.Execute(client)
 		}
-		return
 	}
-	return resp, err
+	return
 }
 
-func (dr *Request) executeNewDigest(resp *http.Response) (*http.Response, error) {
+func (dr *Request) executeNewDigest(resp *http.Response, client *http.Client) (*http.Response, error) {
 	var (
 		auth *authorization
 		err  error
@@ -124,7 +102,7 @@ func (dr *Request) executeNewDigest(resp *http.Response) (*http.Response, error)
 	}
 	authString := auth.toString()
 
-	if resp, err := dr.executeRequest(authString); err != nil {
+	if resp, err := dr.executeRequest(authString, client); err != nil {
 		return nil, err
 	} else {
 		dr.Auth = auth
@@ -132,22 +110,22 @@ func (dr *Request) executeNewDigest(resp *http.Response) (*http.Response, error)
 	}
 }
 
-func (dr *Request) executeExistingDigest() (*http.Response, error) {
+func (dr *Request) executeExistingDigest(client *http.Client) (*http.Response, error) {
 	var (
 		auth *authorization
 		err  error
 	)
 
-	if auth, err = dr.Auth.refreshAuthorization(dr); err != nil {
+	if auth, err = dr.Auth.refreshAuthorization(dr, true); err != nil {
 		return nil, err
 	}
 	dr.Auth = auth
 
 	authString := dr.Auth.toString()
-	return dr.executeRequest(authString)
+	return dr.executeRequest(authString, client)
 }
 
-func (dr *Request) executeRequest(authString string) (*http.Response, error) {
+func (dr *Request) executeRequest(authString string, client *http.Client) (*http.Response, error) {
 	var (
 		err error
 		req *http.Request
@@ -163,7 +141,5 @@ func (dr *Request) executeRequest(authString string) (*http.Response, error) {
 	if dr.ContentType != "" {
 		req.Header.Set("Content-Type", dr.ContentType)
 	}
-
-	client := dr.generateClient(30 * time.Second)
 	return client.Do(req)
 }

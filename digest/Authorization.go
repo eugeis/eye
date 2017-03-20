@@ -46,10 +46,10 @@ func newAuthorization(dr *Request) (*authorization, error) {
 		Username_: "", // TODO
 	}
 
-	return ah.refreshAuthorization(dr)
+	return ah.refreshAuthorization(dr, true)
 }
 
-func (ah *authorization) refreshAuthorization(dr *Request) (*authorization, error) {
+func (ah *authorization) refreshAuthorization(dr *Request, updateUri bool) (*authorization, error) {
 
 	ah.Username = dr.Username
 
@@ -61,11 +61,13 @@ func (ah *authorization) refreshAuthorization(dr *Request) (*authorization, erro
 
 	ah.Cnonce = ah.hash(fmt.Sprintf("%d:%s:my_value", time.Now().UnixNano(), dr.Username))
 
-	url, err := url.Parse(dr.Uri)
-	if err != nil {
-		return nil, err
+	if updateUri {
+		url, err := url.Parse(dr.Uri)
+		if err != nil {
+			return nil, err
+		}
+		ah.Uri = url.RequestURI()
 	}
-	ah.Uri = url.RequestURI()
 
 	ah.Response = ah.computeResponse(dr)
 

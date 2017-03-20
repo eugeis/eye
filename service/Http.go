@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"rest/digest"
 	"net/http"
-	"github.com/pkg/errors"
+	"errors"
 )
 
 type Http struct {
@@ -20,7 +20,8 @@ type Http struct {
 	PingTimeoutMillis  int
 	QueryTimeoutMillis int
 
-	req *digest.Request
+	client *http.Client
+	req    *digest.Request
 
 	pingTimeout  time.Duration
 	queryTimeout time.Duration
@@ -34,41 +35,52 @@ func (s *Http) Name() string {
 	return s.ServiceName
 }
 
-func (s *Http) Check(query string, pattern *regexp.Regexp) (ok bool, err error) {
-	err = s.Init()
-	if err != nil {
-		return false, err
-	}
+type httpCheck struct {
+	info    string
+	req     *digest.Request
+	pattern *regexp.Regexp
+	service *Http
+}
 
-	return Match(pattern, func() (data []byte, err error) {
+func (o httpCheck) Check() (ret bool, err error) {
+	err = o.service.Init()
+	if err == nil {
+		ret, err = Match(o.info, o.pattern, func() (data []byte, err error) {
+			resp, err := o.req.Execute(o.service.client)
+			if err == nil {
+				data, err = ioutil.ReadAll(resp.Body)
+				log.Debug("%s", data)
+				defer resp.Body.Close()
 
-		resp, err := s.req.ExecuteQuery(query)
-		if err == nil {
-			data, err = ioutil.ReadAll(resp.Body)
-			log.Debug("%s", data)
-			defer resp.Body.Close()
-
-			if resp.StatusCode != http.StatusOK {
-				err = errors.New(fmt.Sprintf("Status %d", resp.StatusCode))
+				if resp.StatusCode != http.StatusOK {
+					err = errors.New(fmt.Sprintf("Status %d", resp.StatusCode))
+				}
 			}
-		}
-		return
-	})
+			return
+		})
+	}
+	return
+
+}
+
+func (s *Http) NewСheck(query string, expr string) (ret Check, err error) {
+	pattern, err := regexp.Compile(expr)
+	if err == nil {
+		req := digest.NewRequest(s.User, s.Password, "GET", s.Url+query, "")
+		ret = httpCheck{
+			info:    fmt.Sprintf("q: %s, e: %s", query, expr),
+			req:     &req,
+			pattern: pattern, service: s }
+	}
+	return
 }
 
 func (s *Http) Init() error {
 	var err error
 
 	if s.req == nil {
+		s.client = digest.NewClient(true, s.queryTimeout)
 		req := digest.NewRequest(s.User, s.Password, "GET", s.Url, "")
-
-		resp, err := req.Execute()
-		if err != nil {
-			return err
-		} else {
-			log.Debug(body(resp))
-		}
-		defer resp.Body.Close()
 		s.req = &req
 	}
 	return err
@@ -93,7 +105,7 @@ func (s *Http) Ping() error {
 }
 
 func (s *Http) ping() error {
-	resp, err := s.req.Execute()
+	resp, err := s.req.Execute(s.client)
 	if err == nil {
 		log.Debug(body(resp))
 		defer resp.Body.Close()
