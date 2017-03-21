@@ -1,0 +1,80 @@
+name: Controlguide
+port: 3000
+debug: true
+
+mysql:
+-   servicename:     mysql
+
+    user:     xxxx
+    password: xxxx
+
+    host:     localhost
+    port:     3306
+
+    pingtimeoutmillis: 1000
+    querytimeoutmillis: 2000
+
+-   servicename:     mysql1
+
+    user:     xxxx
+    password: xxxx
+
+    host:     localhost
+    port:     3306
+
+    pingtimeoutmillis: 1000
+    querytimeoutmillis: 2000
+
+-   servicename:     mysql2
+
+    user:     xxxx
+    password: xxxx
+
+    host:     localhost
+    port:     3306
+
+    pingtimeoutmillis: 1000
+    querytimeoutmillis: 2000
+
+http:
+-   servicename:     wildfly
+
+    user:     xxxx
+    password: xxxx
+
+    url:     http://localhost:9990/management
+
+    pingrequest:
+        query: ?operation=attribute&name=server-state
+        expr: running
+
+    pingtimeoutmillis: 1000
+    querytimeoutmillis: 2000
+
+-   servicename:     wildfly1
+
+    user:     xxxx
+    password: xxxx
+
+    url:     http://localhost:9990/management
+
+    pingrequest:
+        query: ?operation=attribute&name=server-state
+        expr: running
+
+    pingtimeoutmillis: 1000
+    querytimeoutmillis: 2000
+
+-   servicename:     wildfly2
+
+    user:     xxxx
+    password: xxxx
+
+    url:     http://localhost:9990/management
+
+    pingrequest:
+        query: ?operation=attribute&name=server-state
+        expr: running
+
+    pingtimeoutmillis: 1000
+    querytimeoutmillis: 2000
