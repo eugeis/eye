@@ -1,8 +1,7 @@
-package conf
+package core
 
 import (
 	"github.com/jinzhu/configor"
-	"rest/service"
 	"fmt"
 	"rest/integ"
 )
@@ -10,14 +9,14 @@ import (
 var log = integ.Log
 
 type RestConfig struct {
-	Name  string `default:"app name"`
+	Name  string `default:"app Name"`
 	Port  int `default:"3000"`
 	Debug bool `default:true`
 
-	MySql []*service.MySql
-	Http  []*service.Http
+	MySql []*MySql
+	Http  []*Http
 
-	serviceFactory service.Factory
+	serviceFactory Factory
 }
 
 func Load(fileNames string) *RestConfig {
@@ -39,9 +38,9 @@ func (c *RestConfig) Print() {
 	}
 }
 
-func (c *RestConfig) ServiceFactory() service.Factory {
+func (c *RestConfig) ServiceFactory() Factory {
 	if c.serviceFactory == nil {
-		serviceFactory := service.NewFactory()
+		serviceFactory := NewFactory()
 		for _, service := range c.MySql {
 			serviceFactory.Add(service)
 		}

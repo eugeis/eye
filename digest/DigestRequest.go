@@ -61,21 +61,21 @@ func (dr *Request) UpdateRequest(username string,
 func (dr *Request) Execute(client *http.Client) (resp *http.Response, err error) {
 	if dr.Auth == nil {
 		var req *http.Request
-		req, err := http.NewRequest(dr.Method, dr.Uri, bytes.NewReader([]byte(dr.Body)))
+		req, err = http.NewRequest(dr.Method, dr.Uri, bytes.NewReader([]byte(dr.Body)))
 		if err == nil {
 			if dr.ContentType != "" {
 				req.Header.Set("Content-Type", dr.ContentType)
 			}
 
 			resp, err = client.Do(req)
-
-			if resp.StatusCode == 401 {
+			if err == nil && resp.StatusCode == 401 {
 				resp, err = dr.executeNewDigest(resp, client)
 			}
 		}
 	} else {
 		resp, err = dr.executeExistingDigest(client)
-		if resp.StatusCode == 401 {
+		if err == nil && resp.StatusCode == 401 {
+			//reset and start new request with auth
 			dr.Auth = nil
 			resp, err = dr.Execute(client)
 		}

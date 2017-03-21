@@ -1,32 +1,12 @@
-package service
+package core
 
 import (
-	"regexp"
 	"time"
 	"context"
-	"rest/integ"
 	"strings"
+	"errors"
+	"fmt"
 )
-
-var log = integ.Log
-
-func Match(info string, pattern *regexp.Regexp, query func() ([]byte, error)) (ok bool, err error) {
-	data, err := query()
-	if err != nil {
-		log.Info("Service failed because of '%s'", err)
-	} else {
-		log.Debug("data '%s'", data)
-		ok = pattern.Match(data)
-		if err != nil {
-			log.Info("error '%s' for %s", info)
-		} else if !ok {
-			log.Debug("no match for %s", info)
-		} else {
-			log.Debug("match for %s", info)
-		}
-	}
-	return
-}
 
 func TimeoutContext(timeout time.Duration) context.Context {
 	c, _ := context.WithTimeout(context.Background(), timeout)
@@ -41,9 +21,13 @@ func NewFactory() SimpleServiceFactory {
 	return SimpleServiceFactory{services: make(map[string]Service)}
 }
 
-func (o *SimpleServiceFactory) Find(name string) Service {
+func (o *SimpleServiceFactory) Find(name string) (ret Service, err error) {
 	nameLowCase := strings.ToLower(name)
-	return o.services[nameLowCase]
+	ret = o.services[nameLowCase]
+	if ret == nil {
+		err = errors.New(fmt.Sprintf("Can't find the service '%s'", name))
+	}
+	return
 }
 
 func (o *SimpleServiceFactory) Add(service Service) {

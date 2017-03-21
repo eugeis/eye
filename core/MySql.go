@@ -1,4 +1,4 @@
-package service
+package core
 
 import (
 	"database/sql"
@@ -36,33 +36,19 @@ func (s *MySql) Name() string {
 	return s.ServiceName
 }
 
-type mySqlCheck struct {
-	info    string
-	query   string
-	pattern *regexp.Regexp
-	service *MySql
-}
-
-func (o mySqlCheck) Check() (ret bool, err error) {
-	err = o.service.Init()
-	if err == nil {
-		ret, err = Match(o.info, o.pattern, func() (data []byte, err error) {
-			data, err = o.service.jsonBytes(o.query)
+func (s *MySql) NewСheck(req *QueryRequest) (ret Check, err error) {
+	var pattern *regexp.Regexp
+	if len(req.Expr) > 0 {
+		pattern, err = regexp.Compile(req.Expr)
+		if err != nil {
 			return
-		})
-	}
-	return
-}
-
-func (s *MySql) NewСheck(query string, expr string) (ret Check, err error) {
-	pattern, err := regexp.Compile(expr)
-	if err == nil {
-		err = s.validateQuery(query)
-		if err == nil {
-			query = s.limitQuery(query)
-			ret = mySqlCheck{info: fmt.Sprintf("q: %s, e: %s", query, expr), query: query, pattern: pattern, service: s}
 		}
+	}
 
+	err = s.validateQuery(req.Query)
+	if err == nil {
+		query := s.limitQuery(req.Query)
+		ret = mySqlCheck{info: fmt.Sprintf("q: %s, e: %s", query, req.Expr), query: query, pattern: pattern, service: s}
 	}
 	return
 }
@@ -73,7 +59,7 @@ func (s *MySql) validateQuery(query string) error {
 
 	for _, keyword := range disallowedKeywords {
 		if strings.Contains(queryLowCase, keyword) {
-			err = errors.New(fmt.Sprintf("'%s' is disallowed for query", keyword))
+			err = errors.New(fmt.Sprintf("'%s' is disallowed for Query", keyword))
 			break
 		}
 	}
@@ -216,4 +202,42 @@ func (s *MySql) query(sql string) (*sql.Rows, error) {
 	} else {
 		return s.db.Query(sql)
 	}
+}
+
+//check
+type mySqlCheck struct {
+	info    string
+	query   string
+	pattern *regexp.Regexp
+	service *MySql
+}
+
+func (o mySqlCheck) Validate() (err error) {
+	data, err := o.Query()
+	if err == nil {
+		if o.pattern != nil {
+			if !o.pattern.Match(data) {
+				err = errors.New(fmt.Sprintf("No match for %s", o.info))
+
+			}
+		} else if len(data) == 0 {
+			err = errors.New(fmt.Sprintf("No match, empty result for %s", o.info))
+		}
+	}
+	return
+}
+
+func (o mySqlCheck) Query() (data []byte, err error) {
+	err = o.service.Init()
+	if err != nil {
+		return
+	}
+	data, err = o.service.jsonBytes(o.query)
+	if err == nil {
+		log.Debug("%s: %s", o.info, data)
+	}
+	return
+}
+
+func (o mySqlCheck) Close() {
 }

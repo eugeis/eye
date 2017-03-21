@@ -8,19 +8,18 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"rest/conf"
-	"rest/service"
+	"rest/core"
 )
 
 var log = integ.Log
 
 func main() {
-	var config *conf.RestConfig
+	var config *core.RestConfig
 	args := os.Args[1:]
 	if len(args) > 0 {
-		config = conf.Load(strings.Join(args, " "))
+		config = core.Load(strings.Join(args, " "))
 	} else {
-		config = conf.Load("rest.yml")
+		config = core.Load("rest.yml")
 	}
 
 	if !config.Debug {
@@ -29,72 +28,89 @@ func main() {
 	}
 	config.Print()
 
-	serviceFactory := config.ServiceFactory()
-	defer serviceFactory.Close()
+	controller := core.NewController(config)
 
-	var commandCache = integ.NewCache()
+	defer controller.Close()
 
 	router := gin.Default()
 
-	router.GET("/:service/ping", func(c *gin.Context) {
-		c.Header("Content-Type", "application/json")
+	serviceGroup := router.Group("/service")
+	{
+		serviceGroup.GET("/:service/ping", func(c *gin.Context) {
+			response(controller.Ping(c.Param("service")), c)
+		})
 
-		serviceName := c.Param("service")
-		s := serviceFactory.Find(serviceName)
-		if s != nil {
-			err := s.Ping()
-			if err == nil {
-				c.String(http.StatusOK, "{ \"ok\": true }")
-			} else {
-				c.String(http.StatusNotAcceptable, fmt.Sprintf("{ \"ok\": false, \"desc:\": %s }", err))
-			}
-		} else {
-			log.Info("/ping: can't found the service '%s'", serviceName)
-			c.String(http.StatusBadRequest,
-				fmt.Sprintf("{ \"ok\": false, \"desc:\": can't found the service '%s' }", serviceName))
-		}
-	})
+		serviceGroup.GET("/:service/validate", func(c *gin.Context) {
+			response(controller.Validate(serviceQuery(c)), c)
+		})
+	}
 
-	router.GET("/:service/validate", func(c *gin.Context) {
-		c.Header("Content-Type", "application/json")
+	servicesGroup := router.Group("/services")
+	{
+		servicesGroup.GET("/any/ping", func(c *gin.Context) {
+			response(controller.PingAny(services(c)), c)
+		})
 
-		serviceName := c.Param("service")
-		s := serviceFactory.Find(serviceName)
-		if s != nil {
-			query := c.DefaultQuery("query", "")
-			expr := c.DefaultQuery("expr", "")
+		servicesGroup.GET("/all/ping", func(c *gin.Context) {
+			response(controller.PingAll(services(c)), c)
+		})
 
-			if query == "" || expr == "" {
-				c.String(http.StatusBadRequest,
-					"{ \"ok\": false, \"desc\": \"Please define 'query' and 'expr' parameters\" }")
-			} else {
-				value, err := commandCache.GetOrBuild(buildCommandKey(serviceName, query, expr), func() (interface{}, error) {
-					return s.NewСheck(query, expr)
-				})
-				if err == nil {
-					command, _ := value.(service.Check)
-					ok, err := command.Check()
-					if err != nil {
-						c.String(http.StatusBadRequest, fmt.Sprintf("{ \"ok\": false, \"desc:\": %s }", err))
-					} else if ok {
-						c.String(http.StatusOK, "{ \"ok\": true }")
-					} else {
-						c.String(http.StatusNotAcceptable, "{ \"ok\": false }")
-					}
-				} else {
-					log.Info("/validate: error parsing '%s' of '%s'", err, expr)
-					c.String(http.StatusBadRequest, fmt.Sprintf("{ \"ok\": false, \"desc:\": %s }", err))
-				}
-			}
-		} else {
-			log.Info("/validate: can't found the service '%s'", serviceName)
-			c.String(http.StatusBadRequest,
-				fmt.Sprintf("{ \"ok\": false, \"desc:\": can't found the service '%s' }", serviceName))
-		}
-	})
+		servicesGroup.GET("/any/validate", func(c *gin.Context) {
+			response(controller.ValidateAny(servicesQuery(c)), c)
+		})
+
+		servicesGroup.GET("/running/validate", func(c *gin.Context) {
+			response(controller.ValidateRunning(servicesQuery(c)), c)
+		})
+
+		servicesGroup.GET("/all/validate", func(c *gin.Context) {
+			response(controller.ValidateAll(servicesQuery(c)), c)
+		})
+
+		servicesGroup.GET("/any/compare", func(c *gin.Context) {
+			response(controller.CompareAny(servicesCompare(c)), c)
+		})
+
+		servicesGroup.GET("/running/compare", func(c *gin.Context) {
+			response(controller.CompareRunning(servicesCompare(c)), c)
+		})
+
+		servicesGroup.GET("/all/compare", func(c *gin.Context) {
+			response(controller.CompareAll(servicesCompare(c)), c)
+		})
+	}
+
 	router.Run(fmt.Sprintf(":%d", config.Port))
 }
 
-func buildCommandKey(serviceName string, query string, expr string) string {
-	return fmt.Sprintf("%s.q(%s).e(%s)", serviceName, query, expr)
+func services(c *gin.Context) ([]string) {
+	return strings.Split(c.DefaultQuery("services", ""), ",")
+}
+
+func servicesQuery(c *gin.Context) ([]string, *core.QueryRequest) {
+	return strings.Split(c.DefaultQuery("services", ""), ","), queryReq(c)
+}
+
+func servicesCompare(c *gin.Context) ([]string, *core.CompareRequest) {
+	return strings.Split(c.DefaultQuery("services", ""), ","),
+		&core.CompareRequest{QueryRequest: queryReq(c), Operator: c.DefaultQuery("op", "equals")}
+}
+
+func serviceQuery(c *gin.Context) (string, *core.QueryRequest) {
+	return c.Param("service"), queryReq(c)
+}
+
+func queryReq(c *gin.Context) *core.QueryRequest {
+	return &core.QueryRequest{
+		Query: c.DefaultQuery("query", ""),
+		Expr:  c.DefaultQuery("expr", "")}
+}
+
+func response(err error, c *gin.Context) {
+	c.Header("Content-Type", "application/json")
+	if err == nil {
+		c.String(http.StatusOK, "{ \"ok\": true }")
+	} else {
+		c.String(http.StatusNotAcceptable, fmt.Sprintf("{ \"ok\": false, \"desc:\": %s }", err))
+	}
 }
