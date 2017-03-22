@@ -14,22 +14,15 @@ import (
 var log = integ.Log
 
 func main() {
-	var config *core.Config
-	args := os.Args[1:]
-	log.Info("%v", args)
-	if len(args) > 0 {
-		config = core.Load(strings.Join(args, " "))
-	} else {
-		config = core.Load("rest.yml")
+	controller, err := core.NewController(configFiles())
+	if err != nil {
+		log.Err("Exit! %v", err)
 	}
 
-	if !config.Debug {
+	if !controller.Config.Debug {
 		gin.SetMode(gin.ReleaseMode)
 		integ.Debug = false
 	}
-	config.Print()
-
-	controller := core.NewController(config)
 
 	defer controller.Close()
 
@@ -90,13 +83,22 @@ func main() {
 
 	adminGroup := router.Group("/admin")
 	{
-		adminGroup.GET("/reset", func(c *gin.Context) {
-			controller.Reset()
+		adminGroup.GET("/reload", func(c *gin.Context) {
+			controller.ReloadConfig()
 			response(nil, c)
 		})
 	}
 
-	router.Run(fmt.Sprintf(":%d", config.Port))
+	router.Run(fmt.Sprintf(":%d", controller.Config.Port))
+}
+
+func configFiles() string {
+	configFiles := "rest.yml"
+	args := os.Args[1:]
+	if len(args) > 0 {
+		configFiles = strings.Join(args, " ")
+	}
+	return configFiles
 }
 
 func services(c *gin.Context) ([]string) {

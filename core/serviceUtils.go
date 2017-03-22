@@ -39,4 +39,5 @@ func (o *SimpleServiceFactory) Close() {
 	for _, item := range o.services {
 		item.Close()
 	}
+	o.services = make(map[string]Service)
 }

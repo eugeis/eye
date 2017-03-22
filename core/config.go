@@ -4,6 +4,7 @@ import (
 	"github.com/jinzhu/configor"
 	"fmt"
 	"rest/integ"
+	"strings"
 )
 
 var log = integ.Log
@@ -17,13 +18,18 @@ type Config struct {
 	MySql []*MySql
 	Http  []*Http
 
-	serviceFactory Factory
+	fileNames string
 }
 
-func Load(fileNames string) *Config {
-	ret := &Config{}
-	configor.Load(ret, fileNames)
-	return ret
+func Load(fileNames string) (ret *Config, err error) {
+	ret = &Config{fileNames: fileNames}
+	err = configor.Load(ret, fileNames)
+
+	//ignore, https://github.com/jinzhu/configor/issues/6
+	if err != nil && strings.EqualFold(err.Error(), "invalid config, should be struct") {
+		err = nil
+	}
+	return
 }
 
 func (c *Config) Print() {
@@ -37,19 +43,4 @@ func (c *Config) Print() {
 	for _, v := range c.Http {
 		log.Info(fmt.Sprintf("\t%s", v.Name()))
 	}
-}
-
-func (c *Config) ServiceFactory() Factory {
-	if c.serviceFactory == nil {
-		serviceFactory := NewFactory()
-		for _, service := range c.MySql {
-			serviceFactory.Add(service)
-		}
-
-		for _, service := range c.Http {
-			serviceFactory.Add(service)
-		}
-		c.serviceFactory = &serviceFactory
-	}
-	return c.serviceFactory
 }

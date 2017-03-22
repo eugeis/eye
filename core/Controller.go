@@ -12,27 +12,56 @@ type Operator interface {
 }
 
 type Controller struct {
-	config         *Config
+	Config         *Config
 	serviceFactory Factory
 	commandCache   integ.Cache
+	configFiles    string
 }
 
-func NewController(config *Config) Controller {
-	return Controller{config: config, serviceFactory: config.ServiceFactory(), commandCache: integ.NewCache()}
+func NewController(configFiles string) (ret *Controller, err error) {
+	ret = &Controller{configFiles: configFiles, commandCache: integ.NewCache()}
+	err = ret.ReloadConfig()
+	return
 }
 
-func (o Controller) Close() {
+func (o *Controller) Close() {
 	if o.serviceFactory != nil {
 		o.serviceFactory.Close()
+		o.commandCache.Clear()
 	}
-	o.commandCache.Clear()
 }
 
-func (o Controller) Reset() {
+func (o *Controller) ReloadConfig() (err error) {
 	o.Close()
+	o.Config, err = Load(o.configFiles)
+	if err == nil {
+		o.Config.Print()
+		o.reloadServiceFactory()
+	}
+	return
 }
 
-func (o Controller) Ping(serviceName string) (err error) {
+func (o *Controller) reloadServiceFactory() {
+	oldServiceFactory := o.serviceFactory
+	o.serviceFactory = o.buildServiceFactory()
+	if oldServiceFactory != nil {
+		oldServiceFactory.Close()
+	}
+}
+
+func (o *Controller) buildServiceFactory() Factory {
+	serviceFactory := NewFactory()
+	for _, service := range o.Config.MySql {
+		serviceFactory.Add(service)
+	}
+
+	for _, service := range o.Config.Http {
+		serviceFactory.Add(service)
+	}
+	return &serviceFactory
+}
+
+func (o *Controller) Ping(serviceName string) (err error) {
 	service, err := o.serviceFactory.Find(serviceName)
 	if err == nil {
 		err = service.Ping()
@@ -40,11 +69,11 @@ func (o Controller) Ping(serviceName string) (err error) {
 	return
 }
 
-func (o Controller) Check(checkName string) (err error) {
+func (o *Controller) Check(checkName string) (err error) {
 	return
 }
 
-func (o Controller) Validate(serviceName string, req *QueryRequest) (err error) {
+func (o *Controller) Validate(serviceName string, req *QueryRequest) (err error) {
 	if req.Query == "" {
 		log.Debug(fmt.Sprintf("ping instead of validator, because no query defined for %s", serviceName))
 		return o.Ping(serviceName)
@@ -58,7 +87,7 @@ func (o Controller) Validate(serviceName string, req *QueryRequest) (err error) 
 	return
 }
 
-func (o Controller) buildCheck(serviceName string, req *QueryRequest) (ret Check, err error) {
+func (o *Controller) buildCheck(serviceName string, req *QueryRequest) (ret Check, err error) {
 	var value interface{}
 	value, err = o.commandCache.GetOrBuild(req.CheckKey(serviceName), func() (interface{}, error) {
 		service, err := o.serviceFactory.Find(serviceName)
@@ -74,7 +103,7 @@ func (o Controller) buildCheck(serviceName string, req *QueryRequest) (ret Check
 	return
 }
 
-func (o Controller) PingAny(serviceNames []string) (err error) {
+func (o *Controller) PingAny(serviceNames []string) (err error) {
 	for _, serviceName := range serviceNames {
 		err = o.Ping(serviceName)
 		if err == nil {
@@ -84,7 +113,7 @@ func (o Controller) PingAny(serviceNames []string) (err error) {
 	return
 }
 
-func (o Controller) PingAll(serviceNames []string) (err error) {
+func (o *Controller) PingAll(serviceNames []string) (err error) {
 	for _, serviceName := range serviceNames {
 		err = o.Ping(serviceName)
 		if err != nil {
@@ -94,7 +123,7 @@ func (o Controller) PingAll(serviceNames []string) (err error) {
 	return
 }
 
-func (o Controller) ValidateAny(serviceNames []string, req *QueryRequest) (err error) {
+func (o *Controller) ValidateAny(serviceNames []string, req *QueryRequest) (err error) {
 	for _, serviceName := range serviceNames {
 		err = o.Validate(serviceName, req)
 		if err == nil {
@@ -104,7 +133,7 @@ func (o Controller) ValidateAny(serviceNames []string, req *QueryRequest) (err e
 	return
 }
 
-func (o Controller) ValidateRunning(serviceNames []string, req *QueryRequest) (err error) {
+func (o *Controller) ValidateRunning(serviceNames []string, req *QueryRequest) (err error) {
 	for _, serviceName := range serviceNames {
 		errTemp := o.Ping(serviceName)
 		if errTemp == nil {
@@ -118,7 +147,7 @@ func (o Controller) ValidateRunning(serviceNames []string, req *QueryRequest) (e
 	return
 }
 
-func (o Controller) ValidateAll(serviceNames []string, req *QueryRequest) (err error) {
+func (o *Controller) ValidateAll(serviceNames []string, req *QueryRequest) (err error) {
 	for _, serviceName := range serviceNames {
 		err = o.Validate(serviceName, req)
 		if err != nil {
@@ -128,7 +157,7 @@ func (o Controller) ValidateAll(serviceNames []string, req *QueryRequest) (err e
 	return
 }
 
-func (o Controller) CompareAny(serviceNames []string, req *CompareRequest) (err error) {
+func (o *Controller) CompareAny(serviceNames []string, req *CompareRequest) (err error) {
 	var check Check
 	check, err = o.compareCheck(serviceNames, req, func(checksData map[string][]byte) (checkError error) {
 		var firstName string
@@ -157,7 +186,7 @@ func (o Controller) CompareAny(serviceNames []string, req *CompareRequest) (err 
 	return
 }
 
-func (o Controller) CompareRunning(serviceNames []string, req *CompareRequest) (err error) {
+func (o *Controller) CompareRunning(serviceNames []string, req *CompareRequest) (err error) {
 	var check Check
 	check, err = o.compareCheck(serviceNames, req, func(checksData map[string][]byte) (checkError error) {
 		var firstName string
@@ -185,7 +214,7 @@ func (o Controller) CompareRunning(serviceNames []string, req *CompareRequest) (
 	return
 }
 
-func (o Controller) CompareAll(serviceNames []string, req *CompareRequest) (err error) {
+func (o *Controller) CompareAll(serviceNames []string, req *CompareRequest) (err error) {
 	var check Check
 	check, err = o.compareCheck(serviceNames, req, func(checksData map[string][]byte) (checkError error) {
 		var firstName string
@@ -215,7 +244,7 @@ func (o Controller) CompareAll(serviceNames []string, req *CompareRequest) (err 
 	return
 }
 
-func (o Controller) compareCheck(serviceNames []string, req *CompareRequest, validator func(map[string][]byte) error) (check Check, err error) {
+func (o *Controller) compareCheck(serviceNames []string, req *CompareRequest, validator func(map[string][]byte) error) (check Check, err error) {
 	var value interface{}
 
 	checkKey := req.QueryRequest.ChecksKey(serviceNames)
@@ -229,7 +258,7 @@ func (o Controller) compareCheck(serviceNames []string, req *CompareRequest, val
 		}
 
 		checks := make([]Check, len(serviceNames))
-		check = multiChecks{info: checkKey, query: req.QueryRequest.Query, pattern: pattern, checks: checks, validator: validator}
+		check = MultiCheck{info: checkKey, query: req.QueryRequest.Query, pattern: pattern, checks: checks, validator: validator}
 
 		var serviceCheck Check
 		for i, serviceName := range serviceNames {
@@ -249,56 +278,11 @@ func (o Controller) compareCheck(serviceNames []string, req *CompareRequest, val
 	return
 }
 
-func (o Controller) query(serviceName string, req *QueryRequest) (data []byte, err error) {
+func (o *Controller) query(serviceName string, req *QueryRequest) (data []byte, err error) {
 	//var buildCheck Check
 	//buildCheck, err = o.buildCheck(serviceName, req)
 	if err == nil {
 		//data, err = buildCheck.Query()
-	}
-	return
-}
-
-//buildCheck
-type multiChecks struct {
-	info      string
-	query     string
-	pattern   *regexp.Regexp
-	checks    []Check
-	validator func(map[string][]byte) error
-}
-
-func (o multiChecks) Validate() error {
-	return o.validator(o.checksData())
-}
-
-func (o multiChecks) Query() (data []byte, err error) {
-	return
-}
-
-func (o multiChecks) Info() string {
-	return o.info
-}
-
-func (o multiChecks) checksData() (checksData map[string][]byte) {
-	checksData = make(map[string][]byte)
-	for _, check := range o.checks {
-		data, err := check.Query()
-		if err == nil {
-			if o.pattern != nil {
-				matches := o.pattern.FindSubmatch(data)
-				if matches == nil {
-					checksData[check.Info()] = nil
-				} else if len(matches) > 0 {
-					checksData[check.Info()] = matches[1]
-				} else {
-					checksData[check.Info()] = matches[0]
-				}
-			} else {
-				checksData[check.Info()] = data
-			}
-		} else {
-			checksData[check.Info()] = nil
-		}
 	}
 	return
 }
