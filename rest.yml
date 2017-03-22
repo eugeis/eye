@@ -5,8 +5,8 @@ debug: true
 mysql:
 -   servicename:     mysql
 
-    user:     xxxx
-    password: xxxx
+    user:     root
+    password: admin
 
     host:     localhost
     port:     3306
@@ -16,8 +16,8 @@ mysql:
 
 -   servicename:     mysql1
 
-    user:     xxxx
-    password: xxxx
+    user:     root
+    password: admin
 
     host:     localhost
     port:     3306
@@ -27,8 +27,8 @@ mysql:
 
 -   servicename:     mysql2
 
-    user:     xxxx
-    password: xxxx
+    user:     root
+    password: admin
 
     host:     localhost
     port:     3306
@@ -39,8 +39,8 @@ mysql:
 http:
 -   servicename:     wildfly
 
-    user:     xxxx
-    password: xxxx
+    user:     admin
+    password: admin
 
     url:     http://localhost:9990/management
 
@@ -53,8 +53,8 @@ http:
 
 -   servicename:     wildfly1
 
-    user:     xxxx
-    password: xxxx
+    user:     admin
+    password: admin
 
     url:     http://localhost:9990/management
 
@@ -67,8 +67,8 @@ http:
 
 -   servicename:     wildfly2
 
-    user:     xxxx
-    password: xxxx
+    user:     admin
+    password: admin
 
     url:     http://localhost:9990/management
 

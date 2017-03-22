@@ -37,27 +37,6 @@ func (s *Http) Name() string {
 	return s.ServiceName
 }
 
-func (s *Http) NewСheck(req *QueryRequest) (ret Check, err error) {
-	return s.newСheck(req)
-}
-
-func (s *Http) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
-	var pattern *regexp.Regexp
-	if len(req.Expr) > 0 {
-		pattern, err = regexp.Compile(req.Expr)
-		if err != nil {
-			return
-		}
-	}
-
-	dReq := digest.NewRequest(s.User, s.Password, "GET", s.Url+req.Query, "")
-	ret = &httpCheck{
-		info:    fmt.Sprintf("q: %s, e: %s", req.Query, req.Expr),
-		req:     &dReq,
-		pattern: pattern, service: s }
-	return
-}
-
 func (s *Http) Init() (err error) {
 	if s.client == nil {
 		s.client = digest.NewClient(true, s.queryTimeout)
@@ -93,6 +72,27 @@ func body(resp *http.Response) string {
 	body, _ := ioutil.ReadAll(resp.Body)
 	ret := fmt.Sprintf("%s", body)
 	return ret
+}
+
+func (s *Http) NewСheck(req *QueryRequest) (ret Check, err error) {
+	return s.newСheck(req)
+}
+
+func (s *Http) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
+	var pattern *regexp.Regexp
+	if len(req.Expr) > 0 {
+		pattern, err = regexp.Compile(req.Expr)
+		if err != nil {
+			return
+		}
+	}
+
+	dReq := digest.NewRequest(s.User, s.Password, "GET", s.Url+req.Query, "")
+	ret = &httpCheck{
+		info:    req.CheckKey(s.Name()),
+		req:     &dReq,
+		pattern: pattern, service: s }
+	return
 }
 
 //buildCheck

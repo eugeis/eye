@@ -36,23 +36,6 @@ func (s *MySql) Name() string {
 	return s.ServiceName
 }
 
-func (s *MySql) NewСheck(req *QueryRequest) (ret Check, err error) {
-	var pattern *regexp.Regexp
-	if len(req.Expr) > 0 {
-		pattern, err = regexp.Compile(req.Expr)
-		if err != nil {
-			return
-		}
-	}
-
-	err = s.validateQuery(req.Query)
-	if err == nil {
-		query := s.limitQuery(req.Query)
-		ret = mySqlCheck{info: fmt.Sprintf("q: %s, e: %s", query, req.Expr), query: query, pattern: pattern, service: s}
-	}
-	return
-}
-
 func (s *MySql) validateQuery(query string) error {
 	var err error
 	queryLowCase := strings.ToUpper(query)
@@ -202,6 +185,23 @@ func (s *MySql) query(sql string) (*sql.Rows, error) {
 	} else {
 		return s.db.Query(sql)
 	}
+}
+
+func (s *MySql) NewСheck(req *QueryRequest) (ret Check, err error) {
+	var pattern *regexp.Regexp
+	if len(req.Expr) > 0 {
+		pattern, err = regexp.Compile(req.Expr)
+		if err != nil {
+			return
+		}
+	}
+
+	err = s.validateQuery(req.Query)
+	if err == nil {
+		query := s.limitQuery(req.Query)
+		ret = mySqlCheck{info: req.CheckKey(s.Name()), query: query, pattern: pattern, service: s}
+	}
+	return
 }
 
 //buildCheck

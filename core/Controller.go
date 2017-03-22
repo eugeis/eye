@@ -127,11 +127,30 @@ func (o Controller) ValidateAll(serviceNames []string, req *QueryRequest) (err e
 }
 
 func (o Controller) CompareAny(serviceNames []string, req *CompareRequest) (err error) {
-	for _, serviceName := range serviceNames {
-		err = o.Validate(serviceName, req.QueryRequest)
-		if err == nil {
-			break
+	var check Check
+	check, err = o.compareCheck(serviceNames, req, func(checksData map[string][]byte) (checkError error) {
+		var firstName string
+		var firstData []byte
+		for serviceName, data := range checksData {
+			if data != nil {
+				if firstData == nil {
+					firstData = data
+					firstName = serviceName
+				} else {
+					if !bytes.Equal(firstData, data) {
+						checkError = errors.Errorf("%s != $s", firstName, serviceName)
+					} else {
+						checkError = nil
+						break
+					}
+				}
+			}
 		}
+		return
+	})
+
+	if err == nil {
+		err = check.Validate()
 	}
 	return
 }
@@ -142,6 +161,7 @@ func (o Controller) CompareRunning(serviceNames []string, req *CompareRequest) (
 		var firstName string
 		var firstData []byte
 		for serviceName, data := range checksData {
+			//check only running
 			if data != nil {
 				if firstData == nil {
 					firstData = data
@@ -163,16 +183,49 @@ func (o Controller) CompareRunning(serviceNames []string, req *CompareRequest) (
 	return
 }
 
+func (o Controller) CompareAll(serviceNames []string, req *CompareRequest) (err error) {
+	var check Check
+	check, err = o.compareCheck(serviceNames, req, func(checksData map[string][]byte) (checkError error) {
+		var firstName string
+		var firstData []byte
+		for serviceName, data := range checksData {
+			if data != nil {
+				if firstData == nil {
+					firstData = data
+					firstName = serviceName
+				} else {
+					if !bytes.Equal(firstData, data) {
+						checkError = errors.Errorf("%s != $s", firstName, serviceName)
+						break
+					}
+				}
+			} else {
+				checkError = errors.Errorf("%s != $s", firstName, serviceName)
+				break
+			}
+		}
+		return
+	})
+
+	if err == nil {
+		err = check.Validate()
+	}
+	return
+}
+
 func (o Controller) compareCheck(serviceNames []string, req *CompareRequest, validator func(map[string][]byte) error) (check Check, err error) {
 	var value interface{}
 
 	checkKey := req.QueryRequest.ChecksKey(serviceNames)
 	value, err = o.commandCache.GetOrBuild(checkKey, func() (check interface{}, err error) {
 		var pattern *regexp.Regexp
-		pattern, err = regexp.Compile(req.QueryRequest.Expr)
-		if err != nil {
-			return
+		if len(req.QueryRequest.Expr) > 0 {
+			pattern, err = regexp.Compile(req.QueryRequest.Expr)
+			if err != nil {
+				return
+			}
 		}
+
 		checks := make([]Check, len(serviceNames))
 		check = multiChecks{info: checkKey, query: req.QueryRequest.Query, pattern: pattern, checks: checks, validator: validator}
 
@@ -190,16 +243,6 @@ func (o Controller) compareCheck(serviceNames []string, req *CompareRequest, val
 	if err == nil {
 		check = value.(Check)
 		err = check.Validate()
-	}
-	return
-}
-
-func (o Controller) CompareAll(serviceNames []string, req *CompareRequest) (err error) {
-	for _, serviceName := range serviceNames {
-		err = o.Validate(serviceName, req.QueryRequest)
-		if err != nil {
-			break
-		}
 	}
 	return
 }
@@ -230,11 +273,15 @@ func (o multiChecks) Query() (data []byte, err error) {
 	return
 }
 
+func (o multiChecks) Info() string {
+	return o.info
+}
+
 func (o multiChecks) checksData() (checksData map[string][]byte) {
 	checksData = make(map[string][]byte)
 	for _, check := range o.checks {
 		data, err := check.Query()
-		if err != nil {
+		if err == nil {
 			if o.pattern != nil {
 				matches := o.pattern.FindSubmatch(data)
 				if matches == nil {
