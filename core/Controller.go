@@ -4,8 +4,8 @@ import (
 	"rest/integ"
 	"fmt"
 	"bytes"
-	"github.com/pkg/errors"
 	"regexp"
+	"errors"
 )
 
 type Operator interface {
@@ -138,7 +138,7 @@ func (o Controller) CompareAny(serviceNames []string, req *CompareRequest) (err 
 					firstName = serviceName
 				} else {
 					if !bytes.Equal(firstData, data) {
-						checkError = errors.Errorf("%s != $s", firstName, serviceName)
+						checkError = errors.New(fmt.Sprintf("%s != $s", firstName, serviceName))
 					} else {
 						checkError = nil
 						break
@@ -168,7 +168,7 @@ func (o Controller) CompareRunning(serviceNames []string, req *CompareRequest) (
 					firstName = serviceName
 				} else {
 					if !bytes.Equal(firstData, data) {
-						checkError = errors.Errorf("%s != $s", firstName, serviceName)
+						checkError = errors.New(fmt.Sprintf("%s != $s", firstName, serviceName))
 						break
 					}
 				}
@@ -195,12 +195,12 @@ func (o Controller) CompareAll(serviceNames []string, req *CompareRequest) (err 
 					firstName = serviceName
 				} else {
 					if !bytes.Equal(firstData, data) {
-						checkError = errors.Errorf("%s != $s", firstName, serviceName)
+						checkError = errors.New(fmt.Sprintf("%s != $s", firstName, serviceName))
 						break
 					}
 				}
 			} else {
-				checkError = errors.Errorf("%s != $s", firstName, serviceName)
+				checkError = errors.New(fmt.Sprintf("%s != $s", firstName, serviceName))
 				break
 			}
 		}
