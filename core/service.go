@@ -1,6 +1,9 @@
 package core
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Service interface {
 	Name() string
@@ -15,9 +18,9 @@ type Service interface {
 }
 
 type Check interface {
+	Info() string
 	Query() ([]byte, error)
 	Validate() error
-	Close()
 }
 
 type Factory interface {
@@ -35,6 +38,10 @@ type CompareRequest struct {
 	Operator     string
 }
 
-func (o QueryRequest) CommandKey(serviceName string) string {
+func (o QueryRequest) CheckKey(serviceName string) string {
 	return fmt.Sprintf("%s.q(%s).e(%s)", serviceName, o.Query, o.Expr)
+}
+
+func (o QueryRequest) ChecksKey(serviceNames []string) string {
+	return fmt.Sprintf("%s.q(%s).e(%s)", strings.Join(serviceNames, "_"), o.Query, o.Expr)
 }

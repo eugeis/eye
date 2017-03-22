@@ -8,10 +8,11 @@ import (
 
 var log = integ.Log
 
-type RestConfig struct {
+type Config struct {
 	Name  string `default:"app Name"`
 	Port  int `default:"3000"`
 	Debug bool `default:true`
+	Token string
 
 	MySql []*MySql
 	Http  []*Http
@@ -19,13 +20,13 @@ type RestConfig struct {
 	serviceFactory Factory
 }
 
-func Load(fileNames string) *RestConfig {
-	ret := &RestConfig{}
+func Load(fileNames string) *Config {
+	ret := &Config{}
 	configor.Load(ret, fileNames)
 	return ret
 }
 
-func (c *RestConfig) Print() {
+func (c *Config) Print() {
 	log.Info(fmt.Sprintf("Name: %s, Port: %d, Debug: %v", c.Name, c.Port, c.Debug))
 	log.Info("MySql:")
 	for _, v := range c.MySql {
@@ -38,7 +39,7 @@ func (c *RestConfig) Print() {
 	}
 }
 
-func (c *RestConfig) ServiceFactory() Factory {
+func (c *Config) ServiceFactory() Factory {
 	if c.serviceFactory == nil {
 		serviceFactory := NewFactory()
 		for _, service := range c.MySql {

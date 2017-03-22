@@ -14,7 +14,7 @@ import (
 var log = integ.Log
 
 func main() {
-	var config *core.RestConfig
+	var config *core.Config
 	args := os.Args[1:]
 	if len(args) > 0 {
 		config = core.Load(strings.Join(args, " "))
@@ -77,6 +77,13 @@ func main() {
 
 		servicesGroup.GET("/all/compare", func(c *gin.Context) {
 			response(controller.CompareAll(servicesCompare(c)), c)
+		})
+	}
+
+	checkGroup := router.Group("/check")
+	{
+		checkGroup.GET("/:check", func(c *gin.Context) {
+			response(controller.Check(c.Param("check")), c)
 		})
 	}
 

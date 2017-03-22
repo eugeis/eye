@@ -204,12 +204,16 @@ func (s *MySql) query(sql string) (*sql.Rows, error) {
 	}
 }
 
-//check
+//buildCheck
 type mySqlCheck struct {
 	info    string
 	query   string
 	pattern *regexp.Regexp
 	service *MySql
+}
+
+func (o mySqlCheck) Info() string {
+	return o.info
 }
 
 func (o mySqlCheck) Validate() (err error) {
@@ -237,7 +241,4 @@ func (o mySqlCheck) Query() (data []byte, err error) {
 		log.Debug("%s: %s", o.info, data)
 	}
 	return
-}
-
-func (o mySqlCheck) Close() {
 }

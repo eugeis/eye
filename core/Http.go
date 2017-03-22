@@ -70,9 +70,6 @@ func (s *Http) Init() (err error) {
 }
 
 func (s *Http) Close() {
-	if s.pingCheck != nil {
-		s.pingCheck.Close()
-	}
 	s.client = nil
 	s.pingCheck = nil
 }
@@ -98,13 +95,17 @@ func body(resp *http.Response) string {
 	return ret
 }
 
-//check
+//buildCheck
 
 type httpCheck struct {
 	info    string
 	req     *digest.Request
 	pattern *regexp.Regexp
 	service *Http
+}
+
+func (o httpCheck) Info() string {
+	return o.info
 }
 
 func (o httpCheck) Validate() (err error) {
@@ -139,10 +140,4 @@ func (o httpCheck) Query() (data []byte, err error) {
 		err = errors.New(fmt.Sprintf("Status %d", resp.StatusCode))
 	}
 	return
-}
-
-func (o httpCheck) Close() {
-	if o.req != nil {
-		o.req.Close()
-	}
 }
