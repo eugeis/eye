@@ -6,7 +6,7 @@ import (
 	"bytes"
 	"regexp"
 	"errors"
-	"math"
+	"strconv"
 )
 
 type Operator interface {
@@ -249,11 +249,32 @@ func (o *Controller) CompareAll(serviceNames []string, req *CompareRequest) (err
 func match(data1 []byte, data2 []byte, req *CompareRequest) (ret bool) {
 	match := false
 	if req.Tolerance > 0 {
-		match = math.Abs(float64(data1)-float64(data2)) <= req.Tolerance
+		var x, y int
+		var err error
+		s1 := string(data1)
+		s2 := string(data2)
+
+		x, err = strconv.Atoi(s1)
+		if err == nil {
+			y, err = strconv.Atoi(s2)
+		}
+		if err == nil {
+			match = abs(x-y) <= req.Tolerance
+		} else {
+			log.Debug("Covert of %s and %s to int not possible, use bytes comparison.")
+			match = bytes.Equal(data1, data2)
+		}
 	} else {
 		match = bytes.Equal(data1, data2)
 	}
 	return (!req.Not && match) || (req.Not && !match)
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
 
 func (o *Controller) compareCheck(serviceNames []string, req *CompareRequest, validator func(map[string][]byte) error) (check Check, err error) {

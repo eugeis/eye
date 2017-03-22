@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"rest/core"
+	"strconv"
 )
 
 var log = integ.Log
@@ -110,11 +111,26 @@ func servicesQuery(c *gin.Context) ([]string, *core.QueryRequest) {
 }
 
 func servicesCompare(c *gin.Context) ([]string, *core.CompareRequest) {
+
 	return strings.Split(c.DefaultQuery("services", ""), ","),
 		&core.CompareRequest{
-			QueryRequest: queryReq(c),
-			Tolerance:    int(c.DefaultQuery("tolerance", "0")),
-			Not:    bool(c.DefaultQuery("not", "false"))}
+			QueryRequest: queryReq(c), Tolerance:
+			queryInt("tolerance", c),
+			Not: queryBool("not", c)}
+}
+
+func queryInt(key string, c *gin.Context) (ret int) {
+	if value := c.Query(key); value != "" {
+		ret, _ = strconv.Atoi(value)
+	}
+	return ret
+}
+
+func queryBool(key string, c *gin.Context) (ret bool) {
+	if value := c.Query(key); value != "" {
+		ret, _ = strconv.ParseBool(value)
+	}
+	return ret
 }
 
 func serviceQuery(c *gin.Context) (string, *core.QueryRequest) {
