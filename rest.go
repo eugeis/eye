@@ -111,7 +111,10 @@ func servicesQuery(c *gin.Context) ([]string, *core.QueryRequest) {
 
 func servicesCompare(c *gin.Context) ([]string, *core.CompareRequest) {
 	return strings.Split(c.DefaultQuery("services", ""), ","),
-		&core.CompareRequest{QueryRequest: queryReq(c), Operator: c.DefaultQuery("op", "equals")}
+		&core.CompareRequest{
+			QueryRequest: queryReq(c),
+			Tolerance:    int(c.DefaultQuery("tolerance", "0")),
+			Not:    bool(c.DefaultQuery("not", "false"))}
 }
 
 func serviceQuery(c *gin.Context) (string, *core.QueryRequest) {

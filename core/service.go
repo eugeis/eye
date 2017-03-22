@@ -31,11 +31,13 @@ type Factory interface {
 type QueryRequest struct {
 	Query string
 	Expr  string
+
 }
 
 type CompareRequest struct {
 	QueryRequest *QueryRequest
-	Operator     string
+	Tolerance     float64
+	Not bool
 }
 
 func (o QueryRequest) CheckKey(serviceName string) string {

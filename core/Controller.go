@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"regexp"
 	"errors"
+	"math"
 )
 
 type Operator interface {
@@ -219,19 +220,20 @@ func (o *Controller) CompareAll(serviceNames []string, req *CompareRequest) (err
 	check, err = o.compareCheck(serviceNames, req, func(checksData map[string][]byte) (checkError error) {
 		var firstName string
 		var firstData []byte
+
 		for serviceName, data := range checksData {
 			if data != nil {
 				if firstData == nil {
 					firstData = data
 					firstName = serviceName
 				} else {
-					if !bytes.Equal(firstData, data) {
-						checkError = errors.New(fmt.Sprintf("%s != $s", firstName, serviceName))
+					if !match(firstData, data, req) {
+						checkError = errors.New(fmt.Sprintf("%s ~ $s", firstName, serviceName))
 						break
 					}
 				}
 			} else {
-				checkError = errors.New(fmt.Sprintf("%s != $s", firstName, serviceName))
+				checkError = errors.New(fmt.Sprintf("%s ~ %s", firstName, serviceName))
 				break
 			}
 		}
@@ -242,6 +244,16 @@ func (o *Controller) CompareAll(serviceNames []string, req *CompareRequest) (err
 		err = check.Validate()
 	}
 	return
+}
+
+func match(data1 []byte, data2 []byte, req *CompareRequest) (ret bool) {
+	match := false
+	if req.Tolerance > 0 {
+		match = math.Abs(float64(data1)-float64(data2)) <= req.Tolerance
+	} else {
+		match = bytes.Equal(data1, data2)
+	}
+	return (!req.Not && match) || (req.Not && !match)
 }
 
 func (o *Controller) compareCheck(serviceNames []string, req *CompareRequest, validator func(map[string][]byte) error) (check Check, err error) {
