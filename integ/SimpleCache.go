@@ -15,6 +15,13 @@ func NewCache() SimpleCache {
 	return SimpleCache{MaxSize: 1000, data: make(map[string]interface{}), lock: sync.Mutex{}}
 }
 
+func (o SimpleCache) Clear() {
+	o.lock.Lock()
+	o.data = make(map[string]interface{})
+	o.lock.Unlock()
+	return
+}
+
 func (o SimpleCache) Get(key string, builder func() interface{}) (value interface{}, ok bool) {
 	o.lock.Lock()
 	value, ok = o.data[key]

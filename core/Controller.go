@@ -25,9 +25,11 @@ func (o Controller) Close() {
 	if o.serviceFactory != nil {
 		o.serviceFactory.Close()
 	}
-	o.commandCache = nil
-	o.config = nil
-	o.serviceFactory = nil
+	o.commandCache.Clear()
+}
+
+func (o Controller) Reset() {
+	o.Close()
 }
 
 func (o Controller) Ping(serviceName string) (err error) {

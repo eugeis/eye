@@ -16,6 +16,7 @@ var log = integ.Log
 func main() {
 	var config *core.Config
 	args := os.Args[1:]
+	log.Info("%v", args)
 	if len(args) > 0 {
 		config = core.Load(strings.Join(args, " "))
 	} else {
@@ -84,6 +85,14 @@ func main() {
 	{
 		checkGroup.GET("/:check", func(c *gin.Context) {
 			response(controller.Check(c.Param("check")), c)
+		})
+	}
+
+	adminGroup := router.Group("/admin")
+	{
+		adminGroup.GET("/reset", func(c *gin.Context) {
+			controller.Reset()
+			response(nil, c)
 		})
 	}
 

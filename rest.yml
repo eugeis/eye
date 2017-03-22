@@ -6,7 +6,7 @@ mysql:
 -   servicename:     mysql
 
     user:     root
-    password: admin
+    password: xxxx
 
     host:     localhost
     port:     3306
@@ -17,9 +17,9 @@ mysql:
 -   servicename:     mysql1
 
     user:     root
-    password: admin
+    password: xxxx
 
-    host:     localhost
+    host:     serv1
     port:     3306
 
     pingtimeoutmillis: 1000
@@ -28,9 +28,9 @@ mysql:
 -   servicename:     mysql2
 
     user:     root
-    password: admin
+    password: xxxx
 
-    host:     localhost
+    host:     serv2
     port:     3306
 
     pingtimeoutmillis: 1000
@@ -39,8 +39,8 @@ mysql:
 http:
 -   servicename:     wildfly
 
-    user:     admin
-    password: admin
+    user:     xxxx
+    password: xxxx
 
     url:     http://localhost:9990/management
 
@@ -53,10 +53,10 @@ http:
 
 -   servicename:     wildfly1
 
-    user:     admin
-    password: admin
+    user:     xxxx
+    password: xxxx
 
-    url:     http://localhost:9990/management
+    url:     http://serv1:9990/management
 
     pingrequest:
         query: ?operation=attribute&name=server-state
@@ -67,10 +67,10 @@ http:
 
 -   servicename:     wildfly2
 
-    user:     admin
-    password: admin
+    user:     xxxx
+    password: xxxx
 
-    url:     http://localhost:9990/management
+    url:     http://serv2:9990/management
 
     pingrequest:
         query: ?operation=attribute&name=server-state
