@@ -237,8 +237,5 @@ func (o mySqlCheck) Query() (data []byte, err error) {
 		return
 	}
 	data, err = o.service.jsonBytes(o.query)
-	if err == nil {
-		log.Debug("%s: %s", o.info, data)
-	}
 	return
 }
