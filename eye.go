@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
-	"rest/integ"
+	"eye/integ"
 	"fmt"
 	"os"
 	"strings"
-	"rest/core"
+	"eye/core"
 	"strconv"
 )
 
@@ -94,7 +94,7 @@ func main() {
 }
 
 func configFiles() string {
-	configFiles := "rest.yml"
+	configFiles := "eye.yml"
 	args := os.Args[1:]
 	if len(args) > 0 {
 		configFiles = strings.Join(args, " ")
@@ -144,10 +144,10 @@ func queryReq(c *gin.Context) *core.QueryRequest {
 }
 
 func response(err error, c *gin.Context) {
-	c.Header("Content-Type", "application/json")
+	c.Header("Content-Type", "application/json; charset=UTF-8")
 	if err == nil {
 		c.String(http.StatusOK, "{ \"ok\": true }")
 	} else {
-		c.String(http.StatusNotAcceptable, fmt.Sprintf("{ \"ok\": false, \"desc:\": %s }", err))
+		c.String(http.StatusExpectationFailed, fmt.Sprintf("{ \"ok\": false, \"desc:\": %s }", err))
 	}
 }

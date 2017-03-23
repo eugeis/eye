@@ -1,0 +1,182 @@
+swagger: '2.0'
+info:
+  title: Eye API
+  description: Eye - diagnosis application for different service / resource types like database, HTTP, file system.
+  version: "1.0.0"
+# array of all schemes that your API supports
+schemes:
+  - http
+  - https
+produces:
+  - application/json
+paths:
+  /service/{serviceName}/ping:
+    get:
+      summary: Check availability of a single service 
+      description: |
+        The Service Ping endpoint executes a ping request for the service. The response includes the HTTP status code and sipmle json representation of the ping result with optional description.
+      parameters:
+        - $ref: '#/parameters/serviceNameParam'    
+      tags:
+        - Service
+        - Ping
+      responses:
+        200:
+          description: valid, the service is available
+          schema:
+            $ref: '#/definitions/ValidationResult'
+        429:
+          $ref: '#/responses/warning'
+        417:
+          $ref: '#/responses/failed'
+  /service/{serviceName}/validate:
+    get:
+      summary: Validation based on state of a single service
+      description: |
+        The Service endpoint process a validation request on the service based an qeury and a validation expression of the result of the query. The response includes the HTTP status codes and sipmle json representation of the validation result with optional description.
+      parameters:
+        - $ref: '#/parameters/serviceNameParam'
+        - $ref: '#/parameters/queryParam'
+        - $ref: '#/parameters/exprParam'
+      tags:
+        - Service
+        - Validate
+      responses:
+        200:
+          description: valid, the result of the query matches against the expression or if the expression is not defined the result is not empty 
+          schema:
+            $ref: '#/definitions/ValidationResult'
+        429:
+          $ref: '#/responses/warning'
+        417:
+          $ref: '#/responses/failed'
+  /services/{strictness}/ping:
+    get:
+      summary: Checks if Any - at least one, All - all services are available from the list of services defined as parameter
+      description: |
+        The Services Any or All Ping endpoint executes a ping request against all defined services. Any - at least one, all - all defined services are available. The response includes the HTTP status code and sipmle json representation of the ping result with optional description.
+      parameters:
+        - $ref: '#/parameters/strictnessParam'
+        - $ref: '#/parameters/servicesParam'
+      tags:
+        - Services
+        - Ping
+      responses:
+        200:
+          description: valid, any - at least one service is available, all - all defined services are available
+          schema:
+            $ref: '#/definitions/ValidationResult'
+        429:
+          $ref: '#/responses/warning'
+        417:
+          $ref: '#/responses/failed'
+  /services/{strictness}/validate:
+    get:
+      summary: Validation based on multiple services.
+      description: |
+        The Services Any, Running or All Validate endpoint executes a validation request against all defined services. Any - until at least one service, running - all running (available) services, all - all defined services returns a valid result. The response includes the HTTP status code and sipmle json representation of the ping result with optional description.
+      parameters:
+        - $ref: '#/parameters/strictnessParam'
+        - $ref: '#/parameters/servicesParam'
+        - $ref: '#/parameters/queryParam'
+        - $ref: '#/parameters/exprParam'
+      tags:
+        - Services
+        - Validate
+      responses:
+        200:
+          description: valid, any - the result of the query matches for at least one, running - for all running (available), all - for all defined services against the expression or if the expression is not defined the query result is not empty
+          schema:
+            $ref: '#/definitions/ValidationResult'
+        429:
+          $ref: '#/responses/warning'
+        417:
+          $ref: '#/responses/failed'
+  /services/{strictness}/compare:
+    get:
+      summary: Comparison of the query results on multiple services.
+      description: |
+        The Services Any|Running|Compare endpoint executes a comparison request against all defined services. Any - until at least two, running - all running, all - all defined services return a comparable result depends on defined comparison operators. Following operators are supported, result difference in tolerance range, not equal or equal as default operator. If an expression for the query result is defined, then the query result must matches and the value of first group is used for comparison. The response includes the HTTP status code and sipmle json representation of the ping result with optional description.
+      parameters:
+        - $ref: '#/parameters/strictnessParam'
+        - $ref: '#/parameters/servicesParam'
+        - $ref: '#/parameters/queryParam'
+        - $ref: '#/parameters/exprParam'
+        - $ref: '#/parameters/tolleranceParam'
+        - $ref: '#/parameters/notParam'
+      tags:
+        - Services
+        - Compare
+      responses:
+        200:
+          description: valid, the results of the query are comparable, any - for at least two, running - for all running, all - for all defined services
+          schema:
+            $ref: '#/definitions/ValidationResult'
+        429:
+          $ref: '#/responses/warning'
+        417:
+          $ref: '#/responses/failed'
+# define reusable parameters:
+parameters:
+  servicesParam:
+    name: services
+    in: query
+    description: Services to executes against
+    required: true
+    type: string
+  serviceNameParam:    
+    name: serviceName
+    in: path
+    description: Name of the service.
+    required: true
+    type: string
+  queryParam:
+    name: query
+    in: query
+    description: Query of the request
+    required: true
+    type: string
+  tolleranceParam:
+    name: tollerance
+    in: query
+    description: Tollerance range for the difference of query results
+    required: false
+    type: integer
+  notParam:
+    name: not
+    in: query
+    description: Negation of the result
+    required: false
+    type: boolean
+  exprParam:
+    name: expr
+    in: query
+    description: Regular expression for the result of the query
+    required: false
+    type: string
+    format: regular expression
+  strictnessParam:
+    name: strictness
+    in: path
+    description: Any - at least one, all running or all of defined services
+    required: true
+    type: string
+    enum: ["any", "running","all"]
+
+responses:
+  warning:
+    description: warning, similar to valid but with some constraints described in the description of the result
+    schema:
+      $ref: '#/definitions/ValidationResult'
+  failed:
+    description: failed, the request result is not valid
+    schema:
+      $ref: '#/definitions/ValidationResult'
+definitions:
+  ValidationResult:
+    type: object
+    properties:
+      ok:
+        type: boolean
+      desc:
+        type: string

@@ -3,7 +3,7 @@ package core
 import (
 	"github.com/jinzhu/configor"
 	"fmt"
-	"rest/integ"
+	"eye/integ"
 	"strings"
 )
 

@@ -5,7 +5,7 @@ import (
 	"time"
 	"fmt"
 	"io/ioutil"
-	"rest/digest"
+	"eye/digest"
 	"net/http"
 	"errors"
 )

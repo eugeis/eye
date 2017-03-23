@@ -1,7 +1,7 @@
 package core
 
 import (
-	"rest/integ"
+	"eye/integ"
 	"fmt"
 	"bytes"
 	"regexp"
