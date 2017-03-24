@@ -52,9 +52,9 @@ paths:
           $ref: '#/responses/failed'
   /services/{strictness}/ping:
     get:
-      summary: Checks if Any - at least one, All - all services are available from the list of services defined as parameter
+      summary: Checks if the defined services are available. Any - at least one, All - all services are available.
       description: |
-        The Services Any or All Ping endpoint executes a ping request against all defined services. Any - at least one, all - all defined services are available. The response includes the HTTP status code and sipmle json representation of the ping result with optional description.
+        The Services Any|All Ping endpoint executes a ping request against all defined services. Any - at least one, all - all defined services are available. The response includes the HTTP status code and sipmle json representation of the ping result with optional description.
       parameters:
         - $ref: '#/parameters/strictnessParam'
         - $ref: '#/parameters/servicesParam'
@@ -74,7 +74,7 @@ paths:
     get:
       summary: Validation based on multiple services.
       description: |
-        The Services Any, Running or All Validate endpoint executes a validation request against all defined services. Any - until at least one service, running - all running (available) services, all - all defined services returns a valid result. The response includes the HTTP status code and sipmle json representation of the ping result with optional description.
+        The Services Any|Running|All Validate endpoint executes a validation request against all defined services. Any - until at least one service, running - all running (available) services, all - all defined services returns a valid result. The response includes the HTTP status code and sipmle json representation of the ping result with optional description.
       parameters:
         - $ref: '#/parameters/strictnessParam'
         - $ref: '#/parameters/servicesParam'
@@ -96,7 +96,7 @@ paths:
     get:
       summary: Comparison of the query results on multiple services.
       description: |
-        The Services Any|Running|Compare endpoint executes a comparison request against all defined services. Any - until at least two, running - all running, all - all defined services return a comparable result depends on defined comparison operators. Following operators are supported, result difference in tolerance range, not equal or equal as default operator. If an expression for the query result is defined, then the query result must matches and the value of first group is used for comparison. The response includes the HTTP status code and sipmle json representation of the ping result with optional description.
+        The Services Any|Running|All endpoint executes a comparison request against all defined services. Any - until at least two, running - all running, all - all defined services return a comparable result depends on defined comparison operators. Following operators are supported, result difference in tolerance range, not equal or equal as default operator. If an expression for the query result is defined, then the query result must matches and the value of first group is used for comparison. The response includes the HTTP status code and sipmle json representation of the ping result with optional description.
       parameters:
         - $ref: '#/parameters/strictnessParam'
         - $ref: '#/parameters/servicesParam'

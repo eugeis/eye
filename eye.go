@@ -30,6 +30,8 @@ func main() {
 
 	router := gin.Default()
 
+	router.StaticFile("/help", "./doc.html")
+
 	serviceGroup := router.Group("/service")
 	{
 		serviceGroup.GET("/:service/ping", func(c *gin.Context) {
