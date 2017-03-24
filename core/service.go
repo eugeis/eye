@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"strings"
+	"strconv"
 )
 
 type Service interface {
@@ -19,7 +20,7 @@ type Service interface {
 
 type Check interface {
 	Info() string
-	Query() ([]byte, error)
+	Query() (QueryResult, error)
 	Validate() error
 }
 
@@ -39,10 +40,27 @@ type CompareRequest struct {
 	Not          bool
 }
 
+func (o CompareRequest) ChecksKey(strictness string, serviceNames []string) string {
+	return fmt.Sprintf("%s[tolerance(%v),not(%v)]", o.QueryRequest.ChecksKey(strictness, serviceNames),
+		o.Tolerance, o.Not)
+}
+
 func (o QueryRequest) CheckKey(serviceName string) string {
 	return fmt.Sprintf("%s.q(%s).e(%s)", serviceName, o.Query, o.Expr)
 }
 
-func (o QueryRequest) ChecksKey(serviceNames []string) string {
-	return fmt.Sprintf("%s.q(%s).e(%s)", strings.Join(serviceNames, "_"), o.Query, o.Expr)
+func (o QueryRequest) ChecksKey(strictness string, serviceNames []string) string {
+	return fmt.Sprintf("%s(%s.q(%s).e(%s))", strictness, strings.Join(serviceNames, "-"), o.Query, o.Expr)
+}
+
+type QueryResult []byte
+
+func (o QueryResult) String() (ret string, err error) {
+	ret = string(o)
+	return
+}
+
+func (o QueryResult) Int() (ret int, err error) {
+	ret, err = strconv.Atoi(string(o))
+	return
 }

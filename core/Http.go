@@ -119,7 +119,7 @@ func (o httpCheck) Validate() (err error) {
 	return
 }
 
-func (o httpCheck) Query() (data []byte, err error) {
+func (o httpCheck) Query() (data QueryResult, err error) {
 	err = o.service.Init()
 	if err != nil {
 		return

@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"regexp"
 	"errors"
-	"strconv"
 )
 
 type Operator interface {
@@ -160,17 +159,20 @@ func (o *Controller) ValidateAll(serviceNames []string, req *QueryRequest) (err 
 
 func (o *Controller) CompareAny(serviceNames []string, req *CompareRequest) (err error) {
 	var check Check
-	check, err = o.compareCheck(serviceNames, req, func(checksData map[string][]byte) (checkError error) {
+	checkKey := req.ChecksKey("any", serviceNames)
+	check, err = o.buildCompareCheck(checkKey, serviceNames, true, req, func(checksData map[string]QueryResultInfo) (checkError error) {
 		var firstName string
-		var firstData []byte
+		var firstData QueryResult
 		for serviceName, data := range checksData {
-			if data != nil {
-				if firstData == nil {
-					firstData = data
+			if data.err != nil {
+				if len(firstName) > 0 {
+					firstData = data.result
 					firstName = serviceName
 				} else {
-					if !bytes.Equal(firstData, data) {
-						checkError = errors.New(fmt.Sprintf("%s != $s", firstName, serviceName))
+					matchError := match(firstData, data.result, req)
+					if matchError != nil {
+						checkError = errors.New(fmt.Sprintf("%s ~ %s => %v",
+							firstName, serviceName, matchError))
 					} else {
 						checkError = nil
 						break
@@ -189,24 +191,9 @@ func (o *Controller) CompareAny(serviceNames []string, req *CompareRequest) (err
 
 func (o *Controller) CompareRunning(serviceNames []string, req *CompareRequest) (err error) {
 	var check Check
-	check, err = o.compareCheck(serviceNames, req, func(checksData map[string][]byte) (checkError error) {
-		var firstName string
-		var firstData []byte
-		for serviceName, data := range checksData {
-			//check only running
-			if data != nil {
-				if firstData == nil {
-					firstData = data
-					firstName = serviceName
-				} else {
-					if !bytes.Equal(firstData, data) {
-						checkError = errors.New(fmt.Sprintf("%s != $s", firstName, serviceName))
-						break
-					}
-				}
-			}
-		}
-		return
+	checkKey := req.ChecksKey("running", serviceNames)
+	check, err = o.buildCompareCheck(checkKey, serviceNames, true, req, func(checksData map[string]QueryResultInfo) error {
+		return matchChecksData(checksData, req)
 	})
 
 	if err == nil {
@@ -217,27 +204,9 @@ func (o *Controller) CompareRunning(serviceNames []string, req *CompareRequest) 
 
 func (o *Controller) CompareAll(serviceNames []string, req *CompareRequest) (err error) {
 	var check Check
-	check, err = o.compareCheck(serviceNames, req, func(checksData map[string][]byte) (checkError error) {
-		var firstName string
-		var firstData []byte
-
-		for serviceName, data := range checksData {
-			if data != nil {
-				if firstData == nil {
-					firstData = data
-					firstName = serviceName
-				} else {
-					if !match(firstData, data, req) {
-						checkError = errors.New(fmt.Sprintf("%s ~ $s", firstName, serviceName))
-						break
-					}
-				}
-			} else {
-				checkError = errors.New(fmt.Sprintf("%s ~ %s", firstName, serviceName))
-				break
-			}
-		}
-		return
+	checkKey := req.ChecksKey("all", serviceNames)
+	check, err = o.buildCompareCheck(checkKey, serviceNames, false, req, func(checksData map[string]QueryResultInfo) error {
+		return matchChecksData(checksData, req)
 	})
 
 	if err == nil {
@@ -246,28 +215,61 @@ func (o *Controller) CompareAll(serviceNames []string, req *CompareRequest) (err
 	return
 }
 
-func match(data1 []byte, data2 []byte, req *CompareRequest) (ret bool) {
-	match := false
+func matchChecksData(checksData map[string]QueryResultInfo, req *CompareRequest) (err error) {
+	var firstName string
+	var firstData QueryResult
+	for serviceName, queryResult := range checksData {
+		if queryResult.err == nil {
+			if len(firstName) == 0 {
+				firstData = queryResult.result
+				firstName = serviceName
+			} else {
+				matchError := match(firstData, queryResult.result, req)
+				if matchError != nil {
+					err = errors.New(fmt.Sprintf("%s ~ %s failed: %s",
+						firstName, serviceName, matchError))
+					break
+				}
+			}
+		} else {
+			err = errors.New(fmt.Sprintf("%s failed: %v", serviceName, queryResult.err.Error()))
+		}
+	}
+	return
+}
+
+func match(data1 QueryResult, data2 QueryResult, req *CompareRequest) (err error) {
+	var matchErr error
 	if req.Tolerance > 0 {
 		var x, y int
 		var err error
-		s1 := string(data1)
-		s2 := string(data2)
 
-		x, err = strconv.Atoi(s1)
+		x, err = data1.Int()
 		if err == nil {
-			y, err = strconv.Atoi(s2)
+			y, err = data2.Int()
 		}
 		if err == nil {
-			match = abs(x-y) <= req.Tolerance
+			diff := abs(x - y)
+			if diff > req.Tolerance {
+				matchErr = errors.New(fmt.Sprintf("abs(%v-%v)=%v, greater than tolerance %v", x, y, diff, req.Tolerance))
+			}
 		} else {
-			log.Debug("Covert of %s and %s to int not possible, use bytes comparison.")
-			match = bytes.Equal(data1, data2)
+			log.Debug("Convertion to int not possible, use bytes comparison.")
+			if !bytes.Equal(data1, data2) {
+				matchErr = errors.New("not equal")
+			}
 		}
 	} else {
-		match = bytes.Equal(data1, data2)
+		if !bytes.Equal(data1, data2) {
+			matchErr = errors.New("not equal")
+		}
 	}
-	return (!req.Not && match) || (req.Not && !match)
+	if !req.Not {
+		err = matchErr
+	} else if matchErr == nil {
+		err = errors.New("compare request matches but must not")
+	}
+	return
 }
 
 func abs(x int) int {
@@ -277,10 +279,10 @@ func abs(x int) int {
 	return x
 }
 
-func (o *Controller) compareCheck(serviceNames []string, req *CompareRequest, validator func(map[string][]byte) error) (check Check, err error) {
+func (o *Controller) buildCompareCheck(checkKey string, serviceNames []string, onlyRunning bool, req *CompareRequest,
+	validator func(map[string]QueryResultInfo) error) (check Check, err error) {
 	var value interface{}
 
-	checkKey := req.QueryRequest.ChecksKey(serviceNames)
 	value, err = o.commandCache.GetOrBuild(checkKey, func() (check interface{}, err error) {
 		var pattern *regexp.Regexp
 		if len(req.QueryRequest.Expr) > 0 {
@@ -291,7 +293,8 @@ func (o *Controller) compareCheck(serviceNames []string, req *CompareRequest, va
 		}
 
 		checks := make([]Check, len(serviceNames))
-		check = MultiCheck{info: checkKey, query: req.QueryRequest.Query, pattern: pattern, checks: checks, validator: validator}
+		check = MultiCheck{info: checkKey, query: req.QueryRequest.Query, pattern: pattern, checks: checks,
+			onlyRunning:     onlyRunning, validator: validator}
 
 		var serviceCheck Check
 		for i, serviceName := range serviceNames {
@@ -306,16 +309,15 @@ func (o *Controller) compareCheck(serviceNames []string, req *CompareRequest, va
 
 	if err == nil {
 		check = value.(Check)
-		err = check.Validate()
 	}
 	return
 }
 
-func (o *Controller) query(serviceName string, req *QueryRequest) (data []byte, err error) {
-	//var buildCheck Check
-	//buildCheck, err = o.buildCheck(serviceName, req)
+func (o *Controller) query(serviceName string, req *QueryRequest) (data QueryResult, err error) {
+	var buildCheck Check
+	buildCheck, err = o.buildCheck(serviceName, req)
 	if err == nil {
-		//data, err = buildCheck.Query()
+		data, err = buildCheck.Query()
 	}
 	return
 }

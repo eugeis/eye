@@ -10,6 +10,7 @@ import (
 	"strings"
 	"eye/core"
 	"strconv"
+	"encoding/json"
 )
 
 var log = integ.Log
@@ -116,7 +117,7 @@ func servicesCompare(c *gin.Context) ([]string, *core.CompareRequest) {
 		&core.CompareRequest{
 			QueryRequest: queryReq(c), Tolerance:
 			queryInt("tolerance", c),
-			Not: queryBool("not", c)}
+			Not: queryFlag("not", c)}
 }
 
 func queryInt(key string, c *gin.Context) (ret int) {
@@ -126,9 +127,13 @@ func queryInt(key string, c *gin.Context) (ret int) {
 	return ret
 }
 
-func queryBool(key string, c *gin.Context) (ret bool) {
-	if value := c.Query(key); value != "" {
-		ret, _ = strconv.ParseBool(value)
+func queryFlag(key string, c *gin.Context) (ret bool) {
+	if value, ok := c.GetQuery(key); ok {
+		if value == "" {
+			ret = true
+		} else {
+			ret, _ = strconv.ParseBool(value)
+		}
 	}
 	return ret
 }
@@ -148,6 +153,7 @@ func response(err error, c *gin.Context) {
 	if err == nil {
 		c.String(http.StatusOK, "{ \"ok\": true }")
 	} else {
-		c.String(http.StatusExpectationFailed, fmt.Sprintf("{ \"ok\": false, \"desc:\": %s }", err))
+		jsonDesc, _ := json.Marshal(err.Error())
+		c.String(http.StatusExpectationFailed, fmt.Sprintf("{ \"ok\": false, \"desc:\": %s }", jsonDesc))
 	}
 }

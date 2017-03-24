@@ -112,14 +112,25 @@ func (s *MySql) Ping() error {
 }
 
 func (s *MySql) ping() (error) {
+	return s.pingByQuery()
+}
+
+/* not reliable, also for GO 1.8? */
+func (s *MySql) pingByConnection() (error) {
+	if s.pingTimeout > 0 {
+		return s.db.PingContext(TimeoutContext(s.pingTimeout))
+	} else {
+		return s.db.Ping()
+	}
+}
+
+func (s *MySql) pingByQuery() (error) {
 	if s.pingTimeout > 0 {
 		_, err := s.db.ExecContext(TimeoutContext(s.pingTimeout), "SELECT 1")
 		return err
-		//return s.db.PingContext(TimeoutContext(s.pingTimeout)) //not reliable, also not for GO 1.8
 	} else {
 		_, err := s.db.Exec("SELECT 1")
 		return err
-		//return s.db.Ping()
 	}
 }
 
@@ -127,7 +138,7 @@ func (s *MySql) buildDataSourceName() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", s.User, s.Password, s.Host, s.Port, s.Database)
 }
 
-func (s *MySql) jsonBytes(sql string) (data []byte, err error) {
+func (s *MySql) jsonBytes(sql string) (data QueryResult, err error) {
 	obj, err := s.queryToMap(sql)
 	if err == nil {
 		data, err = json.Marshal(obj)
@@ -224,18 +235,18 @@ func (o mySqlCheck) Validate() (err error) {
 				err = errors.New(fmt.Sprintf("No match for %s", o.info))
 
 			}
-		} else if len(data) == 0 {
+		} else if data != nil {
 			err = errors.New(fmt.Sprintf("No match, empty result for %s", o.info))
 		}
 	}
 	return
 }
 
-func (o mySqlCheck) Query() (data []byte, err error) {
+func (o mySqlCheck) Query() (data QueryResult, err error) {
 	err = o.service.Init()
-	if err != nil {
-		return
+	if err == nil {
+		data, err = o.service.jsonBytes(o.query)
+		//log.Debug(string(data))
 	}
-	data, err = o.service.jsonBytes(o.query)
 	return
 }
