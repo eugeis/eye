@@ -116,6 +116,31 @@ paths:
           $ref: '#/responses/warning'
         417:
           $ref: '#/responses/failed'
+  /admin/reload:
+    get:
+      summary: Reload configuration
+      description: |
+        Reload configuration and reset all cached check instances
+      tags:
+        - Admin
+      responses:
+        200:
+          description: configuration successfully reloaded
+          schema:
+            $ref: '#/definitions/ValidationResult'
+        429:
+          $ref: '#/responses/warning'
+        417:
+          $ref: '#/responses/failed'
+  /admin/config:
+    get:
+      summary: Show loaded configuration of Eye
+      description: Configuration file(s) are provided as command parameters of eye
+      responses:
+        200:
+          description: Current load configuration
+          schema:
+            $ref: '#/definitions/Eye'
 # define reusable parameters:
 parameters:
   servicesParam:
@@ -162,7 +187,6 @@ parameters:
     required: true
     type: string
     enum: ["any", "running","all"]
-
 responses:
   warning:
     description: warning, similar to valid but with some constraints described in the description of the result
@@ -179,4 +203,60 @@ definitions:
       ok:
         type: boolean
       desc:
+        type: string
+  Eye:
+    type: object
+    properties:
+      name:
+        type: string
+      port:
+        type: integer
+      debug:
+        type: boolean
+      mysql:
+        type: array
+        items:
+          $ref: '#/definitions/MySql'
+      http:
+        type: array
+        items:
+          $ref: '#/definitions/Http'
+  MySql:
+    type: object
+    properties:
+      servicename:
+        type: string
+      host:
+        type: string
+      port:
+        type: integer
+      pingtimeoutmillis:
+        type: integer
+      querytimeoutmillis:
+        type: integer
+      user:
+        type: string
+      password:
+        type: string
+  Http:
+    type: object
+    properties:
+      servicename:
+        type: string
+      url:
+        type: string
+      pingrequest:
+        type: object
+        properties:
+          query:
+            type: string
+          expr:
+            type: string
+      pingtimeoutmillis:
+        type: integer
+      querytimeoutmillis:
+        type: integer
+      user:
+        type: string
+      password:
         type: string

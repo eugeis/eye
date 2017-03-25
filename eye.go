@@ -30,7 +30,9 @@ func main() {
 
 	router := gin.Default()
 
-	router.StaticFile("/help", "./doc.html")
+	router.StaticFile("/help", "./html/doc.html")
+	router.StaticFile("/", "./html/doc.html")
+
 
 	serviceGroup := router.Group("/service")
 	{
