@@ -1,12 +1,11 @@
 name: Controlguide
 port: 3000
+token: access token
 debug: true
 
 mysql:
 -   servicename:     mysql
-
-    user:     root
-    password: xxxx
+    accesskey: mysql
 
     host:     localhost
     port:     3306
@@ -15,9 +14,7 @@ mysql:
     querytimeoutmillis: 2000
 
 -   servicename:     mysql1
-
-    user:     root
-    password: xxxx
+    accesskey: mysql
 
     host:     serv1
     port:     3306
@@ -25,10 +22,8 @@ mysql:
     pingtimeoutmillis: 1000
     querytimeoutmillis: 2000
 
--   servicename:     mysql2
-
-    user:     root
-    password: xxxx
+-   servicename:  mysql2
+    accesskey:  mysql
 
     host:     serv2
     port:     3306
@@ -38,9 +33,7 @@ mysql:
 
 http:
 -   servicename:     wildfly
-
-    user:     xxxx
-    password: xxxx
+    accesskey: wildfly
 
     url:     http://localhost:9990/management
 
@@ -52,9 +45,7 @@ http:
     querytimeoutmillis: 2000
 
 -   servicename:     wildfly1
-
-    user:     xxxx
-    password: xxxx
+    accesskey: wildfly
 
     url:     http://serv1:9990/management
 
@@ -66,9 +57,7 @@ http:
     querytimeoutmillis: 2000
 
 -   servicename:     wildfly2
-
-    user:     xxxx
-    password: xxxx
+    accesskey: wildfly
 
     url:     http://serv2:9990/management
 

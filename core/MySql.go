@@ -14,11 +14,12 @@ var disallowedKeywords = []string{" UNION ", " LIMIT ", ";"}
 
 type MySql struct {
 	ServiceName string `default:"mysql"`
-	Host        string `default:localhost`
-	Port        int `default:3360`
-	Database    string
-	User        string
-	Password    string
+	AccessKey   string `default:"mysql"`
+
+	Host string `default:localhost`
+	Port int `default:3306`
+
+	Database string
 
 	PingTimeoutMillis  int
 	QueryTimeoutMillis int
@@ -26,6 +27,8 @@ type MySql struct {
 	db           *sql.DB
 	pingTimeout  time.Duration
 	queryTimeout time.Duration
+
+	access func(string) Access
 }
 
 func (s *MySql) Kind() string {
@@ -61,31 +64,36 @@ func (s *MySql) limitQuery(query string) string {
 	}
 }
 
-func (s *MySql) Init() error {
-	var err error
+func (s *MySql) Init() (err error) {
 	if s.db == nil {
-		s.db, err = sql.Open("mysql", s.buildDataSourceName())
+		access := s.access(s.AccessKey)
+		if access.Key == s.AccessKey {
+			dataSource := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", access.User, access.Password, s.Host, s.Port, s.Database)
+			s.db, err = sql.Open("mysql", dataSource)
 
-		if err == nil {
-			if s.PingTimeoutMillis > 0 {
-				s.pingTimeout = time.Duration(s.PingTimeoutMillis) * time.Millisecond
-				log.Debug("Ping timeout for %s is %s", s.Name(), s.pingTimeout)
+			if err == nil {
+				if s.PingTimeoutMillis > 0 {
+					s.pingTimeout = time.Duration(s.PingTimeoutMillis) * time.Millisecond
+					log.Debug("Ping timeout for %s is %s", s.Name(), s.pingTimeout)
+				}
+
+				if s.QueryTimeoutMillis > 0 {
+					s.queryTimeout = time.Duration(s.QueryTimeoutMillis) * time.Millisecond
+					log.Debug("Query timeout %s is %s", s.Name(), s.queryTimeout)
+				}
+
+				//connect
+				s.ping()
+			} else {
+				log.Debug("Database connection of %s can't be open because of %s", err)
+				s.db = nil
 			}
-
-			if s.QueryTimeoutMillis > 0 {
-				s.queryTimeout = time.Duration(s.QueryTimeoutMillis) * time.Millisecond
-				log.Debug("Query timeout %s is %s", s.Name(), s.queryTimeout)
-			}
-
-			//connect
-			s.ping()
 		} else {
-			log.Debug("Database connection of %s can't be open because of %s", err)
-			s.db = nil
+			err = errors.New(fmt.Sprintf("No access data found for the service %s", s.ServiceName))
 		}
 
 	}
-	return err
+	return
 }
 
 func (s *MySql) Close() {
@@ -132,10 +140,6 @@ func (s *MySql) pingByQuery() (error) {
 		_, err := s.db.Exec("SELECT 1")
 		return err
 	}
-}
-
-func (s *MySql) buildDataSourceName() string {
-	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", s.User, s.Password, s.Host, s.Port, s.Database)
 }
 
 func (s *MySql) jsonBytes(sql string) (data QueryResult, err error) {

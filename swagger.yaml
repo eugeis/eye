@@ -226,37 +226,40 @@ definitions:
     properties:
       servicename:
         type: string
+        description: given name for the service, which is used as part in path '/service/{name}/...' or in query 'services' parameter
       host:
         type: string
+        description: host / ip address of the MySql server
       port:
         type: integer
+        description: port ode the MySql server, default 3306
       pingtimeoutmillis:
         type: integer
+        description: timeout for the ping request, if the timemout is reached then the ping request is failed
       querytimeoutmillis:
         type: integer
-      user:
-        type: string
-      password:
-        type: string
+        description: timeout for the query request, if the timemout is reached then the query request is failed
   Http:
     type: object
     properties:
       servicename:
         type: string
+        description: given name for the service, which is used as part in path '/service/{name}/...' or in query 'services' parameter
       url:
         type: string
+        description: address of the HTTP resource
       pingrequest:
         type: object
         properties:
           query:
             type: string
+            description: this string will be added to the url of the service
           expr:
             type: string
+            description: regular expression to match the output of the request url + query
       pingtimeoutmillis:
         type: integer
+        description: timeout for the ping request, if the timemout is reached then the ping request is failed
       querytimeoutmillis:
         type: integer
-      user:
-        type: string
-      password:
-        type: string
+        description: timeout for the query request, if the timemout is reached then the query request is failed

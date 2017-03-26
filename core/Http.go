@@ -12,12 +12,10 @@ import (
 
 type Http struct {
 	ServiceName string
+	AccessKey   string
 	Url         string
 
 	PingRequest *QueryRequest
-
-	User     string
-	Password string
 
 	PingTimeoutMillis  int
 	QueryTimeoutMillis int
@@ -27,6 +25,8 @@ type Http struct {
 
 	pingTimeout  time.Duration
 	queryTimeout time.Duration
+
+	access func(string) Access
 }
 
 func (s *Http) Kind() string {
@@ -87,11 +87,16 @@ func (s *Http) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
 		}
 	}
 
-	dReq := digest.NewRequest(s.User, s.Password, "GET", s.Url+req.Query, "")
-	ret = &httpCheck{
-		info:    req.CheckKey(s.Name()),
-		req:     &dReq,
-		pattern: pattern, service: s }
+	access := s.access(s.AccessKey)
+	if access.Key != s.AccessKey {
+		dReq := digest.NewRequest(access.User, access.Password, "GET", s.Url+req.Query, "")
+		ret = &httpCheck{
+			info:    req.CheckKey(s.Name()),
+			req:     &dReq,
+			pattern: pattern, service: s }
+	} else {
+		err = errors.New(fmt.Sprintf("No access data found for the service %s", s.ServiceName))
+	}
 	return
 }
 

@@ -15,10 +15,10 @@ type Controller struct {
 	Config         *Config
 	serviceFactory Factory
 	commandCache   integ.Cache
-	configFiles    string
+	configFiles    []string
 }
 
-func NewController(configFiles string) (ret *Controller, err error) {
+func NewController(configFiles []string) (ret *Controller, err error) {
 	ret = &Controller{configFiles: configFiles, commandCache: integ.NewCache()}
 	err = ret.ReloadConfig()
 	return
@@ -52,10 +52,12 @@ func (o *Controller) reloadServiceFactory() {
 func (o *Controller) buildServiceFactory() Factory {
 	serviceFactory := NewFactory()
 	for _, service := range o.Config.MySql {
+		service.access = o.Config.FindAccess
 		serviceFactory.Add(service)
 	}
 
 	for _, service := range o.Config.Http {
+		service.access = o.Config.FindAccess
 		serviceFactory.Add(service)
 	}
 	return &serviceFactory

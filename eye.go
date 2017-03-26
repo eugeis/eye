@@ -33,7 +33,6 @@ func main() {
 	router.StaticFile("/help", "./html/doc.html")
 	router.StaticFile("/", "./html/doc.html")
 
-
 	serviceGroup := router.Group("/service")
 	{
 		serviceGroup.GET("/:service/ping", func(c *gin.Context) {
@@ -98,13 +97,14 @@ func main() {
 	router.Run(fmt.Sprintf(":%d", controller.Config.Port))
 }
 
-func configFiles() string {
-	configFiles := "eye.yml"
+func configFiles() (ret []string) {
 	args := os.Args[1:]
 	if len(args) > 0 {
-		configFiles = strings.Join(args, " ")
+		ret = args
+	} else {
+		ret = []string{"eye.yml", "access.yml"}
 	}
-	return configFiles
+	return
 }
 
 func services(c *gin.Context) ([]string) {

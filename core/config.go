@@ -18,12 +18,13 @@ type Config struct {
 	MySql []*MySql
 	Http  []*Http
 
-	fileNames string
+	Access    []Access
+	fileNames []string
 }
 
-func Load(fileNames string) (ret *Config, err error) {
+func Load(fileNames []string) (ret *Config, err error) {
 	ret = &Config{fileNames: fileNames}
-	err = configor.Load(ret, fileNames)
+	err = configor.Load(ret, fileNames...)
 
 	//ignore, https://github.com/jinzhu/configor/issues/6
 	if err != nil && strings.EqualFold(err.Error(), "invalid config, should be struct") {
@@ -43,4 +44,14 @@ func (c *Config) Print() {
 	for _, v := range c.Http {
 		log.Info(fmt.Sprintf("\t%s", v.Name()))
 	}
+}
+
+func (c *Config) FindAccess(key string) (ret Access) {
+	for _, access := range c.Access {
+		if strings.EqualFold(key, access.Key) {
+			ret = access
+			break
+		}
+	}
+	return
 }
