@@ -9,6 +9,10 @@ import (
 
 var log = integ.Log
 
+type Security struct {
+	Access []Access
+}
+
 type Config struct {
 	Name  string `default:"app Name"`
 	Port  int `default:"3000"`
@@ -18,12 +22,22 @@ type Config struct {
 	MySql []*MySql
 	Http  []*Http
 
-	Access    []Access
 	fileNames []string
 }
 
 func Load(fileNames []string) (ret *Config, err error) {
 	ret = &Config{fileNames: fileNames}
+	err = configor.Load(ret, fileNames...)
+
+	//ignore, https://github.com/jinzhu/configor/issues/6
+	if err != nil && strings.EqualFold(err.Error(), "invalid config, should be struct") {
+		err = nil
+	}
+	return
+}
+
+func LoadSecurity(fileNames []string) (ret *Security, err error) {
+	ret = &Security{}
 	err = configor.Load(ret, fileNames...)
 
 	//ignore, https://github.com/jinzhu/configor/issues/6
@@ -46,7 +60,7 @@ func (c *Config) Print() {
 	}
 }
 
-func (c *Config) FindAccess(key string) (ret Access) {
+func (c *Security) FindAccess(key string) (ret Access) {
 	for _, access := range c.Access {
 		if strings.EqualFold(key, access.Key) {
 			ret = access

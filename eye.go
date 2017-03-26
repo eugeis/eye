@@ -16,7 +16,7 @@ import (
 var log = integ.Log
 
 func main() {
-	controller, err := core.NewController(configFiles())
+	controller, err := core.NewController(configFiles(), []string{"security.yml"})
 	if err != nil {
 		log.Err("Exit! %v", err)
 	}
@@ -92,6 +92,11 @@ func main() {
 			controller.ReloadConfig()
 			response(nil, c)
 		})
+
+		adminGroup.GET("/config", func(c *gin.Context) {
+			c.Header("Content-Type", "application/json; charset=UTF-8")
+			c.IndentedJSON(http.StatusOK, controller.Config)
+		})
 	}
 
 	router.Run(fmt.Sprintf(":%d", controller.Config.Port))
@@ -102,7 +107,7 @@ func configFiles() (ret []string) {
 	if len(args) > 0 {
 		ret = args
 	} else {
-		ret = []string{"eye.yml", "access.yml"}
+		ret = []string{"eye.yml"}
 	}
 	return
 }

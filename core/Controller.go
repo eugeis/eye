@@ -12,14 +12,18 @@ type Operator interface {
 }
 
 type Controller struct {
-	Config         *Config
+	Config   *Config
+	Security *Security
+
 	serviceFactory Factory
 	commandCache   integ.Cache
-	configFiles    []string
+
+	configFiles   []string
+	securityFiles []string
 }
 
-func NewController(configFiles []string) (ret *Controller, err error) {
-	ret = &Controller{configFiles: configFiles, commandCache: integ.NewCache()}
+func NewController(configFiles []string, securityFiles []string) (ret *Controller, err error) {
+	ret = &Controller{configFiles: configFiles, securityFiles: securityFiles, commandCache: integ.NewCache()}
 	err = ret.ReloadConfig()
 	return
 }
@@ -33,6 +37,7 @@ func (o *Controller) Close() {
 
 func (o *Controller) ReloadConfig() (err error) {
 	o.Close()
+	o.Security, err = LoadSecurity(o.securityFiles)
 	o.Config, err = Load(o.configFiles)
 	if err == nil {
 		o.Config.Print()
@@ -52,12 +57,12 @@ func (o *Controller) reloadServiceFactory() {
 func (o *Controller) buildServiceFactory() Factory {
 	serviceFactory := NewFactory()
 	for _, service := range o.Config.MySql {
-		service.access = o.Config.FindAccess
+		service.access = o.Security.FindAccess
 		serviceFactory.Add(service)
 	}
 
 	for _, service := range o.Config.Http {
-		service.access = o.Config.FindAccess
+		service.access = o.Security.FindAccess
 		serviceFactory.Add(service)
 	}
 	return &serviceFactory
