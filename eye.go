@@ -16,7 +16,7 @@ import (
 var log = integ.Log
 
 func main() {
-	controller, err := core.NewController(configFiles(), []string{"security.yml"})
+	controller, err := core.NewController(configFiles(), securityFiles())
 	if err != nil {
 		log.Err("Exit! %v", err)
 	}
@@ -30,8 +30,8 @@ func main() {
 
 	router := gin.Default()
 
-	router.StaticFile("/help", "./html/doc.html")
-	router.StaticFile("/", "./html/doc.html")
+	router.StaticFile("/help", "html/doc.html")
+	router.StaticFile("/", "html/doc.html")
 
 	serviceGroup := router.Group("/service")
 	{
@@ -105,9 +105,19 @@ func main() {
 func configFiles() (ret []string) {
 	args := os.Args[1:]
 	if len(args) > 0 {
-		ret = args
+		ret = []string{args[0]}
 	} else {
 		ret = []string{"eye.yml"}
+	}
+	return
+}
+
+func securityFiles() (ret []string) {
+	args := os.Args[1:]
+	if len(args) > 1 {
+		ret = []string{args[1]}
+	} else {
+		ret = []string{"security.yml"}
 	}
 	return
 }
@@ -163,6 +173,6 @@ func response(err error, c *gin.Context) {
 		c.String(http.StatusOK, "{ \"ok\": true }")
 	} else {
 		jsonDesc, _ := json.Marshal(err.Error())
-		c.String(http.StatusExpectationFailed, fmt.Sprintf("{ \"ok\": false, \"desc:\": %s }", jsonDesc))
+		c.String(http.StatusConflict, fmt.Sprintf("{ \"ok\": false, \"desc:\": %s }", jsonDesc))
 	}
 }

@@ -79,16 +79,16 @@ func (s *Http) NewСheck(req *QueryRequest) (ret Check, err error) {
 }
 
 func (s *Http) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
-	var pattern *regexp.Regexp
-	if len(req.Expr) > 0 {
-		pattern, err = regexp.Compile(req.Expr)
-		if err != nil {
-			return
-		}
-	}
-
 	access := s.access(s.AccessKey)
-	if access.Key != s.AccessKey {
+	if access.Key == s.AccessKey {
+		var pattern *regexp.Regexp
+		if len(req.Expr) > 0 {
+			pattern, err = regexp.Compile(req.Expr)
+			if err != nil {
+				return
+			}
+		}
+
 		dReq := digest.NewRequest(access.User, access.Password, "GET", s.Url+req.Query, "")
 		ret = &httpCheck{
 			info:    req.CheckKey(s.Name()),

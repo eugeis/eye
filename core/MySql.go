@@ -142,17 +142,17 @@ func (s *MySql) pingByQuery() (error) {
 	}
 }
 
-func (s *MySql) jsonBytes(sql string) (data QueryResult, err error) {
-	obj, err := s.queryToMap(sql)
-	if err == nil {
-		data, err = json.Marshal(obj)
+func (s *MySql) jsonBytes(sql string) (ret QueryResult, err error) {
+	data, err := s.queryToMap(sql)
+	if err == nil && len(data) > 0 {
+		ret, err = json.Marshal(data)
 	}
 	return
 }
 
 func (s *MySql) json(sql string) (json string, err error) {
 	data, err := s.jsonBytes(sql)
-	if err == nil {
+	if err == nil && len(data) > 0 {
 		json = string(data)
 	}
 	return
@@ -237,9 +237,8 @@ func (o mySqlCheck) Validate() (err error) {
 		if o.pattern != nil {
 			if !o.pattern.Match(data) {
 				err = errors.New(fmt.Sprintf("No match for %s", o.info))
-
 			}
-		} else if data != nil {
+		} else if data == nil {
 			err = errors.New(fmt.Sprintf("No match, empty result for %s", o.info))
 		}
 	}

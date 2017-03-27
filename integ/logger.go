@@ -9,7 +9,7 @@ var Debug = true
 var Info = true
 var Err = true
 
-var Log = NewLogger("[REST] ")
+var Log = NewLogger("[EYE] ")
 
 func NewLogger(prefix string) *DebugLogger {
 	return &DebugLogger{Log: log.New(os.Stdout, prefix, log.LstdFlags)}
