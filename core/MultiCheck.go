@@ -1,8 +1,8 @@
 package core
 
 import (
-	"regexp"
 	"errors"
+	"regexp"
 )
 
 type QueryResultInfo struct {

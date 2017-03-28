@@ -1,13 +1,13 @@
 package core
 
 import (
-	"regexp"
-	"time"
+	"errors"
+	"eye/digest"
 	"fmt"
 	"io/ioutil"
-	"eye/digest"
 	"net/http"
-	"errors"
+	"regexp"
+	"time"
 )
 
 type Http struct {
@@ -93,7 +93,7 @@ func (s *Http) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
 		ret = &httpCheck{
 			info:    req.CheckKey(s.Name()),
 			req:     &dReq,
-			pattern: pattern, service: s }
+			pattern: pattern, service: s}
 	} else {
 		err = errors.New(fmt.Sprintf("No access data found for the service %s", s.ServiceName))
 	}

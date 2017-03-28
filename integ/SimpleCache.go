@@ -4,7 +4,6 @@ import (
 	"sync"
 )
 
-
 type SimpleCache struct {
 	MaxSize int
 	data    map[string]interface{}

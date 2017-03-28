@@ -2,12 +2,12 @@ package core
 
 import (
 	"database/sql"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
-	"encoding/json"
-	"time"
 	"strings"
-	"errors"
+	"time"
 )
 
 var disallowedKeywords = []string{" UNION ", " LIMIT ", ";"}
@@ -17,7 +17,7 @@ type MySql struct {
 	AccessKey   string `default:"mysql"`
 
 	Host string `default:localhost`
-	Port int `default:3306`
+	Port int    `default:3306`
 
 	Database string
 
@@ -119,12 +119,12 @@ func (s *MySql) Ping() error {
 	return err
 }
 
-func (s *MySql) ping() (error) {
+func (s *MySql) ping() error {
 	return s.pingByQuery()
 }
 
 /* not reliable, also for GO 1.8? */
-func (s *MySql) pingByConnection() (error) {
+func (s *MySql) pingByConnection() error {
 	if s.pingTimeout > 0 {
 		return s.db.PingContext(TimeoutContext(s.pingTimeout))
 	} else {
@@ -132,7 +132,7 @@ func (s *MySql) pingByConnection() (error) {
 	}
 }
 
-func (s *MySql) pingByQuery() (error) {
+func (s *MySql) pingByQuery() error {
 	if s.pingTimeout > 0 {
 		_, err := s.db.ExecContext(TimeoutContext(s.pingTimeout), "SELECT 1")
 		return err

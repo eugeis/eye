@@ -1,11 +1,11 @@
 package core
 
 import (
-	"time"
 	"context"
-	"strings"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
 )
 
 func TimeoutContext(timeout time.Duration) context.Context {
@@ -43,7 +43,7 @@ func (o *SimpleServiceFactory) Close() {
 }
 
 type Access struct {
-	Key string
-	User string
+	Key      string
+	User     string
 	Password string
 }

@@ -1,6 +1,5 @@
 package digest
 
-
 import (
 	"regexp"
 	"strings"

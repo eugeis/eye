@@ -1,9 +1,9 @@
 package core
 
 import (
-	"github.com/jinzhu/configor"
-	"fmt"
 	"eye/integ"
+	"fmt"
+	"github.com/jinzhu/configor"
 	"strings"
 )
 
@@ -15,8 +15,8 @@ type Security struct {
 
 type Config struct {
 	Name  string `default:"app Name"`
-	Port  int `default:"3000"`
-	Debug bool `default:true`
+	Port  int    `default:"3000"`
+	Debug bool   `default:true`
 	Token string
 
 	MySql []*MySql

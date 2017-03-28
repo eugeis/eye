@@ -2,11 +2,11 @@ package digest
 
 import (
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"net/http"
-	"time"
 	"net/http/cookiejar"
-	"crypto/tls"
+	"time"
 )
 
 type Request struct {
@@ -69,7 +69,7 @@ func (dr *Request) Execute(client *http.Client) (resp *http.Response, err error)
 
 			resp, err = client.Do(req)
 			if err == nil && resp.StatusCode == 401 {
-				defer resp.Body.Close()
+				resp.Body.Close()
 				resp, err = dr.executeNewDigest(resp, client)
 			}
 		}
@@ -77,6 +77,7 @@ func (dr *Request) Execute(client *http.Client) (resp *http.Response, err error)
 		resp, err = dr.executeExistingDigest(client)
 		if err == nil && resp.StatusCode == 401 {
 			//reset and start new request with auth
+			resp.Body.Close()
 			dr.Auth = nil
 			resp, err = dr.Execute(client)
 		}

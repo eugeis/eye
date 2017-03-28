@@ -2,8 +2,8 @@ package core
 
 import (
 	"fmt"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 type Service interface {

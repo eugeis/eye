@@ -1,16 +1,16 @@
 package main
 
 import (
-	"net/http"
-	"github.com/gin-gonic/gin"
-	_ "github.com/go-sql-driver/mysql"
+	"encoding/json"
+	"eye/core"
 	"eye/integ"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
+	"net/http"
 	"os"
-	"strings"
-	"eye/core"
 	"strconv"
-	"encoding/json"
+	"strings"
 )
 
 var log = integ.Log
@@ -122,7 +122,7 @@ func securityFiles() (ret []string) {
 	return
 }
 
-func services(c *gin.Context) ([]string) {
+func services(c *gin.Context) []string {
 	return strings.Split(c.DefaultQuery("services", ""), ",")
 }
 
@@ -134,8 +134,7 @@ func servicesCompare(c *gin.Context) ([]string, *core.CompareRequest) {
 
 	return strings.Split(c.DefaultQuery("services", ""), ","),
 		&core.CompareRequest{
-			QueryRequest: queryReq(c), Tolerance:
-			queryInt("tolerance", c),
+			QueryRequest: queryReq(c), Tolerance: queryInt("tolerance", c),
 			Not: queryFlag("not", c)}
 }
 

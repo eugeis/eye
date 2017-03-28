@@ -1,11 +1,11 @@
 package core
 
 import (
+	"bytes"
+	"errors"
 	"eye/integ"
 	"fmt"
-	"bytes"
 	"regexp"
-	"errors"
 )
 
 type Operator interface {
@@ -301,7 +301,7 @@ func (o *Controller) buildCompareCheck(checkKey string, serviceNames []string, o
 
 		checks := make([]Check, len(serviceNames))
 		check = MultiCheck{info: checkKey, query: req.QueryRequest.Query, pattern: pattern, checks: checks,
-			onlyRunning:     onlyRunning, validator: validator}
+			onlyRunning: onlyRunning, validator: validator}
 
 		var serviceCheck Check
 		for i, serviceName := range serviceNames {
