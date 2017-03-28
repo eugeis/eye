@@ -139,7 +139,7 @@ func (dr *Request) executeRequest(authString string, client *http.Client) (*http
 		return nil, err
 	}
 
-	// fmt.Printf("AUTHSTRING: %s\n\n", authString)
+	// fmt.Printf("AUTHSTRING: %v\n\n", authString)
 	req.Header.Add("Authorization", authString)
 
 	if dr.ContentType != "" {

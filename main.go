@@ -31,7 +31,7 @@ func main() {
 		integ.Debug = false
 	}
 
-	controller := core.NewController(config, accessFinder)
+	controller := core.NewEye(config, accessFinder)
 
 	defer controller.Close()
 
@@ -42,7 +42,7 @@ func main() {
 	engine.Run(fmt.Sprintf(":%d", config.Port))
 }
 
-func defineRoutes(engine *gin.Engine, controller *core.Controller, config *core.Config) {
+func defineRoutes(engine *gin.Engine, controller *core.Eye, config *core.Config) {
 	engine.StaticFile("/help", "html/doc.html")
 	engine.StaticFile("/", "html/doc.html")
 
@@ -195,6 +195,6 @@ func response(err error, c *gin.Context) {
 		c.String(http.StatusOK, "{ \"ok\": true }")
 	} else {
 		jsonDesc, _ := json.Marshal(err.Error())
-		c.String(http.StatusConflict, fmt.Sprintf("{ \"ok\": false, \"desc:\": %s }", jsonDesc))
+		c.String(http.StatusConflict, fmt.Sprintf("{ \"ok\": false, \"desc:\": %v }", jsonDesc))
 	}
 }

@@ -54,12 +54,12 @@ func (ah *authorization) refreshAuthorization(dr *Request, updateUri bool) (*aut
 	ah.Username = dr.Username
 
 	if ah.Userhash {
-		ah.Username = ah.hash(fmt.Sprintf("%s:%s", ah.Username, ah.Realm))
+		ah.Username = ah.hash(fmt.Sprintf("%v:%v", ah.Username, ah.Realm))
 	}
 
 	ah.Nc++
 
-	ah.Cnonce = ah.hash(fmt.Sprintf("%d:%s:my_value", time.Now().UnixNano(), dr.Username))
+	ah.Cnonce = ah.hash(fmt.Sprintf("%d:%v:my_value", time.Now().UnixNano(), dr.Username))
 
 	if updateUri {
 		url, err := url.Parse(dr.Uri)
@@ -77,20 +77,20 @@ func (ah *authorization) refreshAuthorization(dr *Request, updateUri bool) (*aut
 func (ah *authorization) computeResponse(dr *Request) (s string) {
 
 	kdSecret := ah.hash(ah.computeA1(dr))
-	kdData := fmt.Sprintf("%s:%08x:%s:%s:%s", ah.Nonce, ah.Nc, ah.Cnonce, ah.Qop, ah.hash(ah.computeA2(dr)))
+	kdData := fmt.Sprintf("%v:%08x:%v:%v:%v", ah.Nonce, ah.Nc, ah.Cnonce, ah.Qop, ah.hash(ah.computeA2(dr)))
 
-	return ah.hash(fmt.Sprintf("%s:%s", kdSecret, kdData))
+	return ah.hash(fmt.Sprintf("%v:%v", kdSecret, kdData))
 }
 
 func (ah *authorization) computeA1(dr *Request) string {
 
 	if ah.Algorithm == "" || ah.Algorithm == "MD5" || ah.Algorithm == "SHA-256" {
-		return fmt.Sprintf("%s:%s:%s", ah.Username, ah.Realm, dr.Password)
+		return fmt.Sprintf("%v:%v:%v", ah.Username, ah.Realm, dr.Password)
 	}
 
 	if ah.Algorithm == "MD5-sess" || ah.Algorithm == "SHA-256-sess" {
-		upHash := ah.hash(fmt.Sprintf("%s:%s:%s", ah.Username, ah.Realm, dr.Password))
-		return fmt.Sprintf("%s:%s:%s", upHash, ah.Nonce, ah.Cnonce)
+		upHash := ah.hash(fmt.Sprintf("%v:%v:%v", ah.Username, ah.Realm, dr.Password))
+		return fmt.Sprintf("%v:%v:%v", upHash, ah.Nonce, ah.Cnonce)
 	}
 
 	return ""
@@ -100,12 +100,12 @@ func (ah *authorization) computeA2(dr *Request) string {
 
 	if matched, _ := regexp.MatchString("auth-int", dr.Wa.Qop); matched {
 		ah.Qop = "auth-int"
-		return fmt.Sprintf("%s:%s:%s", dr.Method, ah.Uri, ah.hash(dr.Body))
+		return fmt.Sprintf("%v:%v:%v", dr.Method, ah.Uri, ah.hash(dr.Body))
 	}
 
 	if dr.Wa.Qop == "auth" || dr.Wa.Qop == "" {
 		ah.Qop = "auth"
-		return fmt.Sprintf("%s:%s", dr.Method, ah.Uri)
+		return fmt.Sprintf("%v:%v", dr.Method, ah.Uri)
 	}
 
 	return ""
@@ -133,11 +133,11 @@ func (ah *authorization) toString() string {
 	buffer.WriteString("Digest ")
 
 	if ah.Algorithm != "" {
-		buffer.WriteString(fmt.Sprintf("algorithm=%s, ", ah.Algorithm))
+		buffer.WriteString(fmt.Sprintf("algorithm=%v, ", ah.Algorithm))
 	}
 
 	if ah.Cnonce != "" {
-		buffer.WriteString(fmt.Sprintf("cnonce=\"%s\", ", ah.Cnonce))
+		buffer.WriteString(fmt.Sprintf("cnonce=\"%v\", ", ah.Cnonce))
 	}
 
 	if ah.Nc != 0 {
@@ -145,27 +145,27 @@ func (ah *authorization) toString() string {
 	}
 
 	if ah.Opaque != "" {
-		buffer.WriteString(fmt.Sprintf("opaque=\"%s\", ", ah.Opaque))
+		buffer.WriteString(fmt.Sprintf("opaque=\"%v\", ", ah.Opaque))
 	}
 
 	if ah.Nonce != "" {
-		buffer.WriteString(fmt.Sprintf("nonce=\"%s\", ", ah.Nonce))
+		buffer.WriteString(fmt.Sprintf("nonce=\"%v\", ", ah.Nonce))
 	}
 
 	if ah.Qop != "" {
-		buffer.WriteString(fmt.Sprintf("qop=%s, ", ah.Qop))
+		buffer.WriteString(fmt.Sprintf("qop=%v, ", ah.Qop))
 	}
 
 	if ah.Realm != "" {
-		buffer.WriteString(fmt.Sprintf("realm=\"%s\", ", ah.Realm))
+		buffer.WriteString(fmt.Sprintf("realm=\"%v\", ", ah.Realm))
 	}
 
 	if ah.Response != "" {
-		buffer.WriteString(fmt.Sprintf("response=\"%s\", ", ah.Response))
+		buffer.WriteString(fmt.Sprintf("response=\"%v\", ", ah.Response))
 	}
 
 	if ah.Uri != "" {
-		buffer.WriteString(fmt.Sprintf("uri=\"%s\", ", ah.Uri))
+		buffer.WriteString(fmt.Sprintf("uri=\"%v\", ", ah.Uri))
 	}
 
 	if ah.Userhash {
@@ -173,7 +173,7 @@ func (ah *authorization) toString() string {
 	}
 
 	if ah.Username != "" {
-		buffer.WriteString(fmt.Sprintf("username=\"%s\", ", ah.Username))
+		buffer.WriteString(fmt.Sprintf("username=\"%v\", ", ah.Username))
 	}
 
 	s := buffer.String()

@@ -2,9 +2,9 @@ package core
 
 import (
 	"eye/integ"
-	"fmt"
 	"github.com/jinzhu/configor"
 	"strings"
+	"encoding/json"
 )
 
 var log = integ.Log
@@ -21,9 +21,9 @@ type Config struct {
 	configFiles []string
 }
 
-func Load(fileNames []string) (ret *Config, err error) {
-	ret = &Config{}
-	err = configor.Load(ret, fileNames...)
+func Load(configFiles []string) (ret *Config, err error) {
+	ret = &Config{configFiles: configFiles}
+	err = configor.Load(ret, configFiles...)
 
 	ret.Print()
 
@@ -38,15 +38,9 @@ func (o *Config) Reload() (ret *Config, err error) {
 	return Load(o.configFiles)
 }
 
-func (c *Config) Print() {
-	log.Info(fmt.Sprintf("Name: %s, Port: %d, Debug: %v", c.Name, c.Port, c.Debug))
-	log.Info("MySql:")
-	for _, v := range c.MySql {
-		log.Info(fmt.Sprintf("\t%s", v.Name()))
-	}
-
-	log.Info("Http:")
-	for _, v := range c.Http {
-		log.Info(fmt.Sprintf("\t%s", v.Name()))
+func (o *Config) Print() {
+	json, err := json.MarshalIndent(o, "", "\t")
+	if err == nil {
+		log.Info(string(json))
 	}
 }

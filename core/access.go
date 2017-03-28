@@ -22,14 +22,16 @@ type Security struct {
 	Access []Access
 }
 
-func (c *Security) FindAccess(key string) (ret Access, err error) {
-	err = errors.New(fmt.Sprintf("No access data found for '%s'", key))
-	for _, access := range c.Access {
+func (o *Security) FindAccess(key string) (ret Access, err error) {
+	for _, access := range o.Access {
 		if strings.EqualFold(key, access.Key) {
 			ret = access
 			err = nil
 			break
 		}
+	}
+	if ret.Key == "" {
+		err = errors.New(fmt.Sprintf("No access data found for '%v'", key))
 	}
 	return
 }

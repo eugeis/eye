@@ -23,25 +23,28 @@ type MySql struct {
 
 	PingTimeoutMillis  int
 	QueryTimeoutMillis int
+}
+
+type MySqlService struct {
+	mysql        *MySql
+	accessFinder AccessFinder
 
 	db           *sql.DB
 	pingTimeout  time.Duration
 	queryTimeout time.Duration
-
-	accessFinder AccessFinder
 }
 
-func (s *MySql) Name() string {
-	return s.ServiceName
+func (o *MySqlService) Name() string {
+	return o.mysql.ServiceName
 }
 
-func (s *MySql) validateQuery(query string) error {
+func (o *MySqlService) validateQuery(query string) error {
 	var err error
 	queryLowCase := strings.ToUpper(query)
 
 	for _, keyword := range disallowedKeywords {
 		if strings.Contains(queryLowCase, keyword) {
-			err = errors.New(fmt.Sprintf("'%s' is disallowed for Query", keyword))
+			err = errors.New(fmt.Sprintf("'%v' is disallowed for Query", keyword))
 			break
 		}
 	}
@@ -51,7 +54,7 @@ func (s *MySql) validateQuery(query string) error {
 	return err
 }
 
-func (s *MySql) limitQuery(query string) string {
+func (o *MySqlService) limitQuery(query string) string {
 	queryLowCase := strings.ToUpper(query)
 	if !(strings.HasPrefix(queryLowCase, "SELECT ")) {
 		return query + " LIMIT 5"
@@ -60,100 +63,101 @@ func (s *MySql) limitQuery(query string) string {
 	}
 }
 
-func (s *MySql) Init() (err error) {
-	if s.db == nil {
+func (o *MySqlService) Init() (err error) {
+	if o.db == nil {
 		var access Access
-		access, err = s.accessFinder.FindAccess(s.AccessKey)
+		access, err = o.accessFinder.FindAccess(o.mysql.AccessKey)
 		if err == nil {
-			dataSource := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", access.User, access.Password, s.Host, s.Port, s.Database)
-			s.db, err = sql.Open("mysql", dataSource)
+			dataSource := fmt.Sprintf("%v:%v@tcp(%v:%d)/%v", access.User, access.Password,
+				o.mysql.Host, o.mysql.Port, o.mysql.Database)
+			o.db, err = sql.Open("mysql", dataSource)
 
 			if err == nil {
-				if s.PingTimeoutMillis > 0 {
-					s.pingTimeout = time.Duration(s.PingTimeoutMillis) * time.Millisecond
-					log.Debug("Ping timeout for %s is %s", s.Name(), s.pingTimeout)
+				if o.mysql.PingTimeoutMillis > 0 {
+					o.pingTimeout = time.Duration(o.mysql.PingTimeoutMillis) * time.Millisecond
+					log.Debug("Ping timeout for %v is %v", o.Name(), o.pingTimeout)
 				}
 
-				if s.QueryTimeoutMillis > 0 {
-					s.queryTimeout = time.Duration(s.QueryTimeoutMillis) * time.Millisecond
-					log.Debug("Query timeout %s is %s", s.Name(), s.queryTimeout)
+				if o.mysql.QueryTimeoutMillis > 0 {
+					o.queryTimeout = time.Duration(o.mysql.QueryTimeoutMillis) * time.Millisecond
+					log.Debug("Query timeout %v is %v", o.Name(), o.queryTimeout)
 				}
 
 				//connect
-				s.ping()
+				o.ping()
 			} else {
-				log.Debug("Database connection of %s can't be open because of %s", err)
-				s.db = nil
+				log.Debug("Database connection of %v can't be open because of %v", err)
+				o.db = nil
 			}
 		}
 	}
 	return
 }
 
-func (s *MySql) Close() {
-	if s.db != nil {
-		err := s.db.Close()
+func (o *MySqlService) Close() {
+	if o.db != nil {
+		err := o.db.Close()
 		if err != nil {
-			log.Debug("Closing Database connection of %s caused error %s", s.Name, err)
+			log.Debug("Closing Database connection of %v caused error %v", o.Name, err)
 		}
-		s.db = nil
+		o.db = nil
 	} else {
-		log.Debug("Database connection of %s already closed", s.Name)
+		log.Debug("Database connection of %v already closed", o.Name())
 	}
 }
 
-func (s *MySql) Ping() error {
-	err := s.Init()
+func (o *MySqlService) Ping() error {
+	err := o.Init()
 	if err == nil {
-		err = s.ping()
+		err = o.ping()
 		if err != nil {
-			log.Debug("'%s' can't be reached because of %s", s.Name(), err)
+			log.Debug("'%v' can't be reached because of %v", o.Name(), err)
 		}
 	}
 	return err
 }
 
-func (s *MySql) ping() error {
-	return s.pingByQuery()
+func (o *MySqlService) ping() error {
+	return o.pingByQuery()
 }
 
 /* not reliable, also for GO 1.8? */
-func (s *MySql) pingByConnection() error {
-	if s.pingTimeout > 0 {
-		return s.db.PingContext(TimeoutContext(s.pingTimeout))
+func (o *MySqlService) pingByConnection() error {
+	if o.pingTimeout > 0 {
+		return o.db.PingContext(TimeoutContext(o.pingTimeout))
 	} else {
-		return s.db.Ping()
+		return o.db.Ping()
 	}
 }
 
-func (s *MySql) pingByQuery() error {
-	if s.pingTimeout > 0 {
-		_, err := s.db.ExecContext(TimeoutContext(s.pingTimeout), "SELECT 1")
+func (o *MySqlService) pingByQuery() error {
+	if o.pingTimeout > 0 {
+		_, err := o.db.ExecContext(TimeoutContext(o.pingTimeout), "SELECT 1")
 		return err
 	} else {
-		_, err := s.db.Exec("SELECT 1")
+		_, err := o.db.Exec("SELECT 1")
 		return err
 	}
 }
 
-func (s *MySql) jsonBytes(sql string) (ret QueryResult, err error) {
-	data, err := s.queryToMap(sql)
+func (o *MySqlService) jsonBytes(sql string) (ret QueryResult, err error) {
+	data, err := o.queryToMap(sql)
 	if err == nil && len(data) > 0 {
 		ret, err = json.Marshal(data)
 	}
 	return
 }
 
-func (s *MySql) json(sql string) (json string, err error) {
-	data, err := s.jsonBytes(sql)
+func (o *MySqlService) json(sql string) (json string, err error) {
+	data, err := o.jsonBytes(sql)
 	if err == nil && len(data) > 0 {
 		json = string(data)
 	}
 	return
 }
 
-func (s *MySql) queryToMap(sql string) ([]map[string]interface{}, error) {
-	rows, err := s.query(sql)
+func (o *MySqlService) queryToMap(sql string) ([]map[string]interface{}, error) {
+	rows, err := o.query(sql)
 	if err != nil {
 		return nil, err
 	}
@@ -188,15 +192,15 @@ func (s *MySql) queryToMap(sql string) ([]map[string]interface{}, error) {
 	return tableData, nil
 }
 
-func (s *MySql) query(sql string) (*sql.Rows, error) {
-	if s.queryTimeout > 0 {
-		return s.db.QueryContext(TimeoutContext(s.queryTimeout), sql)
+func (o *MySqlService) query(sql string) (*sql.Rows, error) {
+	if o.queryTimeout > 0 {
+		return o.db.QueryContext(TimeoutContext(o.queryTimeout), sql)
 	} else {
-		return s.db.Query(sql)
+		return o.db.Query(sql)
 	}
 }
 
-func (s *MySql) NewСheck(req *QueryRequest) (ret Check, err error) {
+func (o *MySqlService) NewСheck(req *QueryRequest) (ret Check, err error) {
 	var pattern *regexp.Regexp
 	if len(req.Expr) > 0 {
 		pattern, err = regexp.Compile(req.Expr)
@@ -205,10 +209,10 @@ func (s *MySql) NewСheck(req *QueryRequest) (ret Check, err error) {
 		}
 	}
 
-	err = s.validateQuery(req.Query)
+	err = o.validateQuery(req.Query)
 	if err == nil {
-		query := s.limitQuery(req.Query)
-		ret = mySqlCheck{info: req.CheckKey(s.Name()), query: query, pattern: pattern, service: s}
+		query := o.limitQuery(req.Query)
+		ret = mySqlCheck{info: req.CheckKey(o.Name()), query: query, pattern: pattern, service: o}
 	}
 	return
 }
@@ -218,7 +222,7 @@ type mySqlCheck struct {
 	info    string
 	query   string
 	pattern *regexp.Regexp
-	service *MySql
+	service *MySqlService
 }
 
 func (o mySqlCheck) Info() string {
@@ -230,10 +234,10 @@ func (o mySqlCheck) Validate() (err error) {
 	if err == nil {
 		if o.pattern != nil {
 			if !o.pattern.Match(data) {
-				err = errors.New(fmt.Sprintf("No match for %s", o.info))
+				err = errors.New(fmt.Sprintf("No match for %v", o.info))
 			}
 		} else if data == nil {
-			err = errors.New(fmt.Sprintf("No match, empty result for %s", o.info))
+			err = errors.New(fmt.Sprintf("No match, empty result for %v", o.info))
 		}
 	}
 	return

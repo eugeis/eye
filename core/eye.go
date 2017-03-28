@@ -8,7 +8,7 @@ import (
 	"regexp"
 )
 
-type Controller struct {
+type Eye struct {
 	config       *Config
 	accessFinder AccessFinder
 
@@ -16,26 +16,26 @@ type Controller struct {
 	commandCache   integ.Cache
 }
 
-func NewController(config *Config, accessFinder AccessFinder) (ret *Controller) {
-	ret = &Controller{config: config, accessFinder: accessFinder, commandCache: integ.NewCache()}
+func NewEye(config *Config, accessFinder AccessFinder) (ret *Eye) {
+	ret = &Eye{config: config, accessFinder: accessFinder, commandCache: integ.NewCache()}
 	ret.reloadServiceFactory()
 	return
 }
 
-func (o *Controller) Close() {
+func (o *Eye) Close() {
 	if o.serviceFactory != nil {
 		o.serviceFactory.Close()
 		o.commandCache.Clear()
 	}
 }
 
-func (o *Controller) UpdateConfig(config *Config) {
+func (o *Eye) UpdateConfig(config *Config) {
 	o.Close()
 	o.config = config
 	o.reloadServiceFactory()
 }
 
-func (o *Controller) reloadServiceFactory() {
+func (o *Eye) reloadServiceFactory() {
 	oldServiceFactory := o.serviceFactory
 	o.serviceFactory = o.buildServiceFactory()
 	if oldServiceFactory != nil {
@@ -43,21 +43,19 @@ func (o *Controller) reloadServiceFactory() {
 	}
 }
 
-func (o *Controller) buildServiceFactory() Factory {
+func (o *Eye) buildServiceFactory() Factory {
 	serviceFactory := NewFactory()
-	for _, service := range o.config.MySql {
-		service.accessFinder = o.accessFinder
-		serviceFactory.Add(service)
+	for _, item := range o.config.MySql {
+		serviceFactory.Add(&MySqlService{mysql: item, accessFinder: o.accessFinder})
 	}
 
-	for _, service := range o.config.Http {
-		service.accessFinder = o.accessFinder
-		serviceFactory.Add(service)
+	for _, item := range o.config.Http {
+		serviceFactory.Add(&HttpService{http: item, accessFinder: o.accessFinder})
 	}
 	return &serviceFactory
 }
 
-func (o *Controller) Ping(serviceName string) (err error) {
+func (o *Eye) Ping(serviceName string) (err error) {
 	service, err := o.serviceFactory.Find(serviceName)
 	if err == nil {
 		err = service.Ping()
@@ -65,13 +63,13 @@ func (o *Controller) Ping(serviceName string) (err error) {
 	return
 }
 
-func (o *Controller) Check(checkName string) (err error) {
+func (o *Eye) Check(checkName string) (err error) {
 	return
 }
 
-func (o *Controller) Validate(serviceName string, req *QueryRequest) (err error) {
+func (o *Eye) Validate(serviceName string, req *QueryRequest) (err error) {
 	if req.Query == "" {
-		log.Debug(fmt.Sprintf("ping instead of validator, because no query defined for %s", serviceName))
+		log.Debug(fmt.Sprintf("ping instead of validator, because no query defined for %v", serviceName))
 		return o.Ping(serviceName)
 	}
 
@@ -83,7 +81,7 @@ func (o *Controller) Validate(serviceName string, req *QueryRequest) (err error)
 	return
 }
 
-func (o *Controller) buildCheck(serviceName string, req *QueryRequest) (ret Check, err error) {
+func (o *Eye) buildCheck(serviceName string, req *QueryRequest) (ret Check, err error) {
 	var value interface{}
 	value, err = o.commandCache.GetOrBuild(req.CheckKey(serviceName), func() (interface{}, error) {
 		service, err := o.serviceFactory.Find(serviceName)
@@ -99,7 +97,7 @@ func (o *Controller) buildCheck(serviceName string, req *QueryRequest) (ret Chec
 	return
 }
 
-func (o *Controller) PingAny(serviceNames []string) (err error) {
+func (o *Eye) PingAny(serviceNames []string) (err error) {
 	for _, serviceName := range serviceNames {
 		err = o.Ping(serviceName)
 		if err == nil {
@@ -109,7 +107,7 @@ func (o *Controller) PingAny(serviceNames []string) (err error) {
 	return
 }
 
-func (o *Controller) PingAll(serviceNames []string) (err error) {
+func (o *Eye) PingAll(serviceNames []string) (err error) {
 	for _, serviceName := range serviceNames {
 		err = o.Ping(serviceName)
 		if err != nil {
@@ -119,7 +117,7 @@ func (o *Controller) PingAll(serviceNames []string) (err error) {
 	return
 }
 
-func (o *Controller) ValidateAny(serviceNames []string, req *QueryRequest) (err error) {
+func (o *Eye) ValidateAny(serviceNames []string, req *QueryRequest) (err error) {
 	for _, serviceName := range serviceNames {
 		err = o.Validate(serviceName, req)
 		if err == nil {
@@ -129,7 +127,7 @@ func (o *Controller) ValidateAny(serviceNames []string, req *QueryRequest) (err 
 	return
 }
 
-func (o *Controller) ValidateRunning(serviceNames []string, req *QueryRequest) (err error) {
+func (o *Eye) ValidateRunning(serviceNames []string, req *QueryRequest) (err error) {
 	for _, serviceName := range serviceNames {
 		errTemp := o.Ping(serviceName)
 		if errTemp == nil {
@@ -143,7 +141,7 @@ func (o *Controller) ValidateRunning(serviceNames []string, req *QueryRequest) (
 	return
 }
 
-func (o *Controller) ValidateAll(serviceNames []string, req *QueryRequest) (err error) {
+func (o *Eye) ValidateAll(serviceNames []string, req *QueryRequest) (err error) {
 	for _, serviceName := range serviceNames {
 		err = o.Validate(serviceName, req)
 		if err != nil {
@@ -153,7 +151,7 @@ func (o *Controller) ValidateAll(serviceNames []string, req *QueryRequest) (err 
 	return
 }
 
-func (o *Controller) CompareAny(serviceNames []string, req *CompareRequest) (err error) {
+func (o *Eye) CompareAny(serviceNames []string, req *CompareRequest) (err error) {
 	var check Check
 	checkKey := req.ChecksKey("any", serviceNames)
 	check, err = o.buildCompareCheck(checkKey, serviceNames, true, req, func(checksData map[string]QueryResultInfo) (checkError error) {
@@ -167,7 +165,7 @@ func (o *Controller) CompareAny(serviceNames []string, req *CompareRequest) (err
 				} else {
 					matchError := match(firstData, data.result, req)
 					if matchError != nil {
-						checkError = errors.New(fmt.Sprintf("%s ~ %s => %v",
+						checkError = errors.New(fmt.Sprintf("%v ~ %v => %v",
 							firstName, serviceName, matchError))
 					} else {
 						checkError = nil
@@ -185,7 +183,7 @@ func (o *Controller) CompareAny(serviceNames []string, req *CompareRequest) (err
 	return
 }
 
-func (o *Controller) CompareRunning(serviceNames []string, req *CompareRequest) (err error) {
+func (o *Eye) CompareRunning(serviceNames []string, req *CompareRequest) (err error) {
 	var check Check
 	checkKey := req.ChecksKey("running", serviceNames)
 	check, err = o.buildCompareCheck(checkKey, serviceNames, true, req, func(checksData map[string]QueryResultInfo) error {
@@ -198,7 +196,7 @@ func (o *Controller) CompareRunning(serviceNames []string, req *CompareRequest) 
 	return
 }
 
-func (o *Controller) CompareAll(serviceNames []string, req *CompareRequest) (err error) {
+func (o *Eye) CompareAll(serviceNames []string, req *CompareRequest) (err error) {
 	var check Check
 	checkKey := req.ChecksKey("all", serviceNames)
 	check, err = o.buildCompareCheck(checkKey, serviceNames, false, req, func(checksData map[string]QueryResultInfo) error {
@@ -222,13 +220,13 @@ func matchChecksData(checksData map[string]QueryResultInfo, req *CompareRequest)
 			} else {
 				matchError := match(firstData, queryResult.result, req)
 				if matchError != nil {
-					err = errors.New(fmt.Sprintf("%s ~ %s failed: %s",
+					err = errors.New(fmt.Sprintf("%v ~ %v failed: %v",
 						firstName, serviceName, matchError))
 					break
 				}
 			}
 		} else {
-			err = errors.New(fmt.Sprintf("%s failed: %v", serviceName, queryResult.err.Error()))
+			err = errors.New(fmt.Sprintf("%v failed: %v", serviceName, queryResult.err.Error()))
 		}
 	}
 	return
@@ -275,7 +273,7 @@ func abs(x int) int {
 	return x
 }
 
-func (o *Controller) buildCompareCheck(checkKey string, serviceNames []string, onlyRunning bool, req *CompareRequest,
+func (o *Eye) buildCompareCheck(checkKey string, serviceNames []string, onlyRunning bool, req *CompareRequest,
 	validator func(map[string]QueryResultInfo) error) (check Check, err error) {
 	var value interface{}
 
@@ -309,7 +307,7 @@ func (o *Controller) buildCompareCheck(checkKey string, serviceNames []string, o
 	return
 }
 
-func (o *Controller) query(serviceName string, req *QueryRequest) (data QueryResult, err error) {
+func (o *Eye) query(serviceName string, req *QueryRequest) (data QueryResult, err error) {
 	var buildCheck Check
 	buildCheck, err = o.buildCheck(serviceName, req)
 	if err == nil {

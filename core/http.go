@@ -19,6 +19,11 @@ type Http struct {
 
 	PingTimeoutMillis  int
 	QueryTimeoutMillis int
+}
+
+type HttpService struct {
+	http *Http
+	accessFinder AccessFinder
 
 	client    *http.Client
 	pingCheck *httpCheck
@@ -26,57 +31,56 @@ type Http struct {
 	pingTimeout  time.Duration
 	queryTimeout time.Duration
 
-	accessFinder AccessFinder
 }
 
-func (s *Http) Name() string {
-	return s.ServiceName
+func (o *HttpService) Name() string {
+	return o.http.ServiceName
 }
 
-func (s *Http) Init() (err error) {
-	if s.client == nil {
-		s.client = digest.NewClient(true, s.queryTimeout)
-		s.pingCheck, err = s.newСheck(s.PingRequest)
+func (o *HttpService) Init() (err error) {
+	if o.client == nil {
+		o.client = digest.NewClient(true, o.queryTimeout)
+		o.pingCheck, err = o.newСheck(o.http.PingRequest)
 		if err != nil {
-			s.Close()
+			o.Close()
 		}
 	}
 	return
 }
 
-func (s *Http) Close() {
-	s.client = nil
-	s.pingCheck = nil
+func (o *HttpService) Close() {
+	o.client = nil
+	o.pingCheck = nil
 }
 
-func (s *Http) Ping() error {
-	err := s.Init()
+func (o *HttpService) Ping() error {
+	err := o.Init()
 	if err == nil {
-		err = s.ping()
+		err = o.ping()
 		if err != nil {
-			log.Debug("'%s' can't be reached because of %s", s.Name(), err)
+			log.Debug("'%v' can't be reached because of %v", o.Name(), err)
 		}
 	}
 	return err
 }
 
-func (s *Http) ping() error {
-	return s.pingCheck.Validate()
+func (o *HttpService) ping() error {
+	return o.pingCheck.Validate()
 }
 
 func body(resp *http.Response) string {
 	body, _ := ioutil.ReadAll(resp.Body)
-	ret := fmt.Sprintf("%s", body)
+	ret := fmt.Sprintf("%v", body)
 	return ret
 }
 
-func (s *Http) NewСheck(req *QueryRequest) (ret Check, err error) {
-	return s.newСheck(req)
+func (o *HttpService) NewСheck(req *QueryRequest) (ret Check, err error) {
+	return o.newСheck(req)
 }
 
-func (s *Http) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
+func (o *HttpService) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
 	var access Access
-	access, err = s.accessFinder.FindAccess(s.AccessKey)
+	access, err = o.accessFinder.FindAccess(o.http.AccessKey)
 	if err == nil {
 		var pattern *regexp.Regexp
 		if len(req.Expr) > 0 {
@@ -86,11 +90,11 @@ func (s *Http) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
 			}
 		}
 
-		dReq := digest.NewRequest(access.User, access.Password, "GET", s.Url+req.Query, "")
+		dReq := digest.NewRequest(access.User, access.Password, "GET", o.http.Url+req.Query, "")
 		ret = &httpCheck{
-			info:    req.CheckKey(s.Name()),
+			info:    req.CheckKey(o.Name()),
 			req:     &dReq,
-			pattern: pattern, service: s}
+			pattern: pattern, service: o}
 	}
 	return
 }
@@ -101,7 +105,7 @@ type httpCheck struct {
 	info    string
 	req     *digest.Request
 	pattern *regexp.Regexp
-	service *Http
+	service *HttpService
 }
 
 func (o httpCheck) Info() string {
@@ -113,7 +117,7 @@ func (o httpCheck) Validate() (err error) {
 
 	if err == nil && o.pattern != nil {
 		if !o.pattern.Match(data) {
-			err = errors.New(fmt.Sprintf("No match for %s", o.info))
+			err = errors.New(fmt.Sprintf("No match for %v", o.info))
 		}
 	}
 	return
@@ -133,7 +137,7 @@ func (o httpCheck) Query() (data QueryResult, err error) {
 	if err != nil {
 		return
 	}
-	log.Debug("%s", data)
+	log.Debug("%v", data)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
