@@ -8,22 +8,18 @@ import (
 	"regexp"
 )
 
-type Operator interface {
-}
-
 type Controller struct {
-	Config   *Config
-	Security *Security
+	Config       *Config
+	AccessFinder AccessFinder
 
 	serviceFactory Factory
 	commandCache   integ.Cache
 
-	configFiles   []string
-	securityFiles []string
+	configFiles []string
 }
 
-func NewController(configFiles []string, securityFiles []string) (ret *Controller, err error) {
-	ret = &Controller{configFiles: configFiles, securityFiles: securityFiles, commandCache: integ.NewCache()}
+func NewController(configFiles []string, accessFinder AccessFinder) (ret *Controller, err error) {
+	ret = &Controller{configFiles: configFiles, AccessFinder: accessFinder, commandCache: integ.NewCache()}
 	err = ret.ReloadConfig()
 	return
 }
@@ -37,7 +33,6 @@ func (o *Controller) Close() {
 
 func (o *Controller) ReloadConfig() (err error) {
 	o.Close()
-	o.Security, err = LoadSecurity(o.securityFiles)
 	o.Config, err = Load(o.configFiles)
 	if err == nil {
 		o.Config.Print()
@@ -57,12 +52,12 @@ func (o *Controller) reloadServiceFactory() {
 func (o *Controller) buildServiceFactory() Factory {
 	serviceFactory := NewFactory()
 	for _, service := range o.Config.MySql {
-		service.access = o.Security.FindAccess
+		service.accessFinder = o.AccessFinder
 		serviceFactory.Add(service)
 	}
 
 	for _, service := range o.Config.Http {
-		service.access = o.Security.FindAccess
+		service.accessFinder = o.AccessFinder
 		serviceFactory.Add(service)
 	}
 	return &serviceFactory
@@ -301,7 +296,7 @@ func (o *Controller) buildCompareCheck(checkKey string, serviceNames []string, o
 
 		checks := make([]Check, len(serviceNames))
 		check = MultiCheck{info: checkKey, query: req.QueryRequest.Query, pattern: pattern, checks: checks,
-			onlyRunning: onlyRunning, validator: validator}
+			onlyRunning:     onlyRunning, validator: validator}
 
 		var serviceCheck Check
 		for i, serviceName := range serviceNames {

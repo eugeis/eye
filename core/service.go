@@ -8,7 +8,6 @@ import (
 
 type Service interface {
 	Name() string
-	Kind() string
 
 	Init() error
 	Close()

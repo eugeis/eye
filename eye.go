@@ -16,7 +16,8 @@ import (
 var log = integ.Log
 
 func main() {
-	controller, err := core.NewController(configFiles(), securityFiles())
+	accessFinder, err := core.LoadSecurity(securityFiles())
+	controller, err := core.NewController(configFiles(), accessFinder)
 	if err != nil {
 		log.Err("Exit! %v", err)
 	}
@@ -135,7 +136,7 @@ func servicesCompare(c *gin.Context) ([]string, *core.CompareRequest) {
 	return strings.Split(c.DefaultQuery("services", ""), ","),
 		&core.CompareRequest{
 			QueryRequest: queryReq(c), Tolerance: queryInt("tolerance", c),
-			Not: queryFlag("not", c)}
+			Not:          queryFlag("not", c)}
 }
 
 func queryInt(key string, c *gin.Context) (ret int) {

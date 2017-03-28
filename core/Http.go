@@ -26,11 +26,7 @@ type Http struct {
 	pingTimeout  time.Duration
 	queryTimeout time.Duration
 
-	access func(string) Access
-}
-
-func (s *Http) Kind() string {
-	return "Http"
+	accessFinder AccessFinder
 }
 
 func (s *Http) Name() string {
@@ -79,8 +75,9 @@ func (s *Http) NewСheck(req *QueryRequest) (ret Check, err error) {
 }
 
 func (s *Http) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
-	access := s.access(s.AccessKey)
-	if access.Key == s.AccessKey {
+	var access Access
+	access, err = s.accessFinder.FindAccess(s.AccessKey)
+	if err == nil {
 		var pattern *regexp.Regexp
 		if len(req.Expr) > 0 {
 			pattern, err = regexp.Compile(req.Expr)
@@ -94,8 +91,6 @@ func (s *Http) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
 			info:    req.CheckKey(s.Name()),
 			req:     &dReq,
 			pattern: pattern, service: s}
-	} else {
-		err = errors.New(fmt.Sprintf("No access data found for the service %s", s.ServiceName))
 	}
 	return
 }

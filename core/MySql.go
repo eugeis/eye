@@ -28,11 +28,7 @@ type MySql struct {
 	pingTimeout  time.Duration
 	queryTimeout time.Duration
 
-	access func(string) Access
-}
-
-func (s *MySql) Kind() string {
-	return "MySql"
+	accessFinder AccessFinder
 }
 
 func (s *MySql) Name() string {
@@ -66,8 +62,9 @@ func (s *MySql) limitQuery(query string) string {
 
 func (s *MySql) Init() (err error) {
 	if s.db == nil {
-		access := s.access(s.AccessKey)
-		if access.Key == s.AccessKey {
+		var access Access
+		access, err = s.accessFinder.FindAccess(s.AccessKey)
+		if err == nil {
 			dataSource := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", access.User, access.Password, s.Host, s.Port, s.Database)
 			s.db, err = sql.Open("mysql", dataSource)
 
@@ -88,10 +85,7 @@ func (s *MySql) Init() (err error) {
 				log.Debug("Database connection of %s can't be open because of %s", err)
 				s.db = nil
 			}
-		} else {
-			err = errors.New(fmt.Sprintf("No access data found for the service %s", s.ServiceName))
 		}
-
 	}
 	return
 }
