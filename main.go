@@ -11,30 +11,42 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"github.com/jinzhu/configor"
 )
 
 var log = integ.Log
 
 func main() {
-	accessFinder, err := core.LoadSecurity(securityFiles())
-	controller, err := core.NewController(configFiles(), accessFinder)
+	accessFinder, err := buildAccessFinder()
+	if err != nil {
+		log.Err("Exit! %v", err)
+	}
+	config, err := core.Load(configFiles())
 	if err != nil {
 		log.Err("Exit! %v", err)
 	}
 
-	if !controller.Config.Debug {
+	if !config.Debug {
 		gin.SetMode(gin.ReleaseMode)
 		integ.Debug = false
 	}
 
+	controller := core.NewController(config, accessFinder)
+
 	defer controller.Close()
 
-	router := gin.Default()
+	engine := gin.Default()
 
-	router.StaticFile("/help", "html/doc.html")
-	router.StaticFile("/", "html/doc.html")
+	defineRoutes(engine, controller, config)
 
-	serviceGroup := router.Group("/service")
+	engine.Run(fmt.Sprintf(":%d", config.Port))
+}
+
+func defineRoutes(engine *gin.Engine, controller *core.Controller, config *core.Config) {
+	engine.StaticFile("/help", "html/doc.html")
+	engine.StaticFile("/", "html/doc.html")
+
+	serviceGroup := engine.Group("/service")
 	{
 		serviceGroup.GET("/:service/ping", func(c *gin.Context) {
 			response(controller.Ping(c.Param("service")), c)
@@ -45,7 +57,7 @@ func main() {
 		})
 	}
 
-	servicesGroup := router.Group("/services")
+	servicesGroup := engine.Group("/services")
 	{
 		servicesGroup.GET("/any/ping", func(c *gin.Context) {
 			response(controller.PingAny(services(c)), c)
@@ -79,28 +91,27 @@ func main() {
 			response(controller.CompareAll(servicesCompare(c)), c)
 		})
 	}
-
-	checkGroup := router.Group("/check")
+	checkGroup := engine.Group("/check")
 	{
 		checkGroup.GET("/:check", func(c *gin.Context) {
 			response(controller.Check(c.Param("check")), c)
 		})
 	}
-
-	adminGroup := router.Group("/admin")
+	adminGroup := engine.Group("/admin")
 	{
 		adminGroup.GET("/reload", func(c *gin.Context) {
-			controller.ReloadConfig()
-			response(nil, c)
+			config, err := config.Reload()
+			if err == nil {
+				controller.UpdateConfig(config)
+			}
+			response(err, c)
 		})
 
 		adminGroup.GET("/config", func(c *gin.Context) {
 			c.Header("Content-Type", "application/json; charset=UTF-8")
-			c.IndentedJSON(http.StatusOK, controller.Config)
+			c.IndentedJSON(http.StatusOK, config)
 		})
 	}
-
-	router.Run(fmt.Sprintf(":%d", controller.Config.Port))
 }
 
 func configFiles() (ret []string) {
@@ -109,6 +120,17 @@ func configFiles() (ret []string) {
 		ret = []string{args[0]}
 	} else {
 		ret = []string{"eye.yml"}
+	}
+	return
+}
+
+func buildAccessFinder() (ret core.AccessFinder, err error) {
+	ret = &core.Security{}
+	err = configor.Load(ret, securityFiles()...)
+
+	//ignore, https://github.com/jinzhu/configor/issues/6
+	if err != nil && strings.EqualFold(err.Error(), "invalid config, should be struct") {
+		err = nil
 	}
 	return
 }

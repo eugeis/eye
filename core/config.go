@@ -17,6 +17,8 @@ type Config struct {
 
 	MySql []*MySql
 	Http  []*Http
+
+	configFiles []string
 }
 
 func Load(fileNames []string) (ret *Config, err error) {
@@ -30,6 +32,10 @@ func Load(fileNames []string) (ret *Config, err error) {
 		err = nil
 	}
 	return
+}
+
+func (o *Config) Reload() (ret *Config, err error) {
+	return Load(o.configFiles)
 }
 
 func (c *Config) Print() {

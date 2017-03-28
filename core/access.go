@@ -1,7 +1,6 @@
 package core
 
 import (
-	"github.com/jinzhu/configor"
 	"strings"
 	"fmt"
 	"bufio"
@@ -15,17 +14,6 @@ type AccessFinder interface {
 
 type Security struct {
 	Access []Access
-}
-
-func LoadSecurity(fileNames []string) (ret *Security, err error) {
-	ret = &Security{}
-	err = configor.Load(ret, fileNames...)
-
-	//ignore, https://github.com/jinzhu/configor/issues/6
-	if err != nil && strings.EqualFold(err.Error(), "invalid config, should be struct") {
-		err = nil
-	}
-	return
 }
 
 func (c *Security) FindAccess(key string) (ret Access, err error) {

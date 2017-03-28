@@ -9,18 +9,16 @@ import (
 )
 
 type Controller struct {
-	Config       *Config
-	AccessFinder AccessFinder
+	config       *Config
+	accessFinder AccessFinder
 
 	serviceFactory Factory
 	commandCache   integ.Cache
-
-	configFiles []string
 }
 
-func NewController(configFiles []string, accessFinder AccessFinder) (ret *Controller, err error) {
-	ret = &Controller{configFiles: configFiles, AccessFinder: accessFinder, commandCache: integ.NewCache()}
-	err = ret.ReloadConfig()
+func NewController(config *Config, accessFinder AccessFinder) (ret *Controller) {
+	ret = &Controller{config: config, accessFinder: accessFinder, commandCache: integ.NewCache()}
+	ret.reloadServiceFactory()
 	return
 }
 
@@ -31,14 +29,10 @@ func (o *Controller) Close() {
 	}
 }
 
-func (o *Controller) ReloadConfig() (err error) {
+func (o *Controller) UpdateConfig(config *Config) {
 	o.Close()
-	o.Config, err = Load(o.configFiles)
-	if err == nil {
-		o.Config.Print()
-		o.reloadServiceFactory()
-	}
-	return
+	o.config = config
+	o.reloadServiceFactory()
 }
 
 func (o *Controller) reloadServiceFactory() {
@@ -51,13 +45,13 @@ func (o *Controller) reloadServiceFactory() {
 
 func (o *Controller) buildServiceFactory() Factory {
 	serviceFactory := NewFactory()
-	for _, service := range o.Config.MySql {
-		service.accessFinder = o.AccessFinder
+	for _, service := range o.config.MySql {
+		service.accessFinder = o.accessFinder
 		serviceFactory.Add(service)
 	}
 
-	for _, service := range o.Config.Http {
-		service.accessFinder = o.AccessFinder
+	for _, service := range o.config.Http {
+		service.accessFinder = o.accessFinder
 		serviceFactory.Add(service)
 	}
 	return &serviceFactory
