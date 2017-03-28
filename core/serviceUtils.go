@@ -41,9 +41,3 @@ func (o *SimpleServiceFactory) Close() {
 	}
 	o.services = make(map[string]Service)
 }
-
-type Access struct {
-	Key      string
-	User     string
-	Password string
-}

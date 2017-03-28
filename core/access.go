@@ -8,6 +8,12 @@ import (
 	"errors"
 )
 
+type Access struct {
+	Key      string
+	User     string
+	Password string
+}
+
 type AccessFinder interface {
 	FindAccess(key string) (Access, error)
 }
