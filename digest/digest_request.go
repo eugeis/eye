@@ -12,7 +12,7 @@ import (
 type Request struct {
 	Body        string
 	Method      string
-	Password    string
+	Password    []byte
 	Uri         string
 	Username    string
 	Auth        *authorization
@@ -38,7 +38,7 @@ func NewClient(skipTLSVerify bool, timeout time.Duration) (ret *http.Client) {
 	return
 }
 
-func NewRequest(username string, password string, method string, uri string, body string) Request {
+func NewRequest(username string, password []byte, method string, uri string, body string) Request {
 	dr := Request{}
 	dr.UpdateRequest(username, password, method, uri, body)
 	return dr
@@ -48,7 +48,7 @@ func (dr *Request) Close() {
 }
 
 func (dr *Request) UpdateRequest(username string,
-	password string, method string, uri string, body string) *Request {
+	password []byte, method string, uri string, body string) *Request {
 
 	dr.Body = body
 	dr.Method = method

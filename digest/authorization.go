@@ -85,11 +85,11 @@ func (ah *authorization) computeResponse(dr *Request) (s string) {
 func (ah *authorization) computeA1(dr *Request) string {
 
 	if ah.Algorithm == "" || ah.Algorithm == "MD5" || ah.Algorithm == "SHA-256" {
-		return fmt.Sprintf("%v:%v:%v", ah.Username, ah.Realm, dr.Password)
+		return fmt.Sprintf("%v:%v:%s", ah.Username, ah.Realm, dr.Password)
 	}
 
 	if ah.Algorithm == "MD5-sess" || ah.Algorithm == "SHA-256-sess" {
-		upHash := ah.hash(fmt.Sprintf("%v:%v:%v", ah.Username, ah.Realm, dr.Password))
+		upHash := ah.hash(fmt.Sprintf("%v:%v:%s", ah.Username, ah.Realm, dr.Password))
 		return fmt.Sprintf("%v:%v:%v", upHash, ah.Nonce, ah.Cnonce)
 	}
 

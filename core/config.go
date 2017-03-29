@@ -13,17 +13,29 @@ type Config struct {
 	Name  string `default:"Eye"`
 	Port  int    `default:"3000"`
 	Debug bool   `default:true`
-	Token string
+
+	SecurityType SecurityType
 
 	MySql []*MySql
 	Http  []*Http
 
-	configFiles []string
+	ConfigFile string
 }
 
-func Load(configFiles []string) (ret *Config, err error) {
-	ret = &Config{configFiles: configFiles}
-	err = configor.Load(ret, configFiles...)
+type SecurityType struct {
+	Type string `default:"file"` //file, console, vault
+
+	//file
+	File string `default:"security.yml"`
+
+	//vault
+	VaultAddress string
+	Token        string
+}
+
+func Load(configFile string) (ret *Config, err error) {
+	ret = &Config{ConfigFile: configFile}
+	err = configor.Load(ret, configFile)
 
 	ret.Print()
 
@@ -35,7 +47,7 @@ func Load(configFiles []string) (ret *Config, err error) {
 }
 
 func (o *Config) Reload() (ret *Config, err error) {
-	return Load(o.configFiles)
+	return Load(o.ConfigFile)
 }
 
 func (o *Config) Print() {
@@ -43,4 +55,13 @@ func (o *Config) Print() {
 	if err == nil {
 		log.Info(string(json))
 	}
+}
+
+func fillAccessData(security *Security, file string) (err error) {
+	err = configor.Load(security, file)
+	//ignore, https://github.com/jinzhu/configor/issues/6
+	if err != nil && strings.EqualFold(err.Error(), "invalid config, should be struct") {
+		err = nil
+	}
+	return
 }

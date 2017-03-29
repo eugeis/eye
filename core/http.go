@@ -137,7 +137,7 @@ func (o httpCheck) Query() (data QueryResult, err error) {
 	if err != nil {
 		return
 	}
-	log.Debug("%v", data)
+	log.Debug("http data: %s", data)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {

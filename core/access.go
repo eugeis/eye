@@ -3,15 +3,13 @@ package core
 import (
 	"strings"
 	"fmt"
-	"bufio"
-	"os"
 	"errors"
+	"path/filepath"
 )
 
 type Access struct {
-	Key      string
 	User     string
-	Password string
+	Password []byte
 }
 
 type AccessFinder interface {
@@ -19,26 +17,50 @@ type AccessFinder interface {
 }
 
 type Security struct {
-	Access []Access
+	Access map[string]Access
 }
 
 func (o *Security) FindAccess(key string) (ret Access, err error) {
-	for _, access := range o.Access {
-		if strings.EqualFold(key, access.Key) {
-			ret = access
-			err = nil
-			break
-		}
-	}
-	if ret.Key == "" {
+	var ok bool
+	ret, ok = o.Access[key]
+	if !ok {
 		err = errors.New(fmt.Sprintf("No access data found for '%v'", key))
 	}
 	return
 }
 
-func read() {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter text: ")
-	text, _ := reader.ReadString('\n')
-	fmt.Println(text)
+func BuildAccessFinder(config *Config) (ret AccessFinder, err error) {
+	security := &Security{}
+	ret = security
+	if strings.EqualFold(config.SecurityType.Type, "file") {
+		path := filepath.Dir(config.ConfigFile)
+		err = fillAccessData(security, filepath.Join(path, config.SecurityType.File))
+	} else if strings.EqualFold(config.SecurityType.Type, "console") {
+		security.Access = extractAccessKeys(config)
+		fillAccessDataFromConsole(security)
+
+	} else if strings.EqualFold(config.SecurityType.Type, "vault") {
+		security.Access = extractAccessKeys(config)
+		var vault *VaultClient
+		vault, err = NewVaultClient(config.SecurityType.Token)
+		if err == nil {
+			vault.fillAccessData(config.Name, security)
+		}
+	}
+	return
+}
+
+func extractAccessKeys(config *Config) (ret map[string]Access) {
+	ret = make(map[string]Access)
+	for _, item := range config.MySql {
+		if _, ok := ret[item.AccessKey]; !ok {
+			ret[item.AccessKey] = Access{}
+		}
+	}
+	for _, item := range config.Http {
+		if _, ok := ret[item.AccessKey]; !ok {
+			ret[item.AccessKey] = Access{}
+		}
+	}
+	return
 }

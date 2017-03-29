@@ -68,7 +68,7 @@ func (o *MySqlService) Init() (err error) {
 		var access Access
 		access, err = o.accessFinder.FindAccess(o.mysql.AccessKey)
 		if err == nil {
-			dataSource := fmt.Sprintf("%v:%v@tcp(%v:%d)/%v", access.User, access.Password,
+			dataSource := fmt.Sprintf("%v:%s@tcp(%v:%d)/%v", access.User, access.Password,
 				o.mysql.Host, o.mysql.Port, o.mysql.Database)
 			o.db, err = sql.Open("mysql", dataSource)
 

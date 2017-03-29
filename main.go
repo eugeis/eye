@@ -11,35 +11,65 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"github.com/jinzhu/configor"
+	"github.com/urfave/cli"
 )
 
 var log = integ.Log
 
 func main() {
-	accessFinder, err := buildAccessFinder()
-	if err != nil {
-		log.Err("Exit! %v", err)
+	app := cli.NewApp()
+	app.Name = "eye"
+	app.Description = "Diagnosis application for different resource types like database, HTTP, file system."
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "config, c",
+			Usage: "Load configuration from `FILE`",
+		},
+		cli.StringFlag{
+			Name:  "security, s",
+			Usage: "Load security configuration from `FILE`",
+		},
+		cli.StringFlag{
+			Name:   "vault_address, va",
+			Usage:  "Connect to Vault server with the `ADDRESS`",
+			EnvVar: "VAULT_ADDRESS",
+		},
+		cli.StringFlag{
+			Name:   "vault_token, vt",
+			Usage:  "Connect to Vault with the `TOKEN`",
+			EnvVar: "VAULT_TOKEN",
+			Hidden: true,
+		},
 	}
-	config, err := core.Load(configFiles())
-	if err != nil {
-		log.Err("Exit! %v", err)
+
+	app.Action = func(c *cli.Context) error {
+		config, err := core.Load(c.String("c"))
+		if err != nil {
+			log.Err("Exit! %v", err)
+		}
+		accessFinder, err := core.BuildAccessFinder(config)
+		if err != nil {
+			log.Err("Exit! %v", err)
+		}
+		if !config.Debug {
+			gin.SetMode(gin.ReleaseMode)
+			integ.Debug = false
+		}
+
+		controller := core.NewEye(config, accessFinder)
+
+		defer controller.Close()
+
+		engine := gin.Default()
+
+		defineRoutes(engine, controller, config)
+
+		engine.Run(fmt.Sprintf(":%d", config.Port))
+
+		return nil
 	}
 
-	if !config.Debug {
-		gin.SetMode(gin.ReleaseMode)
-		integ.Debug = false
-	}
-
-	controller := core.NewEye(config, accessFinder)
-
-	defer controller.Close()
-
-	engine := gin.Default()
-
-	defineRoutes(engine, controller, config)
-
-	engine.Run(fmt.Sprintf(":%d", config.Port))
+	app.Run(os.Args)
 }
 
 func defineRoutes(engine *gin.Engine, controller *core.Eye, config *core.Config) {
@@ -120,27 +150,6 @@ func configFiles() (ret []string) {
 		ret = []string{args[0]}
 	} else {
 		ret = []string{"eye.yml"}
-	}
-	return
-}
-
-func buildAccessFinder() (ret core.AccessFinder, err error) {
-	ret = &core.Security{}
-	err = configor.Load(ret, securityFiles()...)
-
-	//ignore, https://github.com/jinzhu/configor/issues/6
-	if err != nil && strings.EqualFold(err.Error(), "invalid config, should be struct") {
-		err = nil
-	}
-	return
-}
-
-func securityFiles() (ret []string) {
-	args := os.Args[1:]
-	if len(args) > 1 {
-		ret = []string{args[1]}
-	} else {
-		ret = []string{"security.yml"}
 	}
 	return
 }
