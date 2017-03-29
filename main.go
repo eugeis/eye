@@ -42,33 +42,39 @@ func main() {
 		},
 	}
 
-	app.Action = func(c *cli.Context) error {
-		config, err := core.Load(c.String("c"))
-		if err != nil {
-			log.Err("Exit! %v", err)
-		}
-		accessFinder, err := core.BuildAccessFinder(config)
-		if err != nil {
-			log.Err("Exit! %v", err)
-		}
-		if !config.Debug {
-			gin.SetMode(gin.ReleaseMode)
-			integ.Debug = false
-		}
+	app.Commands = []cli.Command{
+		{
+			Name:    "server",
+			Aliases: []string{"r"},
+			Usage:   "Start Eye server",
+			Action: func(c *cli.Context) error {
+				config, err := core.Load(c.GlobalString("c"))
+				if err != nil {
+					log.Err("Exit! %v", err)
+				}
+				accessFinder, err := core.BuildAccessFinder(config)
+				if err != nil {
+					log.Err("Exit! %v", err)
+				}
+				if !config.Debug {
+					gin.SetMode(gin.ReleaseMode)
+					integ.Debug = false
+				}
 
-		controller := core.NewEye(config, accessFinder)
+				controller := core.NewEye(config, accessFinder)
 
-		defer controller.Close()
+				defer controller.Close()
 
-		engine := gin.Default()
+				engine := gin.Default()
 
-		defineRoutes(engine, controller, config)
+				defineRoutes(engine, controller, config)
 
-		engine.Run(fmt.Sprintf(":%d", config.Port))
+				engine.Run(fmt.Sprintf(":%d", config.Port))
 
-		return nil
+				return nil
+			},
+		},
 	}
-
 	app.Run(os.Args)
 }
 
