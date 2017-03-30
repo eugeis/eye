@@ -75,18 +75,18 @@ func (o *MySqlService) Init() (err error) {
 			if err == nil {
 				if o.mysql.PingTimeoutMillis > 0 {
 					o.pingTimeout = time.Duration(o.mysql.PingTimeoutMillis) * time.Millisecond
-					log.Debug("Ping timeout for %v is %v", o.Name(), o.pingTimeout)
+					l.Debug("Ping timeout for %v is %v", o.Name(), o.pingTimeout)
 				}
 
 				if o.mysql.QueryTimeoutMillis > 0 {
 					o.queryTimeout = time.Duration(o.mysql.QueryTimeoutMillis) * time.Millisecond
-					log.Debug("Query timeout %v is %v", o.Name(), o.queryTimeout)
+					l.Debug("Query timeout %v is %v", o.Name(), o.queryTimeout)
 				}
 
 				//connect
 				o.ping()
 			} else {
-				log.Debug("Database connection of %v can't be open because of %v", err)
+				l.Debug("Database connection of %v can't be open because of %v", err)
 				o.db = nil
 			}
 		}
@@ -98,11 +98,11 @@ func (o *MySqlService) Close() {
 	if o.db != nil {
 		err := o.db.Close()
 		if err != nil {
-			log.Debug("Closing Database connection of %v caused error %v", o.Name, err)
+			l.Debug("Closing Database connection of %v caused error %v", o.Name, err)
 		}
 		o.db = nil
 	} else {
-		log.Debug("Database connection of %v already closed", o.Name())
+		l.Debug("Database connection of %v already closed", o.Name())
 	}
 }
 
@@ -111,7 +111,7 @@ func (o *MySqlService) Ping() error {
 	if err == nil {
 		err = o.ping()
 		if err != nil {
-			log.Debug("'%v' can't be reached because of %v", o.Name(), err)
+			l.Debug("'%v' can't be reached because of %v", o.Name(), err)
 		}
 	}
 	return err
@@ -247,7 +247,7 @@ func (o mySqlCheck) Query() (data QueryResult, err error) {
 	err = o.service.Init()
 	if err == nil {
 		data, err = o.service.jsonBytes(o.query)
-		//log.Debug(string(data))
+		//l.Debug(string(data))
 	}
 	return
 }

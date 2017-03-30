@@ -43,10 +43,10 @@ func (o MultiCheck) checksData() (checksData map[string]QueryResultInfo) {
 					checksData[check.Info()] = QueryResultInfo{err: errors.New("No match")}
 				} else if len(matches) > 0 {
 					checksData[check.Info()] = QueryResultInfo{result: matches[1]}
-					//log.Debug("%v = %v", check.Info(), string(matches[1]))
+					//l.Debug("%v = %v", check.Info(), string(matches[1]))
 				} else {
 					checksData[check.Info()] = QueryResultInfo{result: matches[0]}
-					//log.Debug("%v = %v", check.Info(), string(matches[0]))
+					//l.Debug("%v = %v", check.Info(), string(matches[0]))
 				}
 			} else {
 				checksData[check.Info()] = QueryResultInfo{result: data}

@@ -1,10 +1,8 @@
 package core
 
 import (
-	"strings"
 	"fmt"
 	"errors"
-	"path/filepath"
 )
 
 type Access struct {
@@ -29,24 +27,9 @@ func (o *Security) FindAccess(key string) (ret Access, err error) {
 	return
 }
 
-func BuildAccessFinder(config *Config) (ret AccessFinder, err error) {
+func BuildAccessFinderFromFile(securityFile string) (ret AccessFinder, err error) {
 	security := &Security{}
-	ret = security
-	if strings.EqualFold(config.SecurityType.Type, "file") {
-		path := filepath.Dir(config.ConfigFile)
-		err = fillAccessData(security, filepath.Join(path, config.SecurityType.File))
-	} else if strings.EqualFold(config.SecurityType.Type, "console") {
-		security.Access = extractAccessKeys(config)
-		fillAccessDataFromConsole(security)
-
-	} else if strings.EqualFold(config.SecurityType.Type, "vault") {
-		security.Access = extractAccessKeys(config)
-		var vault *VaultClient
-		vault, err = NewVaultClient(config.SecurityType.Token)
-		if err == nil {
-			vault.fillAccessData(config.Name, security)
-		}
-	}
+	err = fillAccessData(security, securityFile)
 	return
 }
 

@@ -58,7 +58,7 @@ func (o *HttpService) Ping() error {
 	if err == nil {
 		err = o.ping()
 		if err != nil {
-			log.Debug("'%v' can't be reached because of %v", o.Name(), err)
+			l.Debug("'%v' can't be reached because of %v", o.Name(), err)
 		}
 	}
 	return err
@@ -137,7 +137,7 @@ func (o httpCheck) Query() (data QueryResult, err error) {
 	if err != nil {
 		return
 	}
-	log.Debug("http data: %s", data)
+	l.Debug("http data: %s", data)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {

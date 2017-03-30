@@ -14,68 +14,110 @@ import (
 	"github.com/urfave/cli"
 )
 
-var log = integ.Log
+var l = integ.Log
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "eye"
-	app.Description = "Diagnosis application for different resource types like database, HTTP, file system."
+	app.Usage = "diagnosis application for different resource types like database, HTTP, file system."
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "config, c",
 			Usage: "Load configuration from `FILE`",
 		},
-		cli.StringFlag{
-			Name:  "security, s",
-			Usage: "Load security configuration from `FILE`",
-		},
-		cli.StringFlag{
-			Name:   "vault_address, va",
-			Usage:  "Connect to Vault server with the `ADDRESS`",
-			EnvVar: "VAULT_ADDRESS",
-		},
-		cli.StringFlag{
-			Name:   "vault_token, vt",
-			Usage:  "Connect to Vault with the `TOKEN`",
-			EnvVar: "VAULT_TOKEN",
-			Hidden: true,
-		},
 	}
 
 	app.Commands = []cli.Command{
 		{
-			Name:    "server",
-			Aliases: []string{"r"},
-			Usage:   "Start Eye server",
-			Action: func(c *cli.Context) error {
-				config, err := core.Load(c.GlobalString("c"))
-				if err != nil {
-					log.Err("Exit! %v", err)
-				}
-				accessFinder, err := core.BuildAccessFinder(config)
-				if err != nil {
-					log.Err("Exit! %v", err)
-				}
-				if !config.Debug {
-					gin.SetMode(gin.ReleaseMode)
-					integ.Debug = false
-				}
-
-				controller := core.NewEye(config, accessFinder)
-
-				defer controller.Close()
-
-				engine := gin.Default()
-
-				defineRoutes(engine, controller, config)
-
-				engine.Run(fmt.Sprintf(":%d", config.Port))
-
-				return nil
+			Name:    "server-vault",
+			Aliases: []string{"sv"},
+			Usage:   "Start Eye server - access data provided from Vault",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:   "vault_token, vt",
+					Usage:  "Connect to Vault with the `TOKEN`",
+					EnvVar: "VAULT_TOKEN",
+				},
+				cli.StringFlag{
+					Name:   "vault_address, va",
+					Usage:  "Connect to Vault server with the `ADDRESS`",
+					EnvVar: "VAULT_ADDR",
+				},
 			},
+			Action: func(c *cli.Context) error {
+				config, err := core.LoadConfig(c.GlobalString("c"))
+				if err != nil {
+					return err
+				}
+				accessFinder, err := core.BuildAccessFinderFromVault(
+					c.String("vault_token"), c.String("vault_address"), config)
+				if err != nil {
+					return err
+				}
+				return start(config, accessFinder)
+			},
+
+		}, {
+			Name:    "server-console",
+			Aliases: []string{"sc"},
+			Usage:   "Start Eye server - access data provided from console input",
+			Action: func(c *cli.Context) error {
+				config, err := core.LoadConfig(c.GlobalString("c"))
+				if err != nil {
+					return err
+				}
+				accessFinder, err := core.BuildAccessFinderFromConsole(config)
+				if err != nil {
+					return err
+				}
+				return start(config, accessFinder)
+			},
+
+		}, {
+			Name:    "server-file",
+			Aliases: []string{"sc"},
+			Usage:   "Start Eye server - access data provided from file",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "security, s",
+					Usage: "Load security configuration from `FILE`",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				config, err := core.LoadConfig(c.GlobalString("c"))
+				if err != nil {
+					return err
+				}
+				accessFinder, err := core.BuildAccessFinderFromFile(c.String("security"))
+				if err != nil {
+					return err
+				}
+				return start(config, accessFinder)
+			},
+
 		},
 	}
-	app.Run(os.Args)
+	err := app.Run(os.Args)
+	if err != nil {
+		l.Err("%s", err)
+	}
+}
+
+func prepareDebug(config *core.Config) {
+	if !config.Debug {
+		gin.SetMode(gin.ReleaseMode)
+		integ.Debug = false
+	}
+	return
+}
+
+func start(config *core.Config, accessFinder core.AccessFinder) (err error) {
+	prepareDebug(config)
+	controller := core.NewEye(config, accessFinder)
+	defer controller.Close()
+	engine := gin.Default()
+	defineRoutes(engine, controller, config)
+	return engine.Run(fmt.Sprintf(":%d", config.Port))
 }
 
 func defineRoutes(engine *gin.Engine, controller *core.Eye, config *core.Config) {
@@ -148,16 +190,6 @@ func defineRoutes(engine *gin.Engine, controller *core.Eye, config *core.Config)
 			c.IndentedJSON(http.StatusOK, config)
 		})
 	}
-}
-
-func configFiles() (ret []string) {
-	args := os.Args[1:]
-	if len(args) > 0 {
-		ret = []string{args[0]}
-	} else {
-		ret = []string{"eye.yml"}
-	}
-	return
 }
 
 func services(c *gin.Context) []string {

@@ -69,7 +69,7 @@ func (o *Eye) Check(checkName string) (err error) {
 
 func (o *Eye) Validate(serviceName string, req *QueryRequest) (err error) {
 	if req.Query == "" {
-		log.Debug(fmt.Sprintf("ping instead of validator, because no query defined for %v", serviceName))
+		l.Debug(fmt.Sprintf("ping instead of validator, because no query defined for %v", serviceName))
 		return o.Ping(serviceName)
 	}
 
@@ -248,7 +248,7 @@ func match(data1 QueryResult, data2 QueryResult, req *CompareRequest) (err error
 				matchErr = errors.New(fmt.Sprintf("abs(%v-%v)=%v, greater than tolerance %v", x, y, diff, req.Tolerance))
 			}
 		} else {
-			log.Debug("Convertion to int not possible, use bytes comparison.")
+			l.Debug("Convertion to int not possible, use bytes comparison.")
 			if !bytes.Equal(data1, data2) {
 				matchErr = errors.New("not equal")
 			}
