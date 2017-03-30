@@ -69,7 +69,6 @@ func (dr *Request) Execute(client *http.Client) (resp *http.Response, err error)
 
 			resp, err = client.Do(req)
 			if err == nil && resp.StatusCode == 401 {
-				resp.Body.Close()
 				resp, err = dr.executeNewDigest(resp, client)
 			}
 		}
@@ -93,6 +92,9 @@ func (dr *Request) executeNewDigest(resp *http.Response, client *http.Client) (*
 	)
 
 	waString := resp.Header.Get("WWW-Authenticate")
+
+	resp.Body.Close()
+
 	if waString == "" {
 		return nil, fmt.Errorf("Failed to get WWW-Authenticate header, please check your server configuration.")
 	}
@@ -103,8 +105,6 @@ func (dr *Request) executeNewDigest(resp *http.Response, client *http.Client) (*
 		return nil, err
 	}
 	authString := auth.toString()
-
-	defer resp.Body.Close()
 
 	if resp, err := dr.executeRequest(authString, client); err != nil {
 		return nil, err

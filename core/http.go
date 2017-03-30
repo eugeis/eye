@@ -132,13 +132,13 @@ func (o httpCheck) Query() (data QueryResult, err error) {
 	if err != nil {
 		return
 	}
+	defer resp.Body.Close()
 
 	data, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}
 	l.Debug("http data: %s", data)
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		err = errors.New(fmt.Sprintf("Status %d", resp.StatusCode))

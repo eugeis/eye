@@ -29,6 +29,7 @@ func (o *Security) FindAccess(key string) (ret Access, err error) {
 
 func BuildAccessFinderFromFile(securityFile string) (ret AccessFinder, err error) {
 	security := &Security{}
+	ret = security
 	err = fillAccessData(security, securityFile)
 	return
 }
