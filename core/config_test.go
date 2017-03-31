@@ -11,6 +11,6 @@ func TestFillAccessData(t *testing.T) {
 }
 
 func TestLoadConfig(t *testing.T) {
-	config, _ := LoadConfig([]string{"d:/views/share/t/diagnosis/config/mega/serv1/eye.yml"})
+	config, _ := LoadConfig("d:/views/share/t/diagnosis/config/mega/serv1/eye.yml")
 	println(config)
 }
