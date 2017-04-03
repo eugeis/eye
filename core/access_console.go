@@ -36,7 +36,7 @@ func fillAccessDataFromConsole(security *Security) (err error) {
 		if err != nil {
 			break
 		}
-		item.Password = pw
+		item.Password = string(pw)
 		security.Access[key] = item
 	}
 	return

@@ -242,6 +242,6 @@ func response(err error, c *gin.Context) {
 		c.String(http.StatusOK, "{ \"ok\": true }")
 	} else {
 		jsonDesc, _ := json.Marshal(err.Error())
-		c.String(http.StatusConflict, fmt.Sprintf("{ \"ok\": false, \"desc:\": %v }", jsonDesc))
+		c.String(http.StatusConflict, fmt.Sprintf("{ \"ok\": false, \"desc:\": %s }", jsonDesc))
 	}
 }

@@ -7,7 +7,7 @@ import (
 
 type Access struct {
 	User     string
-	Password []byte
+	Password string
 }
 
 type AccessFinder interface {

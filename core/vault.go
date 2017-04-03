@@ -34,7 +34,7 @@ func (o *VaultClient) fillAccessData(name string, security *Security) (err error
 		}
 		if secret != nil {
 			item.User = secret.Data["user"].(string)
-			item.Password = []byte(secret.Data["password"].(string))
+			item.Password = secret.Data["password"].(string)
 			security.Access[key] = item
 		} else {
 			l.Info("No access data in Vault for '%key", vaultPath)
