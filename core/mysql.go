@@ -13,7 +13,7 @@ import (
 var disallowedKeywords = []string{" UNION ", " LIMIT ", ";"}
 
 type MySql struct {
-	ServiceName string `default:"mysql"`
+	Name string `default:"mysql"`
 	AccessKey   string `default:"mysql"`
 
 	Host string `default:localhost`
@@ -35,7 +35,7 @@ type MySqlService struct {
 }
 
 func (o *MySqlService) Name() string {
-	return o.mysql.ServiceName
+	return o.mysql.Name
 }
 
 func (o *MySqlService) validateQuery(query string) error {

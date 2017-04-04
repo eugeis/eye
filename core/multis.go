@@ -57,3 +57,20 @@ func (o MultiCheck) checksData() (checksData map[string]QueryResultInfo) {
 	}
 	return
 }
+
+type MultiValidate struct {
+	check     *ValidateCheck
+	validator func([]string, *QueryRequest) error
+}
+
+func (o *MultiValidate) Validate() (err error) {
+	return o.validator(o.check.Services, o.check.Request)
+}
+
+func (o MultiValidate) Query() (data QueryResult, err error) {
+	return
+}
+
+func (o MultiValidate) Info() string {
+	return o.check.Name
+}

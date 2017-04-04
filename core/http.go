@@ -11,7 +11,7 @@ import (
 )
 
 type Http struct {
-	ServiceName string
+	Name string
 	AccessKey   string
 	Url         string
 
@@ -34,7 +34,7 @@ type HttpService struct {
 }
 
 func (o *HttpService) Name() string {
-	return o.http.ServiceName
+	return o.http.Name
 }
 
 func (o *HttpService) Init() (err error) {

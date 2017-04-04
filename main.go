@@ -168,6 +168,10 @@ func defineRoutes(engine *gin.Engine, controller *core.Eye, config *core.Config)
 		servicesGroup.GET("/all/compare", func(c *gin.Context) {
 			response(controller.CompareAll(servicesCompare(c)), c)
 		})
+
+		servicesGroup.GET("/all/compare/:check", func(c *gin.Context) {
+			response(controller.CompareAll(servicesCompare(c)), c)
+		})
 	}
 	checkGroup := engine.Group("/check")
 	{

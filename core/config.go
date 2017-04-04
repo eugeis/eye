@@ -18,7 +18,29 @@ type Config struct {
 	MySql []*MySql
 	Http  []*Http
 
+	Validate        []*ValidateCheck
+
+	ValidateAny     []*ValidateCheck
+	ValidateRunning []*ValidateCheck
+	ValidateAll     []*ValidateCheck
+
+	CompareAny      []*CompareCheck
+	CompareRunning  []*CompareCheck
+	CompareAll      []*CompareCheck
+
 	ConfigFile string
+}
+
+type ValidateCheck struct {
+	Name     string
+	Services []string
+	Request  *QueryRequest
+}
+
+type CompareCheck struct {
+	Name     string
+	Services []string
+	Request  *CompareRequest
 }
 
 func LoadConfig(file string) (ret *Config, err error) {
