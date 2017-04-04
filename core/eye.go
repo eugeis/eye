@@ -132,6 +132,11 @@ func (o *Eye) Ping(serviceName string) (err error) {
 }
 
 func (o *Eye) Check(checkName string) (err error) {
+	if check, ok := o.checks[checkName]; ok {
+		err = check.Validate()
+	} else {
+		err = errors.New(fmt.Sprintf("There is no check '%v' available", checkName))
+	}
 	return
 }
 
