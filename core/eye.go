@@ -1,7 +1,6 @@
 package core
 
 import (
-	"bytes"
 	"errors"
 	"eye/integ"
 	"fmt"
@@ -107,9 +106,6 @@ func (o *Eye) registerCompares() {
 		}
 	}
 }
-func (o *CompareCheck) logBuildCheckNotPossible(err error) {
-	l.Info("Can't build check '%v' because of '%v'", o.Name, err)
-}
 
 func (o *Eye) buildServiceFactory() Factory {
 	serviceFactory := NewFactory()
@@ -124,8 +120,8 @@ func (o *Eye) buildServiceFactory() Factory {
 }
 
 func (o *Eye) Ping(serviceName string) (err error) {
-	service, err := o.serviceFactory.Find(serviceName)
-	if err == nil {
+	var service Service
+	if service, err = o.serviceFactory.Find(serviceName); err == nil {
 		err = service.Ping()
 	}
 	return
@@ -147,8 +143,7 @@ func (o *Eye) Validate(serviceName string, req *QueryRequest) (err error) {
 	}
 
 	var check Check
-	check, err = o.buildCheck(serviceName, req)
-	if err == nil {
+	if check, err = o.buildCheck(serviceName, req); err == nil {
 		err = check.Validate()
 	}
 	return
@@ -226,34 +221,9 @@ func (o *Eye) ValidateAll(serviceNames []string, req *QueryRequest) (err error) 
 
 func (o *Eye) CompareAny(serviceNames []string, req *CompareRequest) (err error) {
 	var check Check
-	check, err = o.getOrBuildCompareCheck(req.ChecksKey("any", serviceNames), serviceNames,
-		true, req, req.compareAnyValidator)
-
-	if err == nil {
+	if check, err = o.getOrBuildCompareCheck(req.ChecksKey("any", serviceNames), serviceNames,
+		true, req, req.compareAnyValidator); err == nil {
 		err = check.Validate()
-	}
-	return
-}
-
-func (o *CompareRequest) compareAnyValidator(checksData map[string]QueryResultInfo) (err error) {
-	var firstName string
-	var firstData QueryResult
-	for serviceName, data := range checksData {
-		if data.err != nil {
-			if len(firstName) > 0 {
-				firstData = data.result
-				firstName = serviceName
-			} else {
-				matchError := match(firstData, data.result, o)
-				if matchError != nil {
-					err = errors.New(fmt.Sprintf("%v ~ %v => %v",
-						firstName, serviceName, matchError))
-				} else {
-					err = nil
-					break
-				}
-			}
-		}
 	}
 	return
 }
@@ -271,92 +241,20 @@ func (o *Eye) CompareRunning(serviceNames []string, req *CompareRequest) (err er
 
 func (o *Eye) CompareAll(serviceNames []string, req *CompareRequest) (err error) {
 	var check Check
-	check, err = o.getOrBuildCompareCheck(req.ChecksKey("all", serviceNames), serviceNames,
-		false, req, req.compareValidator)
-
-	if err == nil {
+	if check, err = o.getOrBuildCompareCheck(req.ChecksKey("all", serviceNames), serviceNames,
+		false, req, req.compareValidator); err == nil {
 		err = check.Validate()
 	}
 	return
-}
-
-func (o *CompareRequest) compareValidator(checksData map[string]QueryResultInfo) error {
-	return matchChecksData(checksData, o)
-}
-
-func matchChecksData(checksData map[string]QueryResultInfo, req *CompareRequest) (err error) {
-	var firstName string
-	var firstData QueryResult
-	for serviceName, queryResult := range checksData {
-		if queryResult.err == nil {
-			if len(firstName) == 0 {
-				firstData = queryResult.result
-				firstName = serviceName
-			} else {
-				matchError := match(firstData, queryResult.result, req)
-				if matchError != nil {
-					err = errors.New(fmt.Sprintf("%v ~ %v failed: %v",
-						firstName, serviceName, matchError))
-					break
-				}
-			}
-		} else {
-			err = errors.New(fmt.Sprintf("%v failed: %v", serviceName, queryResult.err.Error()))
-		}
-	}
-	return
-}
-
-func match(data1 QueryResult, data2 QueryResult, req *CompareRequest) (err error) {
-	var matchErr error
-	if req.Tolerance > 0 {
-		var x, y int
-		var err error
-
-		x, err = data1.Int()
-		if err == nil {
-			y, err = data2.Int()
-		}
-		if err == nil {
-			diff := abs(x - y)
-			if diff > req.Tolerance {
-				matchErr = errors.New(fmt.Sprintf("abs(%v-%v)=%v, greater than tolerance %v", x, y, diff, req.Tolerance))
-			}
-		} else {
-			l.Debug("Convertion to int not possible, use bytes comparison.")
-			if !bytes.Equal(data1, data2) {
-				matchErr = errors.New("not equal")
-			}
-		}
-	} else {
-		if !bytes.Equal(data1, data2) {
-			matchErr = errors.New("not equal")
-		}
-	}
-	if !req.Not {
-		err = matchErr
-	} else if matchErr == nil {
-		err = errors.New("compare request matches but must not")
-	}
-	return
-}
-
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
 }
 
 func (o *Eye) getOrBuildCompareCheck(checkKey string, serviceNames []string, onlyRunning bool, req *CompareRequest,
 	validator func(map[string]QueryResultInfo) error) (check Check, err error) {
 	var value interface{}
 
-	value, err = o.liveChecks.GetOrBuild(checkKey, func() (check interface{}, err error) {
+	if value, err = o.liveChecks.GetOrBuild(checkKey, func() (interface{}, error) {
 		return o.buildCompareCheck(checkKey, serviceNames, onlyRunning, req, validator)
-	})
-
-	if err == nil {
+	}); err == nil {
 		check = value.(Check)
 	}
 	return
