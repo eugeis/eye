@@ -124,6 +124,10 @@ func defineRoutes(engine *gin.Engine, controller *core.Eye, config *core.Config)
 	engine.StaticFile("/help", "html/doc.html")
 	engine.StaticFile("/", "html/doc.html")
 
+	engine.GET("/ping", func(c *gin.Context) {
+		response(nil, c)
+	})
+
 	serviceGroup := engine.Group("/service")
 	{
 		serviceGroup.GET("/:service/ping", func(c *gin.Context) {
