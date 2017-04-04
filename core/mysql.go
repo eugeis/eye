@@ -13,8 +13,8 @@ import (
 var disallowedKeywords = []string{" UNION ", " LIMIT ", ";"}
 
 type MySql struct {
-	Name string `default:"mysql"`
-	AccessKey   string `default:"mysql"`
+	Name      string `default:"mysql"`
+	AccessKey string `default:"mysql"`
 
 	Host string `default:localhost`
 	Port int    `default:3306`
@@ -66,8 +66,7 @@ func (o *MySqlService) limitQuery(query string) string {
 func (o *MySqlService) Init() (err error) {
 	if o.db == nil {
 		var access Access
-		access, err = o.accessFinder.FindAccess(o.mysql.AccessKey)
-		if err == nil {
+		if access, err = o.accessFinder.FindAccess(o.mysql.AccessKey); err == nil {
 			dataSource := fmt.Sprintf("%v:%s@tcp(%v:%d)/%v", access.User, access.Password,
 				o.mysql.Host, o.mysql.Port, o.mysql.Database)
 			o.db, err = sql.Open("mysql", dataSource)
@@ -96,8 +95,7 @@ func (o *MySqlService) Init() (err error) {
 
 func (o *MySqlService) Close() {
 	if o.db != nil {
-		err := o.db.Close()
-		if err != nil {
+		if err := o.db.Close(); err != nil {
 			l.Debug("Closing Database connection of %v caused error %v", o.Name, err)
 		}
 		o.db = nil
@@ -106,11 +104,9 @@ func (o *MySqlService) Close() {
 	}
 }
 
-func (o *MySqlService) Ping() error {
-	err := o.Init()
-	if err == nil {
-		err = o.ping()
-		if err != nil {
+func (o *MySqlService) Ping() (err error) {
+	if err = o.Init(); err == nil {
+		if err = o.ping(); err != nil {
 			l.Debug("'%v' can't be reached because of %v", o.Name(), err)
 		}
 	}
@@ -141,16 +137,16 @@ func (o *MySqlService) pingByQuery() error {
 }
 
 func (o *MySqlService) jsonBytes(sql string) (ret QueryResult, err error) {
-	data, err := o.queryToMap(sql)
-	if err == nil && len(data) > 0 {
+	var data []map[string]interface{}
+	if data, err = o.queryToMap(sql); err == nil && len(data) > 0 {
 		ret, err = json.Marshal(data)
 	}
 	return
 }
 
 func (o *MySqlService) json(sql string) (json string, err error) {
-	data, err := o.jsonBytes(sql)
-	if err == nil && len(data) > 0 {
+	var data QueryResult
+	if data, err = o.jsonBytes(sql); err == nil && len(data) > 0 {
 		json = string(data)
 	}
 	return
@@ -209,8 +205,7 @@ func (o *MySqlService) NewСheck(req *QueryRequest) (ret Check, err error) {
 		}
 	}
 
-	err = o.validateQuery(req.Query)
-	if err == nil {
+	if err = o.validateQuery(req.Query); err == nil {
 		query := o.limitQuery(req.Query)
 		ret = mySqlCheck{info: req.CheckKey(o.Name()), query: query, pattern: pattern, service: o}
 	}
@@ -230,8 +225,8 @@ func (o mySqlCheck) Info() string {
 }
 
 func (o mySqlCheck) Validate() (err error) {
-	data, err := o.Query()
-	if err == nil {
+	var data QueryResult
+	if data, err = o.Query(); err == nil {
 		if o.pattern != nil {
 			if !o.pattern.Match(data) {
 				err = errors.New(fmt.Sprintf("No match for %v", o.info))
@@ -244,8 +239,7 @@ func (o mySqlCheck) Validate() (err error) {
 }
 
 func (o mySqlCheck) Query() (data QueryResult, err error) {
-	err = o.service.Init()
-	if err == nil {
+	if err = o.service.Init(); err == nil {
 		data, err = o.service.jsonBytes(o.query)
 		//l.Debug(string(data))
 	}
