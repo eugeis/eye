@@ -24,9 +24,11 @@ func main() {
 		cli.StringFlag{
 			Name:  "config, c",
 			Usage: "Load configuration from `FILE`",
+		}, cli.StringFlag{
+			Name:  "properties, p",
+			Usage: "Properties file with parameters used in configuration files `FILE`",
 		},
 	}
-
 	app.Commands = []cli.Command{
 		{
 			Name:    "server-vault",
@@ -45,7 +47,7 @@ func main() {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				config, err := core.LoadConfig(c.GlobalString("c"))
+				config, err := loadConfig(c)
 				if err != nil {
 					return err
 				}
@@ -62,7 +64,7 @@ func main() {
 			Aliases: []string{"sc"},
 			Usage:   "Start Eye server - access data provided from console input",
 			Action: func(c *cli.Context) error {
-				config, err := core.LoadConfig(c.GlobalString("c"))
+				config, err := loadConfig(c)
 				if err != nil {
 					return err
 				}
@@ -84,7 +86,7 @@ func main() {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				config, err := core.LoadConfig(c.GlobalString("c"))
+				config, err := loadConfig(c)
 				if err != nil {
 					return err
 				}
@@ -101,6 +103,10 @@ func main() {
 	if err != nil {
 		l.Err("%s", err)
 	}
+}
+
+func loadConfig(c *cli.Context) (*core.Config, error) {
+	return core.LoadConfig(c.GlobalString("c"), c.GlobalString("p"))
 }
 
 func prepareDebug(config *core.Config) {

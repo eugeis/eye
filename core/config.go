@@ -6,8 +6,7 @@ import (
 	"strings"
 	"encoding/json"
 	"os"
-	"regexp"
-	"bytes"
+	"eye/conf"
 )
 
 var l = integ.Log
@@ -30,7 +29,8 @@ type Config struct {
 	CompareRunning []*CompareCheck
 	CompareAll     []*CompareCheck
 
-	ConfigFile string
+	ConfigFile     string
+	PropertiesFile string
 }
 
 type ValidateCheck struct {
@@ -45,10 +45,10 @@ type CompareCheck struct {
 	Request  *CompareRequest
 }
 
-func LoadConfig(file string) (ret *Config, err error) {
-	if _, err = os.Stat(file); err == nil {
-		ret = &Config{ConfigFile: file}
-		err = configor.Load(ret, file)
+func LoadConfig(configFile string, propertiesFile string) (ret *Config, err error) {
+	if _, err = os.Stat(configFile); err == nil {
+		ret = &Config{ConfigFile: configFile, PropertiesFile: propertiesFile}
+		err = conf.ReadConfig(ret, configFile, conf.Env())
 
 		//ignore, https://github.com/jinzhu/configor/issues/6
 		if err != nil && strings.EqualFold(err.Error(), "invalid config, should be struct") {
@@ -56,44 +56,15 @@ func LoadConfig(file string) (ret *Config, err error) {
 		}
 
 		if err == nil {
-			//ret.replaceEnvironmentVariables()
+			//ret.bindToProperties()
 			ret.Print()
 		}
 	}
 	return
 }
 
-func (o *Config) replaceEnvironmentVariables() (err error) {
-	pattern := "(.+?)\\$\\{(.+?)\\}(.+?)"
-	regexp := regexp.MustCompile(pattern)
-	o.Name = replaceEnvVariables(o.Name, regexp)
-	return
-}
-
-func replaceEnvVariables(string string, regexp *regexp.Regexp) (ret string) {
-	if matches := regexp.FindAllStringSubmatch(string, -1); matches != nil {
-		var str bytes.Buffer
-		for _, group := range matches {
-			str.WriteString(group[1])
-			envKey := group[2]
-			if envValue := os.Getenv(envKey); len(envValue) > 0 {
-				str.WriteString(envValue)
-			} else {
-				l.Info("No environment value found for %v", envKey)
-				str.WriteString(envKey)
-			}
-			str.WriteString(group[3])
-			l.Info("%v", group)
-		}
-		ret = str.String()
-	} else {
-		ret = string
-	}
-	return
-}
-
 func (o *Config) Reload() (ret *Config, err error) {
-	return LoadConfig(o.ConfigFile)
+	return LoadConfig(o.ConfigFile, o.PropertiesFile)
 }
 
 func (o *Config) Print() {
