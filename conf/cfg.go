@@ -15,13 +15,13 @@ import (
 	"eye/props"
 )
 
-func Unmarshal(config interface{}, files ...string) (err error) {
+func Unmarshal(config interface{}, files []string, fileSuffixes []string) (err error) {
 	var envAndProps map[string]string
-	envAndProps, err = LoadEnvAndProperties(files...)
+	envAndProps, err = LoadEnvAndProperties(files, fileSuffixes)
 
 	for _, file := range files {
 		if !isPropertiesFile(file) {
-			if err = LoadConfig(config, file, envAndProps); err != nil {
+			if err = LoadConfig(config, file, fileSuffixes, envAndProps); err != nil {
 				break
 			}
 		}
@@ -33,23 +33,42 @@ func isPropertiesFile(file string) bool {
 	return strings.HasSuffix(file, ".properties")
 }
 
-func LoadEnvAndProperties(files ...string) (ret map[string]string, err error) {
-	ret = props.Env()
+func LoadEnvAndProperties(files []string, fileSuffixes []string) (ret map[string]string, err error) {
+	ret = props.Environ()
 	for _, file := range files {
 		if isPropertiesFile(file) {
-			var data bytes.Buffer
-			if data, err = ReadFileBindToProperties(file, ret); err == nil {
-				if _, err = props.ParseIntoMap(data, ret); err != nil {
+			for _, fileWithSuffix := range CollectFilesForSuffixes(file, fileSuffixes) {
+				if err = loadPropertiesFileIntoMap(fileWithSuffix, ret); err != nil {
 					break
 				}
-
 			}
 		}
 	}
 	return
 }
 
-func LoadConfig(config interface{}, file string, properties map[string]string) (err error) {
+func CollectFilesForSuffixes(file string, fileSuffixes []string) (ret []string) {
+	return []string{file}
+}
+
+func loadPropertiesFileIntoMap(file string, toFoll map[string]string) (err error) {
+	var data bytes.Buffer
+	if data, err = ReadFileBindToProperties(file, toFoll); err == nil {
+		_, err = props.ParseIntoMap(data, toFoll)
+	}
+	return
+}
+
+func LoadConfig(config interface{}, file string, fileSuffixes []string, properties map[string]string) (err error) {
+	for _, fileWithSuffix := range CollectFilesForSuffixes(file, fileSuffixes) {
+		if err = loadConfig(config, fileWithSuffix, properties); err != nil {
+			break
+		}
+	}
+	return
+}
+
+func loadConfig(config interface{}, file string, properties map[string]string) (err error) {
 	var data bytes.Buffer
 	if data, err = ReadFileBindToProperties(file, properties); err == nil {
 		switch {

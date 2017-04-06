@@ -28,7 +28,8 @@ type Config struct {
 	CompareRunning []*CompareCheck
 	CompareAll     []*CompareCheck
 
-	ConfigFiles []string
+	ConfigFiles    []string
+	ConfigSuffixes []string
 }
 
 type ValidateCheck struct {
@@ -43,9 +44,9 @@ type CompareCheck struct {
 	Request  *CompareRequest
 }
 
-func LoadConfig(files ...string) (ret *Config, err error) {
+func LoadConfig(files []string, suffixes []string) (ret *Config, err error) {
 	ret = &Config{ConfigFiles: files}
-	err = conf.Unmarshal(ret, files...)
+	err = conf.Unmarshal(ret, files, suffixes)
 
 	if err == nil {
 		ret.Print()
@@ -55,7 +56,7 @@ func LoadConfig(files ...string) (ret *Config, err error) {
 }
 
 func (o *Config) Reload() (ret *Config, err error) {
-	return LoadConfig(o.ConfigFiles...)
+	return LoadConfig(o.ConfigFiles, o.ConfigSuffixes)
 }
 
 func (o *Config) Print() {

@@ -12,8 +12,8 @@ func TestFillAccessData(t *testing.T) {
 
 func TestLoadConfig(t *testing.T) {
 	config, err := LoadConfig(
-		"d:/views/diagnosis/config/eye.yml",
-		"d:/views/diagnosis/config/eye.properties")
+		[]string{"d:/views/diagnosis/config/eye.yml",
+			 "d:/views/diagnosis/config/eye.properties"}, []string{})
 	if err != nil {
 		println(err.Error())
 	}

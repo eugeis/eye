@@ -57,11 +57,11 @@ func ParseIntoMap(data bytes.Buffer, fill map[string]string) (ret map[string]str
 	return
 }
 
-func Env() map[string]string {
-	return EnvIntoMap(make(map[string]string))
+func Environ() map[string]string {
+	return EnvironIntoMap(make(map[string]string))
 }
 
-func EnvIntoMap(fill map[string]string) (ret map[string]string) {
+func EnvironIntoMap(fill map[string]string) (ret map[string]string) {
 	ret = fill
 	SplitPropertiesIntoMap(os.Environ(), ret)
 	return
