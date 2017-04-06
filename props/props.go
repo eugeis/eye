@@ -1,4 +1,4 @@
-package conf
+package props
 
 import (
 	"regexp"
@@ -6,29 +6,32 @@ import (
 	"bytes"
 	"errors"
 	"os"
+	"reflect"
 )
 
-type PropsReader struct {
-	pattern *regexp.Regexp
+var linePattern, _ = regexp.Compile("[#].*\\n|\\s+\\n|\\S+[=]|.*\n")
+
+func Unmarshal(data bytes.Buffer, out interface{}) (err error) {
+	v := reflect.ValueOf(out)
+	if v.Kind() == reflect.Map && !v.IsNil() {
+		_, err = ParseIntoMap(data, out.(map[string]string))
+	} else {
+		err = errors.New("Can't unmarshal properties on an custom object, only map are supported")
+	}
+	return
 }
 
-func New() PropsReader {
-	pattern, _ := regexp.Compile("[#].*\\n|\\s+\\n|\\S+[=]|.*\n")
-	return PropsReader{pattern: pattern}
+func Parse(data bytes.Buffer) (map[string]string, error) {
+	return ParseIntoMap(data, make(map[string]string))
 }
 
-var props = New()
-
-func ParseProperties(data bytes.Buffer) (map[string]string, error) {
-	return ParsePropertiesInto(data, make(map[string]string))
-}
-func ParsePropertiesInto(data bytes.Buffer, fill map[string]string) (ret map[string]string, err error) {
+func ParseIntoMap(data bytes.Buffer, fill map[string]string) (ret map[string]string, err error) {
 	ret = fill
 	str := data.String()
 	if !strings.HasSuffix(str, "\n") {
 		str = str + "\n"
 	}
-	s2 := props.pattern.FindAllString(str, -1)
+	s2 := linePattern.FindAllString(str, -1)
 
 	for i := 0; i < len(s2); {
 		if strings.HasPrefix(s2[i], "#") {
@@ -55,10 +58,10 @@ func ParsePropertiesInto(data bytes.Buffer, fill map[string]string) (ret map[str
 }
 
 func Env() map[string]string {
-	return EnvInto(make(map[string]string))
+	return EnvIntoMap(make(map[string]string))
 }
 
-func EnvInto(fill map[string]string) (ret map[string]string) {
+func EnvIntoMap(fill map[string]string) (ret map[string]string) {
 	ret = fill
 	SplitPropertiesIntoMap(os.Environ(), ret)
 	return

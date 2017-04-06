@@ -12,11 +12,46 @@ import (
 	"errors"
 	"time"
 	"text/template"
+	"eye/props"
 )
 
-func ReadConfig(config interface{}, file string, props map[string]string) (err error) {
+func Unmarshal(config interface{}, files ...string) (err error) {
+	var envAndProps map[string]string
+	envAndProps, err = LoadEnvAndProperties(files...)
+
+	for _, file := range files {
+		if !isPropertiesFile(file) {
+			if err = LoadConfig(config, file, envAndProps); err != nil {
+				break
+			}
+		}
+	}
+	return
+}
+
+func isPropertiesFile(file string) bool {
+	return strings.HasSuffix(file, ".properties")
+}
+
+func LoadEnvAndProperties(files ...string) (ret map[string]string, err error) {
+	ret = props.Env()
+	for _, file := range files {
+		if isPropertiesFile(file) {
+			var data bytes.Buffer
+			if data, err = ReadFileBindToProperties(file, ret); err == nil {
+				if _, err = props.ParseIntoMap(data, ret); err != nil {
+					break
+				}
+
+			}
+		}
+	}
+	return
+}
+
+func LoadConfig(config interface{}, file string, properties map[string]string) (err error) {
 	var data bytes.Buffer
-	if data, err = ReadFileBindToProperties(file, props); err == nil {
+	if data, err = ReadFileBindToProperties(file, properties); err == nil {
 		switch {
 		case strings.HasSuffix(file, ".yaml") || strings.HasSuffix(file, ".yml"):
 			err = yaml.Unmarshal(data.Bytes(), config)
@@ -24,11 +59,15 @@ func ReadConfig(config interface{}, file string, props map[string]string) (err e
 			err = toml.Unmarshal(data.Bytes(), config)
 		case strings.HasSuffix(file, ".json"):
 			err = json.Unmarshal(data.Bytes(), config)
+		case strings.HasSuffix(file, ".properties"):
+			err = props.Unmarshal(data, config)
 		default:
 			if toml.Unmarshal(data.Bytes(), config) != nil {
 				if json.Unmarshal(data.Bytes(), config) != nil {
 					if yaml.Unmarshal(data.Bytes(), config) != nil {
-						err = errors.New("failed to decode config")
+						if props.Unmarshal(data, config) != nil {
+							err = errors.New("failed to decode config")
+						}
 					}
 				}
 			}

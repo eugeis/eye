@@ -5,9 +5,7 @@ import (
 	"github.com/jinzhu/configor"
 	"strings"
 	"encoding/json"
-	"os"
 	"eye/conf"
-	"bytes"
 )
 
 var l = integ.Log
@@ -30,8 +28,7 @@ type Config struct {
 	CompareRunning []*CompareCheck
 	CompareAll     []*CompareCheck
 
-	ConfigFile     string
-	PropertiesFile string
+	ConfigFiles []string
 }
 
 type ValidateCheck struct {
@@ -46,30 +43,19 @@ type CompareCheck struct {
 	Request  *CompareRequest
 }
 
-func LoadConfig(configFile string, propertiesFile string) (ret *Config, err error) {
-	if _, err = os.Stat(configFile); err == nil {
-		ret = &Config{ConfigFile: configFile, PropertiesFile: propertiesFile}
-		envAndProps := conf.Env()
-		if _, e := os.Stat(propertiesFile); e == nil {
-			var propsData bytes.Buffer
-			if propsData, err = conf.ReadFileBindToProperties(propertiesFile, envAndProps); err == nil {
-				_, err = conf.ParsePropertiesInto(propsData, envAndProps)
-			}
-		}
-		if err == nil {
-			err = conf.ReadConfig(ret, configFile, envAndProps)
-		}
-		err = conf.ReadConfig(ret, configFile, envAndProps)
+func LoadConfig(files ...string) (ret *Config, err error) {
+	ret = &Config{ConfigFiles: files}
+	err = conf.Unmarshal(ret, files...)
 
-		if err == nil {
-			ret.Print()
-		}
+	if err == nil {
+		ret.Print()
 	}
+
 	return
 }
 
 func (o *Config) Reload() (ret *Config, err error) {
-	return LoadConfig(o.ConfigFile, o.PropertiesFile)
+	return LoadConfig(o.ConfigFiles...)
 }
 
 func (o *Config) Print() {
