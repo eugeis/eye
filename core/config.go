@@ -5,7 +5,7 @@ import (
 	"github.com/jinzhu/configor"
 	"strings"
 	"encoding/json"
-	"eye/conf"
+	"eye/cfg"
 )
 
 var l = integ.Log
@@ -46,7 +46,7 @@ type CompareCheck struct {
 
 func LoadConfig(files []string, suffixes []string) (ret *Config, err error) {
 	ret = &Config{ConfigFiles: files}
-	err = conf.Unmarshal(ret, files, suffixes)
+	err = cfg.Unmarshal(ret, files, suffixes)
 
 	if err == nil {
 		ret.Print()

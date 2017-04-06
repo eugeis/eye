@@ -1,4 +1,4 @@
-package conf
+package cfg
 
 import (
 	"reflect"
@@ -12,7 +12,7 @@ import (
 	"errors"
 	"time"
 	"text/template"
-	"eye/props"
+	"eye/cfg/props"
 )
 
 func Unmarshal(config interface{}, files []string, fileSuffixes []string) (err error) {
