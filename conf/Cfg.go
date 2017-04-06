@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"path/filepath"
 	"bytes"
-	"os"
 	"strings"
 	"encoding/json"
 	"fmt"
@@ -15,25 +14,35 @@ import (
 	"text/template"
 )
 
-func ReadConfig(config interface{}, file string, params map[string]string) (err error) {
-	var data []byte
-	if data, err = bindToProperties(file, params); err == nil {
+func ReadConfig(config interface{}, file string, props map[string]string) (err error) {
+	var data bytes.Buffer
+	if data, err = ReadFileBindToProperties(file, props); err == nil {
 		switch {
 		case strings.HasSuffix(file, ".yaml") || strings.HasSuffix(file, ".yml"):
-			err = yaml.Unmarshal(data, config)
+			err = yaml.Unmarshal(data.Bytes(), config)
 		case strings.HasSuffix(file, ".toml"):
-			err = toml.Unmarshal(data, config)
+			err = toml.Unmarshal(data.Bytes(), config)
 		case strings.HasSuffix(file, ".json"):
-			err = json.Unmarshal(data, config)
+			err = json.Unmarshal(data.Bytes(), config)
 		default:
-			if toml.Unmarshal(data, config) != nil {
-				if json.Unmarshal(data, config) != nil {
-					if yaml.Unmarshal(data, config) != nil {
+			if toml.Unmarshal(data.Bytes(), config) != nil {
+				if json.Unmarshal(data.Bytes(), config) != nil {
+					if yaml.Unmarshal(data.Bytes(), config) != nil {
 						err = errors.New("failed to decode config")
 					}
 				}
 			}
 		}
+	}
+	return
+}
+
+func ReadFileBindToProperties(file string, params map[string]string) (data bytes.Buffer, err error) {
+	tmpl := template.New(filepath.Base(file)).Funcs(template.FuncMap{
+		"default": dfault,
+	})
+	if tmpl, err = tmpl.ParseFiles(file); err == nil {
+		err = tmpl.Execute(&data, params)
 	}
 	return
 }
@@ -87,29 +96,4 @@ func dfault(dflt interface{}, given ...interface{}) (interface{}, error) {
 	}
 
 	return dflt, nil
-}
-
-func bindToProperties(file string, params map[string]string) (data []byte, err error) {
-	tmpl := template.New(filepath.Base(file)).Funcs(template.FuncMap{
-		"default": dfault,
-	})
-	if tmpl, err = tmpl.ParseFiles(file); err == nil {
-		var buffer bytes.Buffer
-		err = tmpl.Execute(&buffer, params)
-		data = buffer.Bytes()
-	}
-	return
-}
-
-func Env() (ret map[string]string) {
-	ret = make(map[string]string)
-	SplitParamsIntoMap(os.Environ(), ret)
-	return
-}
-
-func SplitParamsIntoMap(params []string, fill map[string]string) {
-	for _, e := range params {
-		pair := strings.Split(e, "=")
-		fill[pair[0]] = pair[1]
-	}
 }

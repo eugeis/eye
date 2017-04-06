@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"os"
 	"eye/conf"
+	"bytes"
 )
 
 var l = integ.Log
@@ -48,15 +49,19 @@ type CompareCheck struct {
 func LoadConfig(configFile string, propertiesFile string) (ret *Config, err error) {
 	if _, err = os.Stat(configFile); err == nil {
 		ret = &Config{ConfigFile: configFile, PropertiesFile: propertiesFile}
-		err = conf.ReadConfig(ret, configFile, conf.Env())
-
-		//ignore, https://github.com/jinzhu/configor/issues/6
-		if err != nil && strings.EqualFold(err.Error(), "invalid config, should be struct") {
-			err = nil
+		envAndProps := conf.Env()
+		if _, e := os.Stat(propertiesFile); e == nil {
+			var propsData bytes.Buffer
+			if propsData, err = conf.ReadFileBindToProperties(propertiesFile, envAndProps); err == nil {
+				_, err = conf.ParsePropertiesInto(propsData, envAndProps)
+			}
 		}
+		if err == nil {
+			err = conf.ReadConfig(ret, configFile, envAndProps)
+		}
+		err = conf.ReadConfig(ret, configFile, envAndProps)
 
 		if err == nil {
-			//ret.bindToProperties()
 			ret.Print()
 		}
 	}
