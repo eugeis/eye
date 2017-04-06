@@ -23,10 +23,14 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "config, c",
-			Usage: "Load configuration from `FILE`",
+			Usage: "Configuration files, separated by ','",
+			Value: "eye.yml",
 		}, cli.StringFlag{
-			Name:  "properties, p",
-			Usage: "Properties file with parameters used in configuration files `FILE`",
+			Name: "environments, e",
+			Usage: "Environments (file suffixes) for configurations and properties files." +
+				"This files - <file>_<suffix>.<ext> -will be loaded from same direcory as a configuration, properties file.",
+			Value: "PROD",
+
 		},
 	}
 	app.Commands = []cli.Command{
@@ -106,7 +110,9 @@ func main() {
 }
 
 func loadConfig(c *cli.Context) (*core.Config, error) {
-	return core.LoadConfig(c.GlobalString("c"), c.GlobalString("p"))
+	configFiles := strings.Split(c.GlobalString("c"), ",")
+	environments := strings.Split(c.GlobalString("e"), ",")
+	return core.LoadConfig(configFiles, environments)
 }
 
 func prepareDebug(config *core.Config) {
