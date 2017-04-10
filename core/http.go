@@ -56,16 +56,12 @@ func (o *HttpService) Close() {
 func (o *HttpService) Ping() error {
 	err := o.Init()
 	if err == nil {
-		err = o.ping()
+		err = o.pingCheck.Validate()
 		if err != nil {
 			l.Debug("'%v' can't be reached because of %v", o.Name(), err)
 		}
 	}
 	return err
-}
-
-func (o *HttpService) ping() error {
-	return o.pingCheck.Validate()
 }
 
 func body(resp *http.Response) string {

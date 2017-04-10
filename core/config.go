@@ -17,6 +17,7 @@ type Config struct {
 
 	MySql []*MySql
 	Http  []*Http
+	Fs  []*Fs
 
 	Validate []*ValidateCheck
 
