@@ -11,9 +11,9 @@ import (
 )
 
 type Http struct {
-	Name string
-	AccessKey   string
-	Url         string
+	Name      string
+	AccessKey string
+	Url       string
 
 	PingRequest *QueryRequest
 
@@ -22,7 +22,7 @@ type Http struct {
 }
 
 type HttpService struct {
-	http *Http
+	http         *Http
 	accessFinder AccessFinder
 
 	client    *http.Client
@@ -30,7 +30,6 @@ type HttpService struct {
 
 	pingTimeout  time.Duration
 	queryTimeout time.Duration
-
 }
 
 func (o *HttpService) Name() string {
@@ -79,18 +78,14 @@ func (o *HttpService) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
 	access, err = o.accessFinder.FindAccess(o.http.AccessKey)
 	if err == nil {
 		var pattern *regexp.Regexp
-		if len(req.Expr) > 0 {
-			pattern, err = regexp.Compile(req.Expr)
-			if err != nil {
-				return
-			}
+		if pattern, err = compileRegexp(req); err != nil {
+			dReq := digest.NewRequest(access.User, access.Password, "GET", o.http.Url+req.Query, "")
+			ret = &httpCheck{
+				info:    req.CheckKey(o.Name()),
+				req:     &dReq,
+				pattern: pattern, service: o}
 		}
 
-		dReq := digest.NewRequest(access.User, access.Password, "GET", o.http.Url+req.Query, "")
-		ret = &httpCheck{
-			info:    req.CheckKey(o.Name()),
-			req:     &dReq,
-			pattern: pattern, service: o}
 	}
 	return
 }

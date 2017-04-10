@@ -198,16 +198,11 @@ func (o *MySqlService) query(sql string) (*sql.Rows, error) {
 
 func (o *MySqlService) NewСheck(req *QueryRequest) (ret Check, err error) {
 	var pattern *regexp.Regexp
-	if len(req.Expr) > 0 {
-		pattern, err = regexp.Compile(req.Expr)
-		if err != nil {
-			return
+	if pattern, err = compileRegexp(req); err != nil {
+		if err = o.validateQuery(req.Query); err == nil {
+			query := o.limitQuery(req.Query)
+			ret = mySqlCheck{info: req.CheckKey(o.Name()), query: query, pattern: pattern, service: o}
 		}
-	}
-
-	if err = o.validateQuery(req.Query); err == nil {
-		query := o.limitQuery(req.Query)
-		ret = mySqlCheck{info: req.CheckKey(o.Name()), query: query, pattern: pattern, service: o}
 	}
 	return
 }

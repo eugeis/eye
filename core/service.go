@@ -7,6 +7,7 @@ import (
 	"time"
 	"errors"
 	"context"
+	"regexp"
 )
 
 type Service interface {
@@ -67,8 +68,6 @@ func (o *QueryResult) Int() (ret int, err error) {
 	return
 }
 
-
-
 func TimeoutContext(timeout time.Duration) context.Context {
 	c, _ := context.WithTimeout(context.Background(), timeout)
 	return c
@@ -101,4 +100,11 @@ func (o *SimpleServiceFactory) Close() {
 		item.Close()
 	}
 	o.services = make(map[string]Service)
+}
+
+func compileRegexp(req *QueryRequest) (ret *regexp.Regexp, err error) {
+	if len(req.Expr) > 0 {
+		ret, err = regexp.Compile(req.Expr)
+	}
+	return
 }

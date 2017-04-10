@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"regexp"
 	"os"
+	"io/ioutil"
+	"encoding/json"
+	"path/filepath"
 )
 
 type Fs struct {
 	Name        string
-	AccessKey   string
 	File        string
 	PingRequest *QueryRequest
 }
@@ -24,8 +26,12 @@ func (o *FsService) Name() string {
 }
 
 func (o *FsService) Init() (err error) {
-	if o.pingCheck == nil && o.Fs.PingRequest != nil {
-		o.pingCheck, err = o.newСheck(o.Fs.PingRequest)
+	if o.pingCheck == nil {
+		if o.Fs.PingRequest != nil {
+			o.pingCheck, err = o.newСheck(o.Fs.PingRequest)
+		} else {
+			o.pingCheck, err = o.newСheck(nil)
+		}
 		if err != nil {
 			o.Close()
 		}
@@ -39,11 +45,7 @@ func (o *FsService) Close() {
 
 func (o *FsService) Ping() (err error) {
 	if err = o.Init(); err != nil {
-		if o.pingCheck != nil {
-			err = o.pingCheck.Validate()
-		} else {
-			_, err = os.Stat(o.Fs.File)
-		}
+		err = o.pingCheck.Validate()
 	}
 	return
 }
@@ -53,14 +55,22 @@ func (o *FsService) NewСheck(req *QueryRequest) (ret Check, err error) {
 }
 
 func (o *FsService) newСheck(req *QueryRequest) (ret *FsCheck, err error) {
+	var pattern *regexp.Regexp
+	pattern, err = compileRegexp(req)
+
+	if req != nil && req.Query != "" {
+		ret = &FsCheck{file: filepath.Join(o.Fs.File, req.Query), pattern: pattern}
+	} else {
+		ret = &FsCheck{file: o.Fs.File, pattern: pattern}
+	}
 	return
 }
 
 //buildCheck
 type FsCheck struct {
 	info    string
+	file    string
 	pattern *regexp.Regexp
-	service *FsService
 }
 
 func (o FsCheck) Info() string {
@@ -79,5 +89,15 @@ func (o FsCheck) Validate() (err error) {
 }
 
 func (o FsCheck) Query() (data QueryResult, err error) {
+	var file os.FileInfo
+
+	file, err = os.Stat(o.file)
+
+	if file.IsDir() {
+		files, _ := ioutil.ReadDir(o.file)
+		data, err = json.Marshal(files)
+	} else {
+		data, err = json.Marshal(file)
+	}
 	return
 }
