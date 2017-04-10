@@ -56,12 +56,16 @@ func (o *FsService) NewСheck(req *QueryRequest) (ret Check, err error) {
 
 func (o *FsService) newСheck(req *QueryRequest) (ret *FsCheck, err error) {
 	var pattern *regexp.Regexp
-	pattern, err = compileRegexp(req)
-
-	if req != nil && req.Query != "" {
-		ret = &FsCheck{file: filepath.Join(o.Fs.File, req.Query), pattern: pattern}
+	if req != nil {
+		if pattern, err = compilePattern(req.Expr); err == nil {
+			if req.Query != "" {
+				ret = &FsCheck{info: req.CheckKey("fs"), file: filepath.Join(o.Fs.File, req.Query), pattern: pattern}
+			} else {
+				ret = &FsCheck{info: req.CheckKey("fs"), file: o.Fs.File, pattern: pattern}
+			}
+		}
 	} else {
-		ret = &FsCheck{file: o.Fs.File, pattern: pattern}
+		ret = &FsCheck{info: req.CheckKey("fs"), file: o.Fs.File}
 	}
 	return
 }

@@ -6,3 +6,7 @@ type Cache interface {
 	Put(key string, value interface{})
 	Clear()
 }
+
+type ObjectCache interface {
+	Get(key string, builder func() interface{}) (value interface{}, ok bool)
+}

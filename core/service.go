@@ -102,9 +102,22 @@ func (o *SimpleServiceFactory) Close() {
 	o.services = make(map[string]Service)
 }
 
-func compileRegexp(req *QueryRequest) (ret *regexp.Regexp, err error) {
-	if len(req.Expr) > 0 {
-		ret, err = regexp.Compile(req.Expr)
+func compilePattern(pattern string) (ret *regexp.Regexp, err error) {
+	if len(pattern) > 0 {
+		ret, err = regexp.Compile(pattern)
+	}
+	return
+}
+
+func compilePatterns(pattern ...string) (ret []*regexp.Regexp, err error) {
+	ret = make([]*regexp.Regexp, len(pattern))
+	for _, p := range pattern {
+		if len(p) > 0 {
+			ret[0], err = regexp.Compile(p)
+			if err != nil {
+				break
+			}
+		}
 	}
 	return
 }

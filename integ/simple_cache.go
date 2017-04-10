@@ -2,6 +2,7 @@ package integ
 
 import (
 	"sync"
+	"time"
 )
 
 type SimpleCache struct {
@@ -53,4 +54,27 @@ func (o SimpleCache) put(key string, value interface{}) {
 		o.data = make(map[string]interface{})
 	}
 	o.data[key] = value
+}
+
+type TimeoutObjectCache struct {
+	Timeout time.Duration
+
+	buildAt time.Time
+	obj     interface{}
+
+	lock sync.Mutex
+}
+
+func (o TimeoutObjectCache) Get(builder func() (interface{}, error)) (value interface{}, err error) {
+	o.lock.Lock()
+	if o.obj == nil || time.Since(o.buildAt) > o.Timeout {
+		o.obj, err = builder()
+		if err != nil {
+			o.obj = nil
+		} else {
+			o.buildAt = time.Now()
+		}
+	}
+	o.lock.Unlock()
+	return
 }

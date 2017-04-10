@@ -78,7 +78,7 @@ func (o *HttpService) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
 	access, err = o.accessFinder.FindAccess(o.http.AccessKey)
 	if err == nil {
 		var pattern *regexp.Regexp
-		if pattern, err = compileRegexp(req); err != nil {
+		if pattern, err = compilePattern(req.Expr); err != nil {
 			dReq := digest.NewRequest(access.User, access.Password, "GET", o.http.Url+req.Query, "")
 			ret = &httpCheck{
 				info:    req.CheckKey(o.Name()),
