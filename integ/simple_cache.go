@@ -11,8 +11,8 @@ type SimpleCache struct {
 	lock    sync.Mutex
 }
 
-func NewCache() SimpleCache {
-	return SimpleCache{MaxSize: 1000, data: make(map[string]interface{}), lock: sync.Mutex{}}
+func NewCache() *SimpleCache {
+	return &SimpleCache{MaxSize: 1000, data: make(map[string]interface{}), lock: sync.Mutex{}}
 }
 
 func (o SimpleCache) Clear() {
@@ -58,6 +58,7 @@ func (o SimpleCache) put(key string, value interface{}) {
 
 type TimeoutObjectCache struct {
 	Timeout time.Duration
+	Builder func() (interface{}, error)
 
 	buildAt time.Time
 	obj     interface{}
@@ -65,16 +66,20 @@ type TimeoutObjectCache struct {
 	lock sync.Mutex
 }
 
-func (o TimeoutObjectCache) Get(builder func() (interface{}, error)) (value interface{}, err error) {
+func (o *TimeoutObjectCache) Get() (ret interface{}, err error) {
 	o.lock.Lock()
 	if o.obj == nil || time.Since(o.buildAt) > o.Timeout {
-		o.obj, err = builder()
+		o.obj, err = o.Builder()
+		o.buildAt = time.Now()
 		if err != nil {
 			o.obj = nil
-		} else {
-			o.buildAt = time.Now()
 		}
 	}
+	ret = o.obj
 	o.lock.Unlock()
 	return
+}
+
+func NewObjectCache(builder func() (interface{}, error)) *TimeoutObjectCache {
+	return &TimeoutObjectCache{Timeout: 3 * time.Second, Builder: builder}
 }

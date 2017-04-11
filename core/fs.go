@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"path/filepath"
+	"time"
+	"eye/integ"
 )
 
 type Fs struct {
@@ -30,7 +32,7 @@ func (o *FsService) Init() (err error) {
 		if o.Fs.PingRequest != nil {
 			o.pingCheck, err = o.newСheck(o.Fs.PingRequest)
 		} else {
-			o.pingCheck, err = o.newСheck(nil)
+			o.pingCheck, err = o.newСheck(&QueryRequest{})
 		}
 		if err != nil {
 			o.Close()
@@ -56,16 +58,15 @@ func (o *FsService) NewСheck(req *QueryRequest) (ret Check, err error) {
 
 func (o *FsService) newСheck(req *QueryRequest) (ret *FsCheck, err error) {
 	var pattern *regexp.Regexp
-	if req != nil {
-		if pattern, err = compilePattern(req.Expr); err == nil {
-			if req.Query != "" {
-				ret = &FsCheck{info: req.CheckKey("fs"), file: filepath.Join(o.Fs.File, req.Query), pattern: pattern}
-			} else {
-				ret = &FsCheck{info: req.CheckKey("fs"), file: o.Fs.File, pattern: pattern}
-			}
+	if pattern, err = compilePattern(req.Expr); err == nil {
+		if req.Query != "" {
+			ret = &FsCheck{info: req.CheckKey("Fs"), file: filepath.Join(o.Fs.File, req.Query),
+				pattern:     pattern}
+		} else {
+			ret = &FsCheck{info: req.CheckKey("Fs"), file: o.Fs.File,
+				pattern:     pattern}
 		}
-	} else {
-		ret = &FsCheck{info: req.CheckKey("fs"), file: o.Fs.File}
+		ret.files = integ.NewObjectCache(func() (interface{}, error) { return ret.Files() })
 	}
 	return
 }
@@ -75,6 +76,7 @@ type FsCheck struct {
 	info    string
 	file    string
 	pattern *regexp.Regexp
+	files   integ.ObjectCache
 }
 
 func (o FsCheck) Info() string {
@@ -93,15 +95,47 @@ func (o FsCheck) Validate() (err error) {
 }
 
 func (o FsCheck) Query() (data QueryResult, err error) {
+	var value interface{}
+	data = value.(QueryResult)
+	return
+
+}
+
+func (o FsCheck) Files() (data QueryResult, err error) {
 	var file os.FileInfo
 
-	file, err = os.Stat(o.file)
-
-	if file.IsDir() {
-		files, _ := ioutil.ReadDir(o.file)
-		data, err = json.Marshal(files)
-	} else {
-		data, err = json.Marshal(file)
+	if file, err = os.Stat(o.file); err == nil {
+		if file.IsDir() {
+			var files []os.FileInfo
+			files, err = ioutil.ReadDir(o.file)
+			list := make([]FileInfo, len(files))
+			for i, entry := range files {
+				list[i] = toFileInfo(entry)
+			}
+			data, err = json.Marshal(list)
+		} else {
+			data, err = json.Marshal(toFileInfo(file))
+		}
 	}
+	l.Info("%s", data)
 	return
+}
+
+func toFileInfo(item os.FileInfo) FileInfo {
+	f := FileInfo{
+		Name:    item.Name(),
+		Size:    item.Size(),
+		Mode:    item.Mode(),
+		ModTime: item.ModTime(),
+		IsDir:   item.IsDir(),
+	}
+	return f
+}
+
+type FileInfo struct {
+	Name    string
+	Size    int64
+	Mode    os.FileMode
+	ModTime time.Time
+	IsDir   bool
 }

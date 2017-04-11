@@ -8,5 +8,5 @@ type Cache interface {
 }
 
 type ObjectCache interface {
-	Get(key string, builder func() interface{}) (value interface{}, ok bool)
+	Get() (ret interface{}, err error)
 }

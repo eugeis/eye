@@ -16,23 +16,29 @@ type Ps struct {
 }
 
 type PsService struct {
-	ps        *Ps
+	Ps        *Ps
 	pingCheck *PsCheck
 
 	procs *integ.TimeoutObjectCache
 }
 
 func (o *PsService) Name() string {
-	return o.ps.Name
+	return o.Ps.Name
 }
 
 func (o *PsService) Init() (err error) {
 	if o.pingCheck == nil {
-		o.pingCheck, err = o.newСheck(o.ps.PingRequest)
+		if o.Ps.PingRequest != nil {
+			o.pingCheck, err = o.newСheck(o.Ps.PingRequest)
+		} else {
+			o.pingCheck, err = o.newСheck(&QueryRequest{})
+		}
 		if err != nil {
 			o.Close()
+		} else {
+			o.procs = integ.NewObjectCache(func() (interface{}, error) { return o.buildProcesses() })
 		}
-		o.procs = &integ.TimeoutObjectCache{Timeout: 1000}
+
 	}
 	return
 }
@@ -58,14 +64,14 @@ func (o *PsService) newСheck(req *QueryRequest) (ret *PsCheck, err error) {
 
 	pattern, err = compilePatterns(req.Query, req.Expr)
 	if err == nil {
-		ret = &PsCheck{info: req.CheckKey("ps"), service: o,
+		ret = &PsCheck{info: req.CheckKey("Ps"), service: o,
 			query:       pattern[0], pattern: pattern[1]}
 	}
 	return
 }
 
-func (o PsService) processes() (ret []*Proc, err error) {
-	value, err := o.procs.Get(func() (interface{}, error) { return o.buildProcesses() })
+func (o PsService) Processes() (ret []*Proc, err error) {
+	value, err := o.procs.Get()
 	if err == nil {
 		ret = value.([]*Proc)
 	}
@@ -96,7 +102,6 @@ func (o PsService) buildProcesses() (ret []*Proc, err error) {
 type PsCheck struct {
 	info    string
 	service *PsService
-	req     *QueryRequest
 	query   *regexp.Regexp
 	pattern *regexp.Regexp
 }
@@ -118,10 +123,10 @@ func (o PsCheck) Validate() (err error) {
 
 func (o PsCheck) Query() (ret QueryResult, err error) {
 	var procs []*Proc
-	if o.req.Query != "" {
-		procs, err = o.service.processes()
+	if o.query != nil {
+		procs, err = o.service.Processes()
 	} else {
-		procs, err = o.service.processes()
+		procs, err = o.service.Processes()
 	}
 	if err == nil {
 		ret, err = json.Marshal(procs)
@@ -141,8 +146,8 @@ func (o PsCheck) queryToMap() (ret []*Proc, err error) {
 			p, _ := process.NewProcess(int32(pid))
 
 			proc.Name, _ = p.Name()
-			proc.Status, _ = p.Status()
-			proc.Cmdline, _ = p.Cmdline()
+			//proc.Status, _ = p.Status()
+			//proc.Cmdline, _ = p.Cmdline()
 			//proc.Connections, _ = p.Connections()
 		}
 	}
