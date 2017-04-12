@@ -7,7 +7,7 @@ import (
 )
 
 func TestFileSystemService(t *testing.T) {
-	service := FsService{Fs: &Fs{File:"/Users/ee"}}
+	service := FsService{Fs: &Fs{File:"D:/views"}}
 	err := service.Init()
 	var check Check
 	var data QueryResult

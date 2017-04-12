@@ -6,8 +6,9 @@ import (
 	"regexp"
 	"github.com/shirou/gopsutil/process"
 	"encoding/json"
-	"github.com/shirou/gopsutil/net"
 	"eye/integ"
+	"runtime"
+	"github.com/StackExchange/wmi"
 )
 
 type Ps struct {
@@ -79,20 +80,37 @@ func (o PsService) Processes() (ret []*Proc, err error) {
 }
 
 func (o PsService) buildProcesses() (ret []*Proc, err error) {
-	var pids []int32
-	if pids, err = process.Pids(); err == nil {
-		ret = make([]*Proc, len(pids))
+	if runtime.GOOS == "windows" {
+		var dst []process.Win32_Process
+		q := wmi.CreateQuery(&dst, "")
+		if err = wmi.Query(q, &dst); err == nil {
+			ret = make([]*Proc, len(dst))
+			for i, wp := range dst {
+				proc := &Proc{Id: int(wp.ProcessID)}
+				ret[i] = proc
 
-		for i, pid := range pids {
-			proc := &Proc{Id: pid}
-			ret[i] = proc
+				proc.Name = wp.Name
+				proc.Status = *wp.Status
+				proc.Cmdline = *wp.CommandLine
+				proc.Path = *wp.ExecutablePath
+			}
+		}
+	} else {
+		var pids []int32
+		if pids, err = process.Pids(); err == nil {
+			ret = make([]*Proc, len(pids))
 
-			p, _ := process.NewProcess(int32(pid))
+			for i, pid := range pids {
+				proc := &Proc{Id: int(pid)}
+				ret[i] = proc
 
-			proc.Name, _ = p.Name()
-			proc.Status, _ = p.Status()
-			proc.Cmdline, _ = p.Cmdline()
-			//proc.Connections, _ = p.Connections()
+				p, _ := process.NewProcess(int32(pid))
+
+				proc.Name, _ = p.Name()
+				proc.Status, _ = p.Status()
+				proc.Cmdline, _ = p.Cmdline()
+			}
+
 		}
 	}
 	return
@@ -134,30 +152,10 @@ func (o PsCheck) Query() (ret QueryResult, err error) {
 	return
 }
 
-func (o PsCheck) queryToMap() (ret []*Proc, err error) {
-	var pids []int32
-	if pids, err = process.Pids(); err == nil {
-		ret = make([]*Proc, len(pids))
-
-		for i, pid := range pids {
-			proc := &Proc{Id: pid}
-			ret[i] = proc
-
-			p, _ := process.NewProcess(int32(pid))
-
-			proc.Name, _ = p.Name()
-			//proc.Status, _ = p.Status()
-			//proc.Cmdline, _ = p.Cmdline()
-			//proc.Connections, _ = p.Connections()
-		}
-	}
-	return
-}
-
 type Proc struct {
-	Id          int32
-	Name        string
-	Status      string
-	Cmdline     string
-	Connections []net.ConnectionStat
+	Id      int
+	Name    string
+	Status  string
+	Cmdline string
+	Path    string
 }

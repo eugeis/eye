@@ -11,6 +11,7 @@ func TestProcessService(t *testing.T) {
 	err := ps.Init()
 	var check Check
 	var data QueryResult
+	fmt.Printf("%v", time.Now())
 	if check, err = ps.NewСheck(&QueryRequest{}); err == nil {
 		for i := 1; i <= 10; i++ {
 			if data, err = check.Query(); err == nil {

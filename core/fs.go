@@ -96,6 +96,7 @@ func (o FsCheck) Validate() (err error) {
 
 func (o FsCheck) Query() (data QueryResult, err error) {
 	var value interface{}
+	value, err = o.files.Get()
 	data = value.(QueryResult)
 	return
 
