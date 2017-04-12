@@ -60,6 +60,23 @@ func (o MultiCheck) checksData() (checksData map[string]QueryResultInfo) {
 	return
 }
 
+type MultiPing struct {
+	check     *PingCheck
+	validator func([]string) error
+}
+
+func (o *MultiPing) Validate() (err error) {
+	return o.validator(o.check.Services)
+}
+
+func (o MultiPing) Query() (data QueryResult, err error) {
+	return
+}
+
+func (o MultiPing) Info() string {
+	return o.check.Name
+}
+
 type MultiValidate struct {
 	check     *ValidateCheck
 	validator func([]string, *QueryRequest) error

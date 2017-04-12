@@ -17,7 +17,10 @@ type Config struct {
 
 	MySql []*MySql
 	Http  []*Http
-	Fs  []*Fs
+	Fs    []*Fs
+
+	PingAny     []*PingCheck
+	PingAll     []*PingCheck
 
 	Validate []*ValidateCheck
 
@@ -31,6 +34,11 @@ type Config struct {
 
 	ConfigFiles    []string
 	ConfigSuffixes []string
+}
+
+type PingCheck struct {
+	Name     string
+	Services []string
 }
 
 type ValidateCheck struct {

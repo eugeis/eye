@@ -45,6 +45,7 @@ func (o *Eye) reloadServiceFactory() {
 	o.checks = make(map[string]Check)
 
 	//register checks
+	o.registerMultiPing()
 	o.registerValidateChecks()
 	o.registerMultiValidates()
 	o.registerMultiValidates()
@@ -61,6 +62,16 @@ func (o *Eye) registerValidateChecks() {
 				l.Info("Can't build check '%v' because of '%v'", checkName, err)
 			}
 		}
+	}
+}
+
+func (o *Eye) registerMultiPing() {
+	for _, item := range o.config.PingAll {
+		o.checks[item.Name] = &MultiPing{check: item, validator: o.PingAll}
+	}
+
+	for _, item := range o.config.PingAny {
+		o.checks[item.Name] = &MultiPing{check: item, validator: o.PingAny}
 	}
 }
 

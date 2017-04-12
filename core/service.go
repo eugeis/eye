@@ -121,3 +121,7 @@ func compilePatterns(pattern ...string) (ret []*regexp.Regexp, err error) {
 	}
 	return
 }
+
+func ChecksKey(strictness string, serviceNames []string) string {
+	return fmt.Sprintf("%v(%v.q(%v).e(%v))", strictness, strings.Join(serviceNames, "-"))
+}

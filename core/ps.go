@@ -50,7 +50,7 @@ func (o *PsService) Close() {
 }
 
 func (o *PsService) Ping() (err error) {
-	if err = o.Init(); err != nil {
+	if err = o.Init(); err == nil {
 		err = o.pingCheck.Validate()
 	}
 	return
