@@ -1,8 +1,6 @@
 package core
 
 import (
-	"errors"
-	"fmt"
 	"regexp"
 	"os"
 	"io/ioutil"
@@ -61,10 +59,10 @@ func (o *FsService) newСheck(req *QueryRequest) (ret *FsCheck, err error) {
 	if pattern, err = compilePattern(req.Expr); err == nil {
 		if req.Query != "" {
 			ret = &FsCheck{info: req.CheckKey("Fs"), file: filepath.Join(o.Fs.File, req.Query),
-				pattern:     pattern}
+				pattern:     pattern, not: req.Not}
 		} else {
 			ret = &FsCheck{info: req.CheckKey("Fs"), file: o.Fs.File,
-				pattern:     pattern}
+				pattern:     pattern, not: req.Not}
 		}
 		ret.files = integ.NewObjectCache(func() (interface{}, error) { return ret.Files() })
 	}
@@ -75,6 +73,7 @@ func (o *FsService) newСheck(req *QueryRequest) (ret *FsCheck, err error) {
 type FsCheck struct {
 	info    string
 	file    string
+	not     bool
 	pattern *regexp.Regexp
 	files   integ.ObjectCache
 }
@@ -84,14 +83,7 @@ func (o FsCheck) Info() string {
 }
 
 func (o FsCheck) Validate() (err error) {
-	data, err := o.Query()
-
-	if err == nil && o.pattern != nil {
-		if !o.pattern.Match(data) {
-			err = errors.New(fmt.Sprintf("No match for %v", o.info))
-		}
-	}
-	return
+	return validate(o, o.pattern, o.not)
 }
 
 func (o FsCheck) Query() (data QueryResult, err error) {
@@ -118,7 +110,6 @@ func (o FsCheck) Files() (data QueryResult, err error) {
 			data, err = json.Marshal(toFileInfo(file))
 		}
 	}
-	l.Info("%s", data)
 	return
 }
 

@@ -201,7 +201,8 @@ func (o *MySqlService) NewСheck(req *QueryRequest) (ret Check, err error) {
 	if pattern, err = compilePattern(req.Expr); err == nil {
 		if err = o.validateQuery(req.Query); err == nil {
 			query := o.limitQuery(req.Query)
-			ret = mySqlCheck{info: req.CheckKey(o.Name()), query: query, pattern: pattern, service: o}
+			ret = mySqlCheck{info: req.CheckKey(o.Name()), query: query,
+				pattern:       pattern, service: o, not: req.Not}
 		}
 	}
 	return
@@ -211,6 +212,7 @@ func (o *MySqlService) NewСheck(req *QueryRequest) (ret Check, err error) {
 type mySqlCheck struct {
 	info    string
 	query   string
+	not     bool
 	pattern *regexp.Regexp
 	service *MySqlService
 }
@@ -219,18 +221,8 @@ func (o mySqlCheck) Info() string {
 	return o.info
 }
 
-func (o mySqlCheck) Validate() (err error) {
-	var data QueryResult
-	if data, err = o.Query(); err == nil {
-		if o.pattern != nil {
-			if !o.pattern.Match(data) {
-				err = errors.New(fmt.Sprintf("No match for %v", o.info))
-			}
-		} else if data == nil {
-			err = errors.New(fmt.Sprintf("No match, empty result for %v", o.info))
-		}
-	}
-	return
+func (o mySqlCheck) Validate() error {
+	return validate(o, o.pattern, o.not)
 }
 
 func (o mySqlCheck) Query() (data QueryResult, err error) {

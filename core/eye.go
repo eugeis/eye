@@ -48,20 +48,31 @@ func (o *Eye) reloadServiceFactory() {
 	o.registerMultiPing()
 	o.registerValidateChecks()
 	o.registerMultiValidates()
-	o.registerMultiValidates()
+	o.registerCompares()
 }
 
 func (o *Eye) registerValidateChecks() {
 	for _, item := range o.config.Validate {
-		for _, serviceName := range item.Services {
-			checkName := fmt.Sprintf("%v_%v", serviceName, item.Name)
-			check, err := o.buildCheck(serviceName, item.Request)
-			if err == nil {
-				o.checks[checkName] = check
-			} else {
-				l.Info("Can't build check '%v' because of '%v'", checkName, err)
+		if len(item.Services) > 1 {
+			for _, serviceName := range item.Services {
+				o.registerValidateCheck(fmt.Sprintf("%v-%v", serviceName, item.Name),
+					serviceName, item.Request)
 			}
+		} else if len(item.Services) > 0 {
+			o.registerValidateCheck(item.Name,
+				item.Services[0], item.Request)
+		} else {
+			l.Info("No service defined for the check %v", item.Name)
 		}
+	}
+}
+
+func (o *Eye) registerValidateCheck(checkName string, serviceName string, request *QueryRequest) {
+	check, err := o.buildCheck(serviceName, request)
+	if err == nil {
+		o.checks[checkName] = check
+	} else {
+		l.Info("Can't build check '%v' because of '%v'", checkName, err)
 	}
 }
 
@@ -126,6 +137,14 @@ func (o *Eye) buildServiceFactory() Factory {
 
 	for _, item := range o.config.Http {
 		serviceFactory.Add(&HttpService{http: item, accessFinder: o.accessFinder})
+	}
+
+	for _, item := range o.config.Fs {
+		serviceFactory.Add(&FsService{Fs: item})
+	}
+
+	for _, item := range o.config.Ps {
+		serviceFactory.Add(&PsService{Ps: item})
 	}
 	return &serviceFactory
 }

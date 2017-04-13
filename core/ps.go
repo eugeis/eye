@@ -1,8 +1,6 @@
 package core
 
 import (
-	"errors"
-	"fmt"
 	"regexp"
 	"github.com/shirou/gopsutil/process"
 	"encoding/json"
@@ -66,7 +64,7 @@ func (o *PsService) newСheck(req *QueryRequest) (ret *PsCheck, err error) {
 	pattern, err = compilePatterns(req.Query, req.Expr)
 	if err == nil {
 		ret = &PsCheck{info: req.CheckKey("Ps"), service: o,
-			query:       pattern[0], pattern: pattern[1]}
+			query:       pattern[0], pattern: pattern[1], not: req.Not}
 	}
 	return
 }
@@ -120,6 +118,7 @@ func (o PsService) buildProcesses() (ret []*Proc, err error) {
 type PsCheck struct {
 	info    string
 	service *PsService
+	not     bool
 	query   *regexp.Regexp
 	pattern *regexp.Regexp
 }
@@ -129,14 +128,7 @@ func (o PsCheck) Info() string {
 }
 
 func (o PsCheck) Validate() (err error) {
-	data, err := o.Query()
-
-	if err == nil && o.pattern != nil {
-		if !o.pattern.Match(data) {
-			err = errors.New(fmt.Sprintf("No match for %v", o.info))
-		}
-	}
-	return
+	return validate(o, o.pattern, o.not)
 }
 
 func (o PsCheck) Query() (ret QueryResult, err error) {

@@ -149,7 +149,6 @@ func matchChecksData(checksData map[string]QueryResultInfo, req *CompareRequest)
 }
 
 func match(data1 QueryResult, data2 QueryResult, req *CompareRequest) (err error) {
-	var matchErr error
 	if req.Tolerance > 0 {
 		var x, y int
 		var err error
@@ -160,24 +159,27 @@ func match(data1 QueryResult, data2 QueryResult, req *CompareRequest) (err error
 		}
 		if err == nil {
 			diff := abs(x - y)
-			if diff > req.Tolerance {
-				matchErr = errors.New(fmt.Sprintf("abs(%v-%v)=%v, greater than tolerance %v", x, y, diff, req.Tolerance))
+			if match := diff <= req.Tolerance; (!match && !req.QueryRequest.Not) || (match && req.QueryRequest.Not) {
+				if req.QueryRequest.Not {
+					err = errors.New(fmt.Sprintf("abs(%v-%v)<=%v, less than tolerance %v", x, y, diff, req.Tolerance))
+				} else {
+					err = errors.New(fmt.Sprintf("abs(%v-%v)>%v, greater than tolerance %v", x, y, diff, req.Tolerance))
+				}
 			}
 		} else {
 			l.Debug("Convertion to int not possible, use bytes comparison.")
-			if !bytes.Equal(data1, data2) {
-				matchErr = errors.New("not equal")
+			if match := bytes.Equal(data1, data2); (!match && !req.QueryRequest.Not) || (match && req.QueryRequest.Not) {
+				if req.QueryRequest.Not {
+					err = errors.New("equal")
+				} else {
+					err = errors.New("not equal")
+				}
 			}
 		}
 	} else {
-		if !bytes.Equal(data1, data2) {
-			matchErr = errors.New("not equal")
+		if match := bytes.Equal(data1, data2); (!match && !req.QueryRequest.Not) || (match && req.QueryRequest.Not) {
+			err = errors.New("not equal")
 		}
-	}
-	if !req.Not {
-		err = matchErr
-	} else if matchErr == nil {
-		err = errors.New("compare request matches but must not")
 	}
 	return
 }

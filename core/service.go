@@ -35,25 +35,33 @@ type Factory interface {
 type QueryRequest struct {
 	Query string
 	Expr  string
+	Not   bool
 }
 
 type CompareRequest struct {
 	QueryRequest *QueryRequest
 	Tolerance    int
-	Not          bool
 }
 
 func (o *CompareRequest) ChecksKey(strictness string, serviceNames []string) string {
 	return fmt.Sprintf("%v[tolerance(%v),not(%v)]", o.QueryRequest.ChecksKey(strictness, serviceNames),
-		o.Tolerance, o.Not)
+		o.Tolerance, o.QueryRequest.Not)
 }
 
 func (o *QueryRequest) CheckKey(serviceName string) string {
-	return fmt.Sprintf("%v.q(%v).e(%v)", serviceName, o.Query, o.Expr)
+	if o.Not {
+		return fmt.Sprintf("%v.q(%v).e(%v).not()", serviceName, o.Query, o.Expr)
+	} else {
+		return fmt.Sprintf("%v.q(%v).e(%v)", serviceName, o.Query, o.Expr)
+	}
 }
 
 func (o *QueryRequest) ChecksKey(strictness string, serviceNames []string) string {
-	return fmt.Sprintf("%v(%v.q(%v).e(%v))", strictness, strings.Join(serviceNames, "-"), o.Query, o.Expr)
+	if o.Not {
+		return fmt.Sprintf("%v(%v.q(%v).e(%v).not())", strictness, strings.Join(serviceNames, "-"), o.Query, o.Expr)
+	} else {
+		return fmt.Sprintf("%v(%v.q(%v).e(%v))", strictness, strings.Join(serviceNames, "-"), o.Query, o.Expr)
+	}
 }
 
 type QueryResult []byte
@@ -124,4 +132,18 @@ func compilePatterns(pattern ...string) (ret []*regexp.Regexp, err error) {
 
 func ChecksKey(strictness string, serviceNames []string) string {
 	return fmt.Sprintf("%v(%v.q(%v).e(%v))", strictness, strings.Join(serviceNames, "-"))
+}
+
+func validate(check Check, pattern *regexp.Regexp, not bool) (err error) {
+	var data QueryResult
+	if data, err = check.Query(); err == nil {
+		if pattern != nil {
+			if match := pattern.Match(data); (!match && !not) || (match && not) {
+				err = errors.New(fmt.Sprintf("No match for %v", check.Info()))
+			}
+		} else if match := data != nil; (!match && !not) || (match && not) {
+			err = errors.New(fmt.Sprintf("No match, empty result for %v", check.Info()))
+		}
+	}
+	return
 }

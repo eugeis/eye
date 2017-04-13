@@ -18,6 +18,7 @@ type Config struct {
 	MySql []*MySql
 	Http  []*Http
 	Fs    []*Fs
+	Ps    []*Ps
 
 	PingAny     []*PingCheck
 	PingAll     []*PingCheck

@@ -83,7 +83,7 @@ func (o *HttpService) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
 			ret = &httpCheck{
 				info:    req.CheckKey(o.Name()),
 				req:     &dReq,
-				pattern: pattern, service: o}
+				pattern: pattern, service: o, not: req.Not}
 		}
 
 	}
@@ -95,6 +95,7 @@ func (o *HttpService) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
 type httpCheck struct {
 	info    string
 	req     *digest.Request
+	not     bool
 	pattern *regexp.Regexp
 	service *HttpService
 }
@@ -103,15 +104,8 @@ func (o httpCheck) Info() string {
 	return o.info
 }
 
-func (o httpCheck) Validate() (err error) {
-	data, err := o.Query()
-
-	if err == nil && o.pattern != nil {
-		if !o.pattern.Match(data) {
-			err = errors.New(fmt.Sprintf("No match for %v", o.info))
-		}
-	}
-	return
+func (o httpCheck) Validate() error {
+	return validate(o, o.pattern, o.not)
 }
 
 func (o httpCheck) Query() (data QueryResult, err error) {
