@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"time"
+	"gee/as"
 )
 
 type Http struct {
@@ -23,7 +24,7 @@ type Http struct {
 
 type HttpService struct {
 	http         *Http
-	accessFinder AccessFinder
+	accessFinder as.AccessFinder
 
 	client    *http.Client
 	pingCheck *httpCheck
@@ -57,7 +58,7 @@ func (o *HttpService) Ping() error {
 	if err == nil {
 		err = o.pingCheck.Validate()
 		if err != nil {
-			l.Debug("'%v' can't be reached because of %v", o.Name(), err)
+			Log.Debug("'%v' can't be reached because of %v", o.Name(), err)
 		}
 	}
 	return err
@@ -74,7 +75,7 @@ func (o *HttpService) NewСheck(req *QueryRequest) (ret Check, err error) {
 }
 
 func (o *HttpService) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
-	var access Access
+	var access as.Access
 	access, err = o.accessFinder.FindAccess(o.http.AccessKey)
 	if err == nil {
 		var pattern *regexp.Regexp
@@ -123,7 +124,7 @@ func (o httpCheck) Query() (data QueryResult, err error) {
 	if err != nil {
 		return
 	}
-	l.Debug("http data: %s", data)
+	Log.Debug("http data: %s", data)
 
 	if resp.StatusCode != http.StatusOK {
 		err = errors.New(fmt.Sprintf("Status %d", resp.StatusCode))

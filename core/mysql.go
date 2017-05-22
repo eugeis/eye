@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"gee/as"
 )
 
 var disallowedKeywords = []string{" UNION ", " LIMIT ", ";"}
@@ -27,7 +28,7 @@ type MySql struct {
 
 type MySqlService struct {
 	mysql        *MySql
-	accessFinder AccessFinder
+	accessFinder as.AccessFinder
 
 	db           *sql.DB
 	pingTimeout  time.Duration
@@ -65,7 +66,7 @@ func (o *MySqlService) limitQuery(query string) string {
 
 func (o *MySqlService) Init() (err error) {
 	if o.db == nil {
-		var access Access
+		var access as.Access
 		if access, err = o.accessFinder.FindAccess(o.mysql.AccessKey); err == nil {
 			dataSource := fmt.Sprintf("%v:%s@tcp(%v:%d)/%v", access.User, access.Password,
 				o.mysql.Host, o.mysql.Port, o.mysql.Database)
@@ -74,18 +75,18 @@ func (o *MySqlService) Init() (err error) {
 			if err == nil {
 				if o.mysql.PingTimeoutMillis > 0 {
 					o.pingTimeout = time.Duration(o.mysql.PingTimeoutMillis) * time.Millisecond
-					l.Debug("Ping timeout for %v is %v", o.Name(), o.pingTimeout)
+					Log.Debug("Ping timeout for %v is %v", o.Name(), o.pingTimeout)
 				}
 
 				if o.mysql.QueryTimeoutMillis > 0 {
 					o.queryTimeout = time.Duration(o.mysql.QueryTimeoutMillis) * time.Millisecond
-					l.Debug("Query timeout %v is %v", o.Name(), o.queryTimeout)
+					Log.Debug("Query timeout %v is %v", o.Name(), o.queryTimeout)
 				}
 
 				//connect
 				o.ping()
 			} else {
-				l.Debug("Database connection of %v can't be open because of %v", err)
+				Log.Debug("Database connection of %v can't be open because of %v", err)
 				o.db = nil
 			}
 		}
@@ -96,18 +97,18 @@ func (o *MySqlService) Init() (err error) {
 func (o *MySqlService) Close() {
 	if o.db != nil {
 		if err := o.db.Close(); err != nil {
-			l.Debug("Closing Database connection of %v caused error %v", o.Name, err)
+			Log.Debug("Closing Database connection of %v caused error %v", o.Name, err)
 		}
 		o.db = nil
 	} else {
-		l.Debug("Database connection of %v already closed", o.Name())
+		Log.Debug("Database connection of %v already closed", o.Name())
 	}
 }
 
 func (o *MySqlService) Ping() (err error) {
 	if err = o.Init(); err == nil {
 		if err = o.ping(); err != nil {
-			l.Debug("'%v' can't be reached because of %v", o.Name(), err)
+			Log.Debug("'%v' can't be reached because of %v", o.Name(), err)
 		}
 	}
 	return err

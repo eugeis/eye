@@ -1,14 +1,12 @@
 package core
 
 import (
-	"eye/integ"
-	"github.com/jinzhu/configor"
-	"strings"
 	"encoding/json"
-	"eye/cfg"
+	"gee/cfg"
+	"gee/lg"
 )
 
-var l = integ.Log
+var Log = lg.NewLogger("EYE ")
 
 type Config struct {
 	Name  string `default:"Eye"`
@@ -20,8 +18,8 @@ type Config struct {
 	Fs    []*Fs
 	Ps    []*Ps
 
-	PingAny     []*PingCheck
-	PingAll     []*PingCheck
+	PingAny []*PingCheck
+	PingAll []*PingCheck
 
 	Validate []*ValidateCheck
 
@@ -72,15 +70,18 @@ func (o *Config) Reload() (ret *Config, err error) {
 func (o *Config) Print() {
 	json, err := json.MarshalIndent(o, "", "\t")
 	if err == nil {
-		l.Info(string(json))
+		Log.Info(string(json))
 	}
 }
 
-func fillAccessData(security *Security, file string) (err error) {
-	err = configor.Load(security, file)
-	//ignore, https://github.com/jinzhu/configor/issues/6
-	if err != nil && strings.EqualFold(err.Error(), "invalid config, should be struct") {
-		err = nil
+func (o *Config) ExtractAccessKeys() (ret []string) {
+	ret = make([]string, len(o.MySql)+len(o.Http))
+	for i, item := range o.MySql {
+		ret[i] = item.AccessKey
+	}
+	var pre = len(o.MySql)
+	for i, item := range o.Http {
+		ret[pre + i] = item.AccessKey
 	}
 	return
 }

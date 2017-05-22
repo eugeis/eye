@@ -45,10 +45,10 @@ func (o MultiCheck) checksData() (checksData map[string]QueryResultInfo) {
 					checksData[check.Info()] = QueryResultInfo{err: errors.New("No match")}
 				} else if len(matches) > 0 {
 					checksData[check.Info()] = QueryResultInfo{result: matches[1]}
-					//l.Debug("%v = %v", check.Info(), string(matches[1]))
+					//Log.Debug("%v = %v", check.Info(), string(matches[1]))
 				} else {
 					checksData[check.Info()] = QueryResultInfo{result: matches[0]}
-					//l.Debug("%v = %v", check.Info(), string(matches[0]))
+					//Log.Debug("%v = %v", check.Info(), string(matches[0]))
 				}
 			} else {
 				checksData[check.Info()] = QueryResultInfo{result: data}
@@ -122,7 +122,7 @@ func (o *CompareRequest) compareValidator(checksData map[string]QueryResultInfo)
 }
 
 func (o *CompareCheck) logBuildCheckNotPossible(err error) {
-	l.Info("Can't build check '%v' because of '%v'", o.Name, err)
+	Log.Info("Can't build check '%v' because of '%v'", o.Name, err)
 }
 
 func matchChecksData(checksData map[string]QueryResultInfo, req *CompareRequest) (err error) {
@@ -167,7 +167,7 @@ func match(data1 QueryResult, data2 QueryResult, req *CompareRequest) (err error
 				}
 			}
 		} else {
-			l.Debug("Convertion to int not possible, use bytes comparison.")
+			Log.Debug("Convertion to int not possible, use bytes comparison.")
 			if match := bytes.Equal(data1, data2); (!match && !req.QueryRequest.Not) || (match && req.QueryRequest.Not) {
 				if req.QueryRequest.Not {
 					err = errors.New("equal")

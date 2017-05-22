@@ -5,18 +5,19 @@ import (
 	"eye/integ"
 	"fmt"
 	"regexp"
+	"gee/as"
 )
 
 type Eye struct {
 	config       *Config
-	accessFinder AccessFinder
+	accessFinder as.AccessFinder
 
 	serviceFactory Factory
 	checks         map[string]Check
 	liveChecks     integ.Cache
 }
 
-func NewEye(config *Config, accessFinder AccessFinder) (ret *Eye) {
+func NewEye(config *Config, accessFinder as.AccessFinder) (ret *Eye) {
 	ret = &Eye{config: config, accessFinder: accessFinder, liveChecks: integ.NewCache()}
 	ret.reloadServiceFactory()
 	return
@@ -62,7 +63,7 @@ func (o *Eye) registerValidateChecks() {
 			o.registerValidateCheck(item.Name,
 				item.Services[0], item.Request)
 		} else {
-			l.Info("No service defined for the check %v", item.Name)
+			Log.Info("No service defined for the check %v", item.Name)
 		}
 	}
 }
@@ -72,7 +73,7 @@ func (o *Eye) registerValidateCheck(checkName string, serviceName string, reques
 	if err == nil {
 		o.checks[checkName] = check
 	} else {
-		l.Info("Can't build check '%v' because of '%v'", checkName, err)
+		Log.Info("Can't build check '%v' because of '%v'", checkName, err)
 	}
 }
 
@@ -168,7 +169,7 @@ func (o *Eye) Check(checkName string) (err error) {
 
 func (o *Eye) Validate(serviceName string, req *QueryRequest) (err error) {
 	if req.Query == "" {
-		l.Debug(fmt.Sprintf("ping instead of validator, because no query defined for %v", serviceName))
+		Log.Debug(fmt.Sprintf("ping instead of validator, because no query defined for %v", serviceName))
 		return o.Ping(serviceName)
 	}
 

@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"eye/core"
-	"eye/integ"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
@@ -12,9 +11,10 @@ import (
 	"strconv"
 	"strings"
 	"github.com/urfave/cli"
+	"gee/as"
 )
 
-var l = integ.Log
+var l = core.Log
 
 func main() {
 	app := cli.NewApp()
@@ -55,8 +55,9 @@ func main() {
 				if err != nil {
 					return err
 				}
-				accessFinder, err := core.BuildAccessFinderFromVault(
-					c.String("vault_token"), c.String("vault_address"), config)
+				accessFinder, err := as.BuildAccessFinderFromVault("eye",
+					c.String("vault_token"), c.String("vault_address"),
+					config.Name, config.ExtractAccessKeys())
 				if err != nil {
 					return err
 				}
@@ -72,7 +73,7 @@ func main() {
 				if err != nil {
 					return err
 				}
-				accessFinder, err := core.BuildAccessFinderFromConsole(config)
+				accessFinder, err := as.BuildAccessFinderFromConsole(config.ExtractAccessKeys())
 				if err != nil {
 					return err
 				}
@@ -94,7 +95,7 @@ func main() {
 				if err != nil {
 					return err
 				}
-				accessFinder, err := core.BuildAccessFinderFromFile(c.String("security"))
+				accessFinder, err := as.BuildAccessFinderFromFile(c.String("security"))
 				if err != nil {
 					return err
 				}
@@ -118,12 +119,12 @@ func loadConfig(c *cli.Context) (*core.Config, error) {
 func prepareDebug(config *core.Config) {
 	if !config.Debug {
 		gin.SetMode(gin.ReleaseMode)
-		integ.Debug = false
+		lg.Debug = false
 	}
 	return
 }
 
-func start(config *core.Config, accessFinder core.AccessFinder) (err error) {
+func start(config *core.Config, accessFinder as.AccessFinder) (err error) {
 	prepareDebug(config)
 	controller := core.NewEye(config, accessFinder)
 	defer controller.Close()
