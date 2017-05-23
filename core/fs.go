@@ -97,7 +97,6 @@ func (o FsCheck) Query() (data QueryResult, err error) {
 
 func (o FsCheck) Files() (data QueryResult, err error) {
 	var file os.FileInfo
-
 	if file, err = os.Stat(o.file); err == nil {
 		if file.IsDir() {
 			var files []os.FileInfo

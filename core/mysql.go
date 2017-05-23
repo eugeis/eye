@@ -11,14 +11,14 @@ import (
 	"gee/as"
 )
 
-var disallowedKeywords = []string{" UNION ", " LIMIT ", ";"}
+var disallowedSqlKeywords = []string{" UNION ", " LIMIT ", ";"}
 
 type MySql struct {
 	Name      string `default:"mysql"`
 	AccessKey string `default:"mysql"`
 
-	Host string `default:localhost`
-	Port int    `default:3306`
+	Host string `default:"localhost"`
+	Port int    `default:"3306"`
 
 	Database string
 
@@ -43,7 +43,7 @@ func (o *MySqlService) validateQuery(query string) error {
 	var err error
 	queryLowCase := strings.ToUpper(query)
 
-	for _, keyword := range disallowedKeywords {
+	for _, keyword := range disallowedSqlKeywords {
 		if strings.Contains(queryLowCase, keyword) {
 			err = errors.New(fmt.Sprintf("'%v' is disallowed for Query", keyword))
 			break
@@ -86,7 +86,7 @@ func (o *MySqlService) Init() (err error) {
 				//connect
 				o.ping()
 			} else {
-				Log.Debug("Database connection of %v can't be open because of %v", err)
+				Log.Debug("Index connection of %v can't be open because of %v", err)
 				o.db = nil
 			}
 		}
@@ -97,11 +97,11 @@ func (o *MySqlService) Init() (err error) {
 func (o *MySqlService) Close() {
 	if o.db != nil {
 		if err := o.db.Close(); err != nil {
-			Log.Debug("Closing Database connection of %v caused error %v", o.Name, err)
+			Log.Debug("Closing Index connection of %v caused error %v", o.Name, err)
 		}
 		o.db = nil
 	} else {
-		Log.Debug("Database connection of %v already closed", o.Name())
+		Log.Debug("Index connection of %v already closed", o.Name())
 	}
 }
 

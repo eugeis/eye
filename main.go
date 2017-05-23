@@ -12,6 +12,7 @@ import (
 	"strings"
 	"github.com/urfave/cli"
 	"gee/as"
+	"gee/lg"
 )
 
 var l = core.Log
@@ -28,9 +29,8 @@ func main() {
 		}, cli.StringFlag{
 			Name: "environments, e",
 			Usage: "Environments (file suffixes) for configurations and properties files." +
-				"This files - <file>_<suffix>.<ext> -will be loaded from same direcory as a configuration, properties file.",
-			Value: "PROD",
-
+				"This files - <file>_<suffix>.<ext> -will be loaded from same directory as a configuration, properties file.",
+			Value: "",
 		},
 	}
 	app.Commands = []cli.Command{
