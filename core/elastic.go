@@ -93,7 +93,7 @@ func (o *ElasticService) Ping() (err error) {
 func (o *ElasticService) ping() (err error) {
 	var res *elastic.ClusterHealthResponse
 	if res, err = o.clusterHealth.Do(o.context); err == nil {
-		if strings.EqualFold(res.Status,"RED") {
+		if strings.EqualFold(res.Status, "RED") {
 			err = errors.New("Cluster health status is [RED]")
 		}
 	}
@@ -105,7 +105,6 @@ func (o *ElasticService) NewСheck(req *QueryRequest) (ret Check, err error) {
 	if pattern, err = compilePattern(req.Expr); err == nil {
 		ret = elasticCheck{info: req.CheckKey(o.Name()), query: req.Query,
 			pattern:         pattern, service: o, not: req.Not,
-			search:          o.client.Search(o.elastic.Index).Size(5).Source(req.Query),
 		}
 	}
 	return
@@ -131,6 +130,9 @@ func (o elasticCheck) Validate() error {
 
 func (o elasticCheck) Query() (data QueryResult, err error) {
 	if err = o.service.Init(); err == nil {
+		if o.search == nil {
+			o.search = o.service.client.Search(o.service.elastic.Index).Size(5).Source(o.query)
+		}
 		//l.Debug(string(data))
 		var res *elastic.SearchResult
 		if res, err = o.search.Do(o.service.context); err != nil {
@@ -146,6 +148,7 @@ func (o elasticCheck) Query() (data QueryResult, err error) {
 				Log.Info("Error %v, at unmarshal of %v", err, hit)
 			}
 		}
+		Log.Debug("elastic data: %s", resultData)
 		data, err = json.Marshal(resultData)
 	}
 	return
