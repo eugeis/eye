@@ -3,21 +3,21 @@ package core
 import (
 	"gopkg.in/olivere/elastic.v5"
 	"gee/as"
-	"strings"
 	"fmt"
 	"regexp"
 	"golang.org/x/net/context"
 	"time"
+	"encoding/json"
 	"errors"
+	"strings"
 )
 
 var disallowedElasticKeywords = []string{}
 
 type Elastic struct {
 	Name       string `default:"elastic"`
-	AccessKey  string `default:"elastic"`
 	Host       string `default:"localhost"`
-	Port       int    `default:"9300"`
+	Port       int    `default:"9200"`
 	ScrollSize int `default:"500"`
 
 	Index string
@@ -32,8 +32,6 @@ type ElasticService struct {
 
 	client        *elastic.Client
 	clusterHealth *elastic.ClusterHealthService
-	search        *elastic.SearchService
-	scroll        *elastic.ScrollService
 	context       context.Context
 
 	pingTimeout  time.Duration
@@ -44,39 +42,12 @@ func (o *ElasticService) Name() string {
 	return o.elastic.Name
 }
 
-func (o *ElasticService) validateQuery(query string) error {
-	var err error
-	queryLowCase := strings.ToUpper(query)
-
-	for _, keyword := range disallowedElasticKeywords {
-		if strings.Contains(queryLowCase, keyword) {
-			err = errors.New(fmt.Sprintf("'%v' is disallowed for Query", keyword))
-			break
-		}
-	}
-	if !(strings.HasPrefix(queryLowCase, "SELECT ") || strings.HasPrefix(queryLowCase, "SHOW ")) {
-		err = errors.New("Only SELECT/SHOW queries allowed")
-	}
-	return err
-}
-
-func (o *ElasticService) limitQuery(query string) string {
-	queryLowCase := strings.ToUpper(query)
-	if !(strings.HasPrefix(queryLowCase, "SELECT ")) {
-		return query + " LIMIT 5"
-	} else {
-		return query
-	}
-}
-
 func (o *ElasticService) Init() (err error) {
 	if o.client == nil {
-		url := fmt.Sprintf("http://(%v:%d)", o.elastic.Host, o.elastic.Port)
+		url := fmt.Sprintf("http://%v:%d", o.elastic.Host, o.elastic.Port)
 		o.client, err = elastic.NewClient(elastic.SetURL(url))
 		if err == nil {
 			o.clusterHealth = o.client.ClusterHealth().Index(o.elastic.Index)
-			o.search = o.client.Search(o.elastic.Index)
-			o.scroll = o.client.Scroll(o.elastic.Index).Size(o.elastic.ScrollSize)
 			o.context = context.Background()
 
 			if o.elastic.PingTimeoutMillis > 0 {
@@ -92,7 +63,7 @@ func (o *ElasticService) Init() (err error) {
 			//connect
 			o.ping()
 		} else {
-			Log.Debug("Index connection of %v can't be open because of %v", err)
+			Log.Debug("Elastic client can't connect to %v because of %v", url, err)
 			o.client = nil
 		}
 	}
@@ -104,8 +75,6 @@ func (o *ElasticService) Close() {
 		o.client.Stop()
 		o.clusterHealth = nil
 		o.client = nil
-		o.search = nil
-		o.scroll = nil
 		o.context = nil
 	} else {
 		Log.Debug("Client connection of %v already closed", o.Name())
@@ -121,17 +90,22 @@ func (o *ElasticService) Ping() (err error) {
 	return err
 }
 
-func (o *ElasticService) ping() error {
-	return o.clusterHealth.Validate()
+func (o *ElasticService) ping() (err error) {
+	var res *elastic.ClusterHealthResponse
+	if res, err = o.clusterHealth.Do(o.context); err == nil {
+		if strings.EqualFold(res.Status,"RED") {
+			err = errors.New("Cluster health status is [RED]")
+		}
+	}
+	return
 }
 
 func (o *ElasticService) NewСheck(req *QueryRequest) (ret Check, err error) {
 	var pattern *regexp.Regexp
 	if pattern, err = compilePattern(req.Expr); err == nil {
-		if err = o.validateQuery(req.Query); err == nil {
-			query := o.limitQuery(req.Query)
-			ret = elasticCheck{info: req.CheckKey(o.Name()), query: query,
-				pattern:         pattern, service: o, not: req.Not}
+		ret = elasticCheck{info: req.CheckKey(o.Name()), query: req.Query,
+			pattern:         pattern, service: o, not: req.Not,
+			search:          o.client.Search(o.elastic.Index).Size(5).Source(req.Query),
 		}
 	}
 	return
@@ -144,6 +118,7 @@ type elasticCheck struct {
 	not     bool
 	pattern *regexp.Regexp
 	service *ElasticService
+	search  *elastic.SearchService
 }
 
 func (o elasticCheck) Info() string {
@@ -157,7 +132,21 @@ func (o elasticCheck) Validate() error {
 func (o elasticCheck) Query() (data QueryResult, err error) {
 	if err = o.service.Init(); err == nil {
 		//l.Debug(string(data))
-		o.service.search.Do(o.service.context)
+		var res *elastic.SearchResult
+		if res, err = o.search.Do(o.service.context); err != nil {
+			return
+		}
+		resultData := make([]map[string]interface{}, 0)
+		for _, hit := range res.Hits.Hits {
+			item := make(map[string]interface{})
+			err := json.Unmarshal(*hit.Source, &item)
+			if err == nil {
+				resultData = append(resultData, item)
+			} else {
+				Log.Info("Error %v, at unmarshal of %v", err, hit)
+			}
+		}
+		data, err = json.Marshal(resultData)
 	}
 	return
 }

@@ -147,6 +147,10 @@ func (o *Eye) buildServiceFactory() Factory {
 	for _, item := range o.config.Ps {
 		serviceFactory.Add(&PsService{Ps: item})
 	}
+
+	for _, item := range o.config.Elastic {
+		serviceFactory.Add(&ElasticService{elastic: item})
+	}
 	return &serviceFactory
 }
 

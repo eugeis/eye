@@ -13,10 +13,11 @@ type Config struct {
 	Port  int    `default:"3000"`
 	Debug bool   `default:true`
 
-	MySql []*MySql
-	Http  []*Http
-	Fs    []*Fs
-	Ps    []*Ps
+	MySql    []*MySql
+	Http     []*Http
+	Fs       []*Fs
+	Ps       []*Ps
+	Elastic []*Elastic
 
 	PingAny []*PingCheck
 	PingAll []*PingCheck
@@ -81,7 +82,7 @@ func (o *Config) ExtractAccessKeys() (ret []string) {
 	}
 	var pre = len(o.MySql)
 	for i, item := range o.Http {
-		ret[pre + i] = item.AccessKey
+		ret[pre+i] = item.AccessKey
 	}
 	return
 }
