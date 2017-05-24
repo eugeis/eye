@@ -157,6 +157,7 @@ func (o elasticCheck) Validate() error {
 func (o elasticCheck) Query() (data QueryResult, err error) {
 	if err = o.service.Init(); err == nil {
 		//l.Debug(string(data))
+		o.service.search.Do(o.service.context)
 	}
 	return
 }

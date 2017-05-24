@@ -38,6 +38,12 @@ type QueryRequest struct {
 	Not   bool
 }
 
+type ExportRequest struct {
+	Name      string
+	Query     string
+	Converter func(interface{}) string
+}
+
 type CompareRequest struct {
 	QueryRequest *QueryRequest
 	Tolerance    int
