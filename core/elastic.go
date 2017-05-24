@@ -12,8 +12,6 @@ import (
 	"strings"
 )
 
-var disallowedElasticKeywords = []string{}
-
 type Elastic struct {
 	Name       string `default:"elastic"`
 	Host       string `default:"localhost"`
