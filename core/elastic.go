@@ -108,6 +108,11 @@ func (o *ElasticService) NewСheck(req *QueryRequest) (ret Check, err error) {
 	return
 }
 
+func (o *ElasticService) NewExporter(req *ExportRequest) (ret Exporter, err error) {
+	ret = elasticExporter{info: req.ExportKey(o.Name()), query: req.Query, service: o, }
+	return
+}
+
 //buildCheck
 type elasticCheck struct {
 	info    string
@@ -151,3 +156,21 @@ func (o elasticCheck) Query() (data QueryResult, err error) {
 	}
 	return
 }
+
+type elasticExporter struct {
+	info    string
+	query   string
+	file    string
+	service *ElasticService
+	search  *elastic.SearchService
+}
+
+func (o elasticExporter) Info() string {
+	return o.info
+}
+
+func (o elasticExporter) Export(params ...string) (err error) {
+	return
+}
+
+

@@ -209,6 +209,10 @@ func (o *MySqlService) NewСheck(req *QueryRequest) (ret Check, err error) {
 	return
 }
 
+func (o *MySqlService) NewExporter(req *ExportRequest) (ret Exporter, err error) {
+	return
+}
+
 //buildCheck
 type mySqlCheck struct {
 	info    string

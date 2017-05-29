@@ -91,6 +91,10 @@ func (o *HttpService) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
 	return
 }
 
+func (o *HttpService) NewExporter(req *ExportRequest) (ret Exporter, err error) {
+	return
+}
+
 //buildCheck
 
 type httpCheck struct {

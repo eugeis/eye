@@ -14,6 +14,7 @@ type Eye struct {
 
 	serviceFactory Factory
 	checks         map[string]Check
+	exporters      map[string]Exporter
 	liveChecks     integ.Cache
 }
 
@@ -50,6 +51,34 @@ func (o *Eye) reloadServiceFactory() {
 	o.registerValidateChecks()
 	o.registerMultiValidates()
 	o.registerCompares()
+
+	//register exporters
+	o.exporters = make(map[string]Exporter)
+
+}
+
+func (o *Eye) registerExporters() {
+	for _, item := range o.config.FieldsExporter {
+		if len(item.Services) > 1 {
+			for _, serviceName := range item.Services {
+				o.registerFieldExporter(fmt.Sprintf("%v-%v", serviceName, item.Name),
+					serviceName, item)
+			}
+		} else if len(item.Services) > 0 {
+			o.registerFieldExporter(item.Name, item.Services[0], item)
+		} else {
+			Log.Info("No service defined for the exporter %v", item.Name)
+		}
+	}
+}
+
+func (o *Eye) registerFieldExporter(exporterName string, serviceName string, exporter *FieldsExporter) {
+	item, err := o.buildExporter(serviceName, exporter.Request)
+	if err == nil {
+		o.exporters[exporterName] = item
+	} else {
+		Log.Info("Can't build item '%v' because of '%v'", exporterName, err)
+	}
 }
 
 func (o *Eye) registerValidateChecks() {
@@ -196,6 +225,14 @@ func (o *Eye) buildCheck(serviceName string, req *QueryRequest) (ret Check, err 
 	})
 	if err == nil {
 		ret = value.(Check)
+	}
+	return
+}
+
+func (o *Eye) buildExporter(serviceName string, req *ExportRequest) (ret Exporter, err error) {
+	var service Service
+	if service, err = o.serviceFactory.Find(serviceName); err == nil {
+		ret, err = service.NewExporter(req)
 	}
 	return
 }

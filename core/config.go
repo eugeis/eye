@@ -13,10 +13,10 @@ type Config struct {
 	Port  int    `default:"3000"`
 	Debug bool   `default:true`
 
-	MySql    []*MySql
-	Http     []*Http
-	Fs       []*Fs
-	Ps       []*Ps
+	MySql   []*MySql
+	Http    []*Http
+	Fs      []*Fs
+	Ps      []*Ps
 	Elastic []*Elastic
 
 	PingAny []*PingCheck
@@ -32,6 +32,8 @@ type Config struct {
 	CompareRunning []*CompareCheck
 	CompareAll     []*CompareCheck
 
+	FieldsExporter []*FieldsExporter
+
 	ConfigFiles    []string
 	ConfigSuffixes []string
 }
@@ -43,14 +45,22 @@ type PingCheck struct {
 
 type ValidateCheck struct {
 	Name     string
-	Services []string
 	Request  *QueryRequest
+	Services []string
 }
 
 type CompareCheck struct {
 	Name     string
-	Services []string
 	Request  *CompareRequest
+	Services []string
+}
+
+type FieldsExporter struct {
+	Name     string
+	Fields   []string
+	Separator string
+	Request  *ExportRequest
+	Services []string
 }
 
 func LoadConfig(files []string, suffixes []string) (ret *Config, err error) {

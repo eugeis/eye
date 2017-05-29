@@ -69,6 +69,10 @@ func (o *FsService) newСheck(req *QueryRequest) (ret *FsCheck, err error) {
 	return
 }
 
+func (o *FsService) NewExporter(req *ExportRequest) (ret Exporter, err error) {
+	return
+}
+
 //buildCheck
 type FsCheck struct {
 	info    string

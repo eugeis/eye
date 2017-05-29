@@ -8,6 +8,7 @@ import (
 	"errors"
 	"context"
 	"regexp"
+	"io"
 )
 
 type Service interface {
@@ -19,12 +20,19 @@ type Service interface {
 	Ping() error
 
 	NewСheck(req *QueryRequest) (Check, error)
+
+	NewExporter(req *ExportRequest) (Exporter, error)
 }
 
 type Check interface {
 	Info() string
 	Query() (QueryResult, error)
 	Validate() error
+}
+
+type Exporter interface {
+	Info() string
+	Export(params ...string) error
 }
 
 type Factory interface {
@@ -39,9 +47,9 @@ type QueryRequest struct {
 }
 
 type ExportRequest struct {
-	Name      string
 	Query     string
 	Converter func(interface{}) string
+	Out       func(interface{}) io.Writer
 }
 
 type CompareRequest struct {
@@ -68,6 +76,10 @@ func (o *QueryRequest) ChecksKey(strictness string, serviceNames []string) strin
 	} else {
 		return fmt.Sprintf("%v(%v.q(%v).e(%v))", strictness, strings.Join(serviceNames, "-"), o.Query, o.Expr)
 	}
+}
+
+func (o *ExportRequest) ExportKey(serviceName string) string {
+	return fmt.Sprintf("%v.q(%v)", serviceName, o.Query)
 }
 
 type QueryResult []byte
@@ -137,7 +149,7 @@ func compilePatterns(pattern ...string) (ret []*regexp.Regexp, err error) {
 }
 
 func ChecksKey(strictness string, serviceNames []string) string {
-	return fmt.Sprintf("%v(%v.q(%v).e(%v))", strictness, strings.Join(serviceNames, "-"))
+	return fmt.Sprintf("%v(%v)", strictness, strings.Join(serviceNames, "-"))
 }
 
 func validate(check Check, pattern *regexp.Regexp, not bool) (err error) {

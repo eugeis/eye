@@ -69,6 +69,10 @@ func (o *PsService) newСheck(req *QueryRequest) (ret *PsCheck, err error) {
 	return
 }
 
+func (o *PsService) NewExporter(req *ExportRequest) (ret Exporter, err error) {
+	return
+}
+
 func (o PsService) Processes() (ret []*Proc, err error) {
 	value, err := o.procs.Get()
 	if err == nil {
