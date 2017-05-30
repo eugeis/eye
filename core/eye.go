@@ -5,6 +5,7 @@ import (
 	"eye/integ"
 	"fmt"
 	"gee/as"
+	"os"
 )
 
 type Eye struct {
@@ -34,6 +35,9 @@ func (o *Eye) UpdateConfig(config *Config) {
 	o.Close()
 	o.config = config
 	o.reloadServiceFactory()
+	if len(o.config.ExportFolder) > 0 {
+		os.MkdirAll(o.config.ExportFolder, 0777)
+	}
 }
 
 func (o *Eye) Ping(serviceName string) (err error) {

@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"path/filepath"
 )
 
 var fileNamePattern, _ = regexp.Compile("[^a-zA-Z0-9.-]")
@@ -64,6 +65,8 @@ func (o *Eye) registerFieldExporter(exporterFullName string, serviceName string,
 				}
 				fileName = fileNamePattern.ReplaceAllString(fileName, "_")
 				fileName = strings.Replace(fileName, "__", "_", -1)
+				fileName = filepath.Join(o.config.ExportFolder, fileName)
+
 				return os.Create(fileName)
 			},
 		}

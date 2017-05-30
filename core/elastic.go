@@ -219,7 +219,6 @@ func (o *elasticExporter) search() (ret *elastic.SearchResult, err error) {
 		}
 		if ret.Hits == nil {
 			err = errors.New("expected results != nil; got nil")
-
 		}
 	}
 	return

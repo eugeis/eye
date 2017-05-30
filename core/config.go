@@ -9,9 +9,10 @@ import (
 var Log = lg.NewLogger("EYE ")
 
 type Config struct {
-	Name  string `default:"Eye"`
-	Port  int    `default:"3000"`
-	Debug bool   `default:true`
+	Name         string `default:"Eye"`
+	Port         int    `default:"3000"`
+	Debug        bool   `default:true`
+	ExportFolder string `default:"./export"`
 
 	MySql   []*MySql
 	Http    []*Http
@@ -56,11 +57,11 @@ type CompareCheck struct {
 }
 
 type FieldsExporter struct {
-	Name     string
+	Name      string
 	Query     string
-	Fields   []string
+	Fields    []string
 	Separator string
-	Services []string
+	Services  []string
 }
 
 func LoadConfig(files []string, suffixes []string) (ret *Config, err error) {
