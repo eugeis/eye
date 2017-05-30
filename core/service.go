@@ -32,7 +32,7 @@ type Check interface {
 
 type Exporter interface {
 	Info() string
-	Export(params ...string) error
+	Export(params map[string]string) error
 }
 
 type Factory interface {
@@ -48,8 +48,8 @@ type QueryRequest struct {
 
 type ExportRequest struct {
 	Query     string
-	Converter func(interface{}) string
-	Out       func(interface{}) io.Writer
+	Converter func(map[string]interface{}) []byte
+	Out       func(params map[string]string) (io.WriteCloser, error)
 }
 
 type CompareRequest struct {
@@ -161,6 +161,17 @@ func validate(check Check, pattern *regexp.Regexp, not bool) (err error) {
 			}
 		} else if match := data != nil; (!match && !not) || (match && not) {
 			err = errors.New(fmt.Sprintf("No match, empty result for %v", check.Info()))
+		}
+	}
+	return
+}
+
+func prepareQuery(query string, params map[string]string) (ret string) {
+	ret = query
+	if params != nil && len(params) > 0 {
+		for k, v := range params {
+			placeHolder := fmt.Sprintf("@@%v@@", strings.ToUpper(k))
+			ret = strings.Replace(ret, placeHolder, v, -1)
 		}
 	}
 	return

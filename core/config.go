@@ -57,9 +57,9 @@ type CompareCheck struct {
 
 type FieldsExporter struct {
 	Name     string
+	Query     string
 	Fields   []string
 	Separator string
-	Request  *ExportRequest
 	Services []string
 }
 

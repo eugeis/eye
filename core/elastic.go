@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+	"io"
 )
 
 type Elastic struct {
@@ -109,7 +110,7 @@ func (o *ElasticService) NewСheck(req *QueryRequest) (ret Check, err error) {
 }
 
 func (o *ElasticService) NewExporter(req *ExportRequest) (ret Exporter, err error) {
-	ret = elasticExporter{info: req.ExportKey(o.Name()), query: req.Query, service: o, }
+	ret = elasticExporter{info: req.ExportKey(o.Name()), req: req, service: o}
 	return
 }
 
@@ -159,18 +160,67 @@ func (o elasticCheck) Query() (data QueryResult, err error) {
 
 type elasticExporter struct {
 	info    string
-	query   string
-	file    string
+	req     *ExportRequest
 	service *ElasticService
-	search  *elastic.SearchService
+	scroll  *elastic.ScrollService
 }
 
 func (o elasticExporter) Info() string {
 	return o.info
 }
 
-func (o elasticExporter) Export(params ...string) (err error) {
+func (o elasticExporter) Export(params map[string]string) (err error) {
+	if err = o.service.Init(); err != nil {
+		return
+	}
+	if o.scroll == nil {
+		o.scroll = o.service.client.Scroll(o.service.elastic.Index).Size(o.service.elastic.ScrollSize)
+	}
+
+	var out io.WriteCloser
+	if out, err = o.req.Out(params); err != nil {
+		return
+	}
+	defer out.Close()
+
+	var res *elastic.SearchResult
+
+	query := prepareQuery(o.req.Query, params)
+
+	o.scroll.Body(query)
+
+	for {
+		if res, err = o.search(); err != nil {
+			if err == io.EOF {
+				err = nil
+			}
+			break
+		}
+
+		for _, hit := range res.Hits.Hits {
+			item := make(map[string]interface{})
+			err := json.Unmarshal(*hit.Source, &item)
+			if err == nil {
+				out.Write(o.req.Converter(item))
+			} else {
+				println(err)
+			}
+		}
+	}
+	o.scroll.Clear(o.service.context)
 	return
 }
 
+func (o *elasticExporter) search() (ret *elastic.SearchResult, err error) {
+	ret, err = o.scroll.Do(o.service.context)
+	if err == nil {
+		if ret == nil {
+			err = errors.New("expected results != nil; got nil")
+		}
+		if ret.Hits == nil {
+			err = errors.New("expected results != nil; got nil")
 
+		}
+	}
+	return
+}

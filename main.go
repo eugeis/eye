@@ -196,6 +196,18 @@ func defineRoutes(engine *gin.Engine, controller *core.Eye, config *core.Config)
 			response(controller.Check(c.Param("check")), c)
 		})
 	}
+	exportGroup := engine.Group("/export")
+	{
+		exportGroup.GET("/:name", func(c *gin.Context) {
+			var params = make(map[string]string)
+			for k, v := range c.Request.URL.Query() {
+				if len(v) > 0 {
+					params[k] = v[0]
+				}
+			}
+			response(controller.Export(c.Param("name"), params), c)
+		})
+	}
 	adminGroup := engine.Group("/admin")
 	{
 		adminGroup.GET("/reload", func(c *gin.Context) {
