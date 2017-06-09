@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"gee/cfg"
 	"gee/lg"
+	"path/filepath"
+	"strings"
 )
 
 var Log = lg.NewLogger("EYE ")
@@ -13,6 +15,7 @@ type Config struct {
 	Port         int    `default:"3000"`
 	Debug        bool   `default:true`
 	ExportFolder string `default:"./export"`
+	AppHome      string `default:"."`
 
 	MySql   []*MySql
 	Http    []*Http
@@ -64,19 +67,31 @@ type FieldsExporter struct {
 	Services  []string
 }
 
-func LoadConfig(files []string, suffixes []string) (ret *Config, err error) {
-	ret = &Config{ConfigFiles: files}
+func LoadConfig(files []string, suffixes []string, appHome string) (ret *Config, err error) {
+	ret = &Config{ConfigFiles: files, AppHome: appHome}
 	err = cfg.Unmarshal(ret, files, suffixes)
 
 	if err == nil {
+		ret.calculateExportFolder()
 		ret.Print()
 	}
+	return
+}
 
+func (o *Config) calculateExportFolder() (err error) {
+	if len(o.ExportFolder) == 0 {
+		o.ExportFolder = o.AppHome
+	} else {
+		if strings.HasPrefix(o.ExportFolder, "./") {
+			o.ExportFolder = strings.Replace(o.ExportFolder, ".", o.AppHome+"/", 1)
+		}
+		o.ExportFolder, err = filepath.Abs(o.ExportFolder)
+	}
 	return
 }
 
 func (o *Config) Reload() (ret *Config, err error) {
-	return LoadConfig(o.ConfigFiles, o.ConfigSuffixes)
+	return LoadConfig(o.ConfigFiles, o.ConfigSuffixes, o.AppHome)
 }
 
 func (o *Config) Print() {

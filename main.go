@@ -13,6 +13,8 @@ import (
 	"github.com/urfave/cli"
 	"gee/as"
 	"gee/lg"
+	"errors"
+	"path/filepath"
 )
 
 var l = core.Log
@@ -31,6 +33,10 @@ func main() {
 			Usage: "Environments (file suffixes) for configurations and properties files." +
 				"This files - <file>_<suffix>.<ext> -will be loaded from same directory as a configuration, properties file.",
 			Value: "",
+		}, cli.StringFlag{
+			Name:  "home, b",
+			Usage: "Application Home",
+			Value: ".",
 		},
 	}
 	app.Commands = []cli.Command{
@@ -82,7 +88,7 @@ func main() {
 
 		}, {
 			Name:    "server-file",
-			Aliases: []string{"sc"},
+			Aliases: []string{"sf"},
 			Usage:   "Start Eye server - access data provided from file",
 			Flags: []cli.Flag{
 				cli.StringFlag{
@@ -110,10 +116,13 @@ func main() {
 	}
 }
 
-func loadConfig(c *cli.Context) (*core.Config, error) {
+func loadConfig(c *cli.Context) (ret *core.Config, err error) {
 	configFiles := strings.Split(c.GlobalString("c"), ",")
 	environments := strings.Split(c.GlobalString("e"), ",")
-	return core.LoadConfig(configFiles, environments)
+	if appHome, err := filepath.Abs(c.GlobalString("home")); err == nil {
+		ret, err = core.LoadConfig(configFiles, environments, appHome)
+	}
+	return
 }
 
 func prepareDebug(config *core.Config) {
@@ -134,7 +143,9 @@ func start(config *core.Config, accessFinder as.AccessFinder) (err error) {
 }
 
 func defineRoutes(engine *gin.Engine, controller *core.Eye, config *core.Config) {
-	engine.StaticFile("/help", "html/doc.html")
+	engine.Static("/html", "html")
+	//engine.StaticFS("/log", LocalFs{})
+	engine.Static("/log", fmt.Sprintf("%v/log", config.AppHome))
 	engine.StaticFile("/", "html/doc.html")
 
 	engine.GET("/ping", func(c *gin.Context) {
@@ -277,4 +288,11 @@ func response(err error, c *gin.Context) {
 		jsonDesc, _ := json.Marshal(err.Error())
 		c.String(http.StatusConflict, fmt.Sprintf("{ \"ok\": false, \"desc:\": %s }", jsonDesc))
 	}
+}
+
+type LocalFs struct {
+}
+
+func (o LocalFs) Open(name string) (http.File, error) {
+	return nil, errors.New("Can't find resource" + name)
 }

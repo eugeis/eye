@@ -1,7 +1,12 @@
 package core
 
+import "os"
 
 func (o *Eye) reloadServiceFactory() {
+	if len(o.config.ExportFolder) > 0 {
+		os.MkdirAll(o.config.ExportFolder, 0777)
+	}
+
 	oldServiceFactory := o.serviceFactory
 	o.serviceFactory = o.buildServiceFactory()
 	if oldServiceFactory != nil {
