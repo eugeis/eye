@@ -16,7 +16,7 @@ type Http struct {
 	AccessKey string
 	Url       string
 
-	PingRequest *QueryRequest
+	PingRequest *ValidationRequest
 
 	PingTimeoutMillis  int
 	QueryTimeoutMillis int
@@ -70,11 +70,11 @@ func body(resp *http.Response) string {
 	return ret
 }
 
-func (o *HttpService) NewСheck(req *QueryRequest) (ret Check, err error) {
+func (o *HttpService) NewСheck(req *ValidationRequest) (ret Check, err error) {
 	return o.newСheck(req)
 }
 
-func (o *HttpService) newСheck(req *QueryRequest) (ret *httpCheck, err error) {
+func (o *HttpService) newСheck(req *ValidationRequest) (ret *httpCheck, err error) {
 	var access as.Access
 	access, err = o.accessFinder.FindAccess(o.http.AccessKey)
 	if err == nil {

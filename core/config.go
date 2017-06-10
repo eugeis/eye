@@ -49,7 +49,7 @@ type PingCheck struct {
 
 type ValidateCheck struct {
 	Name     string
-	Request  *QueryRequest
+	Request  *ValidationRequest
 	Services []string
 }
 

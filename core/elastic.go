@@ -99,7 +99,7 @@ func (o *ElasticService) ping() (err error) {
 	return
 }
 
-func (o *ElasticService) NewСheck(req *QueryRequest) (ret Check, err error) {
+func (o *ElasticService) NewСheck(req *ValidationRequest) (ret Check, err error) {
 	var pattern *regexp.Regexp
 	if pattern, err = compilePattern(req.Expr); err == nil {
 		ret = elasticCheck{info: req.CheckKey(o.Name()), query: req.Query,

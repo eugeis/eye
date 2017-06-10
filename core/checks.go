@@ -21,7 +21,7 @@ func (o *Eye) registerValidateChecks() {
 	}
 }
 
-func (o *Eye) registerValidateCheck(checkName string, serviceName string, request *QueryRequest) {
+func (o *Eye) registerValidateCheck(checkName string, serviceName string, request *ValidationRequest) {
 	check, err := o.buildCheck(serviceName, request)
 	if err == nil {
 		o.checks[checkName] = check
@@ -102,20 +102,20 @@ func (o *Eye) buildCompareCheck(checkKey string, serviceNames []string, onlyRunn
 	validator func(map[string]QueryResultInfo) error) (check Check, err error) {
 
 	var pattern *regexp.Regexp
-	if len(req.QueryRequest.Expr) > 0 {
-		pattern, err = regexp.Compile(req.QueryRequest.Expr)
+	if len(req.ValidationRequest.Expr) > 0 {
+		pattern, err = regexp.Compile(req.ValidationRequest.Expr)
 		if err != nil {
 			return
 		}
 	}
 
 	checks := make([]Check, len(serviceNames))
-	check = MultiCheck{info: checkKey, query: req.QueryRequest.Query, pattern: pattern, checks: checks,
+	check = MultiCheck{info: checkKey, query: req.ValidationRequest.Query, pattern: pattern, checks: checks,
 		onlyRunning:     onlyRunning, validator: validator}
 
 	var serviceCheck Check
 	for i, serviceName := range serviceNames {
-		serviceCheck, err = o.buildCheck(serviceName, req.QueryRequest)
+		serviceCheck, err = o.buildCheck(serviceName, req.ValidationRequest)
 		if err != nil {
 			break
 		}
@@ -124,7 +124,7 @@ func (o *Eye) buildCompareCheck(checkKey string, serviceNames []string, onlyRunn
 	return
 }
 
-func (o *Eye) query(serviceName string, req *QueryRequest) (data QueryResult, err error) {
+func (o *Eye) query(serviceName string, req *ValidationRequest) (data QueryResult, err error) {
 	var buildCheck Check
 	buildCheck, err = o.buildCheck(serviceName, req)
 	if err == nil {
@@ -133,7 +133,7 @@ func (o *Eye) query(serviceName string, req *QueryRequest) (data QueryResult, er
 	return
 }
 
-func (o *Eye) buildCheck(serviceName string, req *QueryRequest) (ret Check, err error) {
+func (o *Eye) buildCheck(serviceName string, req *ValidationRequest) (ret Check, err error) {
 	var value interface{}
 	value, err = o.liveChecks.GetOrBuild(req.CheckKey(serviceName), func() (interface{}, error) {
 		service, err := o.serviceFactory.Find(serviceName)

@@ -13,7 +13,7 @@ import (
 type Fs struct {
 	Name        string
 	File        string
-	PingRequest *QueryRequest
+	PingRequest *ValidationRequest
 }
 
 type FsService struct {
@@ -30,7 +30,7 @@ func (o *FsService) Init() (err error) {
 		if o.Fs.PingRequest != nil {
 			o.pingCheck, err = o.newСheck(o.Fs.PingRequest)
 		} else {
-			o.pingCheck, err = o.newСheck(&QueryRequest{})
+			o.pingCheck, err = o.newСheck(&ValidationRequest{})
 		}
 		if err != nil {
 			o.Close()
@@ -50,11 +50,11 @@ func (o *FsService) Ping() (err error) {
 	return
 }
 
-func (o *FsService) NewСheck(req *QueryRequest) (ret Check, err error) {
+func (o *FsService) NewСheck(req *ValidationRequest) (ret Check, err error) {
 	return o.newСheck(req)
 }
 
-func (o *FsService) newСheck(req *QueryRequest) (ret *FsCheck, err error) {
+func (o *FsService) newСheck(req *ValidationRequest) (ret *FsCheck, err error) {
 	var pattern *regexp.Regexp
 	if pattern, err = compilePattern(req.Expr); err == nil {
 		if req.Query != "" {

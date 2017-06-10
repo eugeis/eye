@@ -19,7 +19,7 @@ type Service interface {
 
 	Ping() error
 
-	NewСheck(req *QueryRequest) (Check, error)
+	NewСheck(req *ValidationRequest) (Check, error)
 
 	NewExporter(req *ExportRequest) (Exporter, error)
 }
@@ -40,10 +40,12 @@ type Factory interface {
 	Close()
 }
 
-type QueryRequest struct {
-	Query string
-	Expr  string
-	Not   bool
+type ValidationRequest struct {
+	Query     string
+	Expr      string
+	Operator  string
+	Tolerance int
+	Not       bool
 }
 
 type ExportRequest struct {
@@ -53,29 +55,23 @@ type ExportRequest struct {
 }
 
 type CompareRequest struct {
-	QueryRequest *QueryRequest
-	Tolerance    int
+	ValidationRequest *ValidationRequest
+	Tolerance         int
 }
 
 func (o *CompareRequest) ChecksKey(strictness string, serviceNames []string) string {
-	return fmt.Sprintf("%v[tolerance(%v),not(%v)]", o.QueryRequest.ChecksKey(strictness, serviceNames),
-		o.Tolerance, o.QueryRequest.Not)
+	return fmt.Sprintf("%v[tolerance(%v)]", o.ValidationRequest.ChecksKey(strictness, serviceNames),
+		o.Tolerance)
 }
 
-func (o *QueryRequest) CheckKey(serviceName string) string {
-	if o.Not {
-		return fmt.Sprintf("%v.q(%v).e(%v).not()", serviceName, o.Query, o.Expr)
-	} else {
-		return fmt.Sprintf("%v.q(%v).e(%v)", serviceName, o.Query, o.Expr)
-	}
+func (o *ValidationRequest) CheckKey(serviceName string) string {
+	return fmt.Sprintf("%v.q(%v).e(%v).op(%v).tolerance(%v).not(%v)",
+		serviceName, o.Query, o.Expr, o.Operator, o.Tolerance, o.Not)
 }
 
-func (o *QueryRequest) ChecksKey(strictness string, serviceNames []string) string {
-	if o.Not {
-		return fmt.Sprintf("%v(%v.q(%v).e(%v).not())", strictness, strings.Join(serviceNames, "-"), o.Query, o.Expr)
-	} else {
-		return fmt.Sprintf("%v(%v.q(%v).e(%v))", strictness, strings.Join(serviceNames, "-"), o.Query, o.Expr)
-	}
+func (o *ValidationRequest) ChecksKey(strictness string, serviceNames []string) string {
+	return fmt.Sprintf("%v(%v.q(%v).e(%v).op(%v).tolerance(%v).not(%v))", strictness,
+		strings.Join(serviceNames, "-"), o.Query, o.Expr, o.Operator, o.Tolerance, o.Not)
 }
 
 func (o *ExportRequest) ExportKey(serviceName string) string {

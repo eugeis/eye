@@ -57,7 +57,7 @@ func (o *MySqlService) validateQuery(query string) error {
 
 func (o *MySqlService) limitQuery(query string) string {
 	queryLowCase := strings.ToUpper(query)
-	if !(strings.HasPrefix(queryLowCase, "SELECT ")) {
+	if strings.HasPrefix(queryLowCase, "SELECT ") {
 		return query + " LIMIT 5"
 	} else {
 		return query
@@ -197,7 +197,7 @@ func (o *MySqlService) query(sql string) (*sql.Rows, error) {
 	}
 }
 
-func (o *MySqlService) NewСheck(req *QueryRequest) (ret Check, err error) {
+func (o *MySqlService) NewСheck(req *ValidationRequest) (ret Check, err error) {
 	var pattern *regexp.Regexp
 	if pattern, err = compilePattern(req.Expr); err == nil {
 		if err = o.validateQuery(req.Query); err == nil {
@@ -233,7 +233,7 @@ func (o mySqlCheck) Validate() error {
 func (o mySqlCheck) Query() (data QueryResult, err error) {
 	if err = o.service.Init(); err == nil {
 		data, err = o.service.jsonBytes(o.query)
-		//l.Debug(string(data))
+		Log.Debug(string(data))
 	}
 	return
 }

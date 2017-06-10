@@ -62,7 +62,7 @@ func (o *Eye) Export(exportName string, params map[string]string) (err error) {
 	return
 }
 
-func (o *Eye) Validate(serviceName string, req *QueryRequest) (err error) {
+func (o *Eye) Validate(serviceName string, req *ValidationRequest) (err error) {
 	if req.Query == "" {
 		Log.Debug(fmt.Sprintf("ping instead of validator, because no query defined for %v", serviceName))
 		return o.Ping(serviceName)
@@ -95,7 +95,7 @@ func (o *Eye) PingAll(serviceNames []string) (err error) {
 	return
 }
 
-func (o *Eye) ValidateAny(serviceNames []string, req *QueryRequest) (err error) {
+func (o *Eye) ValidateAny(serviceNames []string, req *ValidationRequest) (err error) {
 	for _, serviceName := range serviceNames {
 		err = o.Validate(serviceName, req)
 		if err == nil {
@@ -105,7 +105,7 @@ func (o *Eye) ValidateAny(serviceNames []string, req *QueryRequest) (err error) 
 	return
 }
 
-func (o *Eye) ValidateRunning(serviceNames []string, req *QueryRequest) (err error) {
+func (o *Eye) ValidateRunning(serviceNames []string, req *ValidationRequest) (err error) {
 	for _, serviceName := range serviceNames {
 		errTemp := o.Ping(serviceName)
 		if errTemp == nil {
@@ -119,7 +119,7 @@ func (o *Eye) ValidateRunning(serviceNames []string, req *QueryRequest) (err err
 	return
 }
 
-func (o *Eye) ValidateAll(serviceNames []string, req *QueryRequest) (err error) {
+func (o *Eye) ValidateAll(serviceNames []string, req *ValidationRequest) (err error) {
 	for _, serviceName := range serviceNames {
 		err = o.Validate(serviceName, req)
 		if err != nil {

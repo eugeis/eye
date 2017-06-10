@@ -11,7 +11,7 @@ import (
 
 type Ps struct {
 	Name        string
-	PingRequest *QueryRequest
+	PingRequest *ValidationRequest
 }
 
 type PsService struct {
@@ -30,7 +30,7 @@ func (o *PsService) Init() (err error) {
 		if o.Ps.PingRequest != nil {
 			o.pingCheck, err = o.newСheck(o.Ps.PingRequest)
 		} else {
-			o.pingCheck, err = o.newСheck(&QueryRequest{})
+			o.pingCheck, err = o.newСheck(&ValidationRequest{})
 		}
 		if err != nil {
 			o.Close()
@@ -54,11 +54,11 @@ func (o *PsService) Ping() (err error) {
 	return
 }
 
-func (o *PsService) NewСheck(req *QueryRequest) (ret Check, err error) {
+func (o *PsService) NewСheck(req *ValidationRequest) (ret Check, err error) {
 	return o.newСheck(req)
 }
 
-func (o *PsService) newСheck(req *QueryRequest) (ret *PsCheck, err error) {
+func (o *PsService) newСheck(req *ValidationRequest) (ret *PsCheck, err error) {
 	var pattern []*regexp.Regexp
 
 	pattern, err = compilePatterns(req.Query, req.Expr)

@@ -79,7 +79,7 @@ func (o MultiPing) Info() string {
 
 type MultiValidate struct {
 	check     *ValidateCheck
-	validator func([]string, *QueryRequest) error
+	validator func([]string, *ValidationRequest) error
 }
 
 func (o *MultiValidate) Validate() (err error) {
@@ -159,8 +159,8 @@ func match(data1 QueryResult, data2 QueryResult, req *CompareRequest) (err error
 		}
 		if err == nil {
 			diff := abs(x - y)
-			if match := diff <= req.Tolerance; (!match && !req.QueryRequest.Not) || (match && req.QueryRequest.Not) {
-				if req.QueryRequest.Not {
+			if match := diff <= req.Tolerance; (!match && !req.ValidationRequest.Not) || (match && req.ValidationRequest.Not) {
+				if req.ValidationRequest.Not {
 					err = errors.New(fmt.Sprintf("abs(%v-%v)<=%v, less than tolerance %v", x, y, diff, req.Tolerance))
 				} else {
 					err = errors.New(fmt.Sprintf("abs(%v-%v)>%v, greater than tolerance %v", x, y, diff, req.Tolerance))
@@ -168,8 +168,8 @@ func match(data1 QueryResult, data2 QueryResult, req *CompareRequest) (err error
 			}
 		} else {
 			Log.Debug("Convertion to int not possible, use bytes comparison.")
-			if match := bytes.Equal(data1, data2); (!match && !req.QueryRequest.Not) || (match && req.QueryRequest.Not) {
-				if req.QueryRequest.Not {
+			if match := bytes.Equal(data1, data2); (!match && !req.ValidationRequest.Not) || (match && req.ValidationRequest.Not) {
+				if req.ValidationRequest.Not {
 					err = errors.New("equal")
 				} else {
 					err = errors.New("not equal")
@@ -177,7 +177,7 @@ func match(data1 QueryResult, data2 QueryResult, req *CompareRequest) (err error
 			}
 		}
 	} else {
-		if match := bytes.Equal(data1, data2); (!match && !req.QueryRequest.Not) || (match && req.QueryRequest.Not) {
+		if match := bytes.Equal(data1, data2); (!match && !req.ValidationRequest.Not) || (match && req.ValidationRequest.Not) {
 			err = errors.New("not equal")
 		}
 	}
