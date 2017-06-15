@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"time"
 	"gee/as"
+	"gopkg.in/Knetic/govaluate.v2"
 )
 
 type Http struct {
@@ -76,18 +77,24 @@ func (o *HttpService) NewСheck(req *ValidationRequest) (ret Check, err error) {
 
 func (o *HttpService) newСheck(req *ValidationRequest) (ret *httpCheck, err error) {
 	var access as.Access
-	access, err = o.accessFinder.FindAccess(o.http.AccessKey)
-	if err == nil {
-		var pattern *regexp.Regexp
-		if pattern, err = compilePattern(req.Expr); err == nil {
-			dReq := digest.NewRequest(access.User, access.Password, "GET", o.http.Url+req.Query, "")
-			ret = &httpCheck{
-				info:    req.CheckKey(o.Name()),
-				req:     &dReq,
-				pattern: pattern, service: o, not: req.Not}
-		}
-
+	if access, err = o.accessFinder.FindAccess(o.http.AccessKey); err != nil {
+		return
 	}
+
+	var eval *govaluate.EvaluableExpression
+	if eval, err = compileEval(req.EvalExpr); err != nil {
+		return
+	}
+
+	var pattern *regexp.Regexp
+	if pattern, err = compileRegExpr(req.RegExpr); err != nil {
+		return
+	}
+
+	dReq := digest.NewRequest(access.User, access.Password, "GET", o.http.Url+req.Query, "")
+	ret = &httpCheck{
+		info:    req.CheckKey(o.Name()), req: &dReq,
+		pattern: pattern, service: o, eval: eval, all: req.All}
 	return
 }
 
@@ -100,7 +107,8 @@ func (o *HttpService) NewExporter(req *ExportRequest) (ret Exporter, err error) 
 type httpCheck struct {
 	info    string
 	req     *digest.Request
-	not     bool
+	all     bool
+	eval    *govaluate.EvaluableExpression
 	pattern *regexp.Regexp
 	service *HttpService
 }
@@ -110,10 +118,10 @@ func (o httpCheck) Info() string {
 }
 
 func (o httpCheck) Validate() error {
-	return validate(o, o.pattern, o.not)
+	return validate(o, o.eval, o.all)
 }
 
-func (o httpCheck) Query() (data QueryResult, err error) {
+func (o httpCheck) Query() (ret QueryResults, err error) {
 	err = o.service.Init()
 	if err != nil {
 		return
@@ -124,11 +132,12 @@ func (o httpCheck) Query() (data QueryResult, err error) {
 	}
 	defer resp.Body.Close()
 
-	data, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
+	var data []byte
+	if data, err = ioutil.ReadAll(resp.Body); err != nil {
 		return
 	}
-	Log.Debug("http data: %s", data)
+	ret, err = buildQueryResult(o.pattern, data)
+	Log.Debug("http ret: %s", ret)
 
 	if resp.StatusCode != http.StatusOK {
 		err = errors.New(fmt.Sprintf("Status %d", resp.StatusCode))

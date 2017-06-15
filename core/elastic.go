@@ -4,13 +4,13 @@ import (
 	"gopkg.in/olivere/elastic.v5"
 	"gee/as"
 	"fmt"
-	"regexp"
 	"golang.org/x/net/context"
 	"time"
 	"encoding/json"
 	"errors"
 	"strings"
 	"io"
+	"gopkg.in/Knetic/govaluate.v2"
 )
 
 type Elastic struct {
@@ -100,12 +100,12 @@ func (o *ElasticService) ping() (err error) {
 }
 
 func (o *ElasticService) NewСheck(req *ValidationRequest) (ret Check, err error) {
-	var pattern *regexp.Regexp
-	if pattern, err = compilePattern(req.Expr); err == nil {
-		ret = elasticCheck{info: req.CheckKey(o.Name()), query: req.Query,
-			pattern:         pattern, service: o, not: req.Not,
-		}
+	var eval *govaluate.EvaluableExpression
+	if eval, err = compileEval(req.EvalExpr); err != nil {
+		return
 	}
+
+	ret = &elasticCheck{info: req.CheckKey(o.Name()), query: req.Query, eval: eval, all: req.All, service: o}
 	return
 }
 
@@ -118,8 +118,8 @@ func (o *ElasticService) NewExporter(req *ExportRequest) (ret Exporter, err erro
 type elasticCheck struct {
 	info    string
 	query   string
-	not     bool
-	pattern *regexp.Regexp
+	all     bool
+	eval    *govaluate.EvaluableExpression
 	service *ElasticService
 	search  *elastic.SearchService
 }
@@ -129,10 +129,10 @@ func (o elasticCheck) Info() string {
 }
 
 func (o elasticCheck) Validate() error {
-	return validate(o, o.pattern, o.not)
+	return validate(o, o.eval, o.all)
 }
 
-func (o elasticCheck) Query() (data QueryResult, err error) {
+func (o elasticCheck) Query() (data QueryResults, err error) {
 	if err = o.service.Init(); err == nil {
 		if o.search == nil {
 			o.search = o.service.client.Search(o.service.elastic.Index).Size(5).Source(o.query)
@@ -142,18 +142,17 @@ func (o elasticCheck) Query() (data QueryResult, err error) {
 		if res, err = o.search.Do(o.service.context); err != nil {
 			return
 		}
-		resultData := make([]map[string]interface{}, 0)
+		data := make([]QueryResult, 0)
 		for _, hit := range res.Hits.Hits {
 			item := make(map[string]interface{})
 			err := json.Unmarshal(*hit.Source, &item)
 			if err == nil {
-				resultData = append(resultData, item)
+				data = append(data, &MapQueryResult{item})
 			} else {
 				Log.Info("Error %v, at unmarshal of %v", err, hit)
 			}
 		}
-		Log.Debug("elastic data: %s", resultData)
-		data, err = json.Marshal(resultData)
+		Log.Debug("elastic data: %s", data)
 	}
 	return
 }

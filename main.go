@@ -244,11 +244,9 @@ func servicesQuery(c *gin.Context) ([]string, *core.ValidationRequest) {
 	return strings.Split(c.DefaultQuery("services", ""), ","), validationReq(c)
 }
 
-func servicesCompare(c *gin.Context) ([]string, *core.CompareRequest) {
-
+func servicesCompare(c *gin.Context) ([]string, *core.ValidationRequest) {
 	return strings.Split(c.DefaultQuery("services", ""), ","),
-		&core.CompareRequest{
-			ValidationRequest: validationReq(c), Tolerance: queryInt("tolerance", c)}
+		validationReq(c)
 }
 
 func queryInt(key string, c *gin.Context) (ret int) {
@@ -275,11 +273,9 @@ func serviceQuery(c *gin.Context) (string, *core.ValidationRequest) {
 
 func validationReq(c *gin.Context) *core.ValidationRequest {
 	return &core.ValidationRequest{
-		Query:     c.DefaultQuery("query", ""),
-		Expr:      c.DefaultQuery("expr", ""),
-		Not:       queryFlag("not", c),
-		Tolerance: queryInt("tolerance", c),
-		Operator:  c.Query("op"), }
+		Query:    c.DefaultQuery("query", ""),
+		RegExpr:  c.DefaultQuery("expr", ""),
+		EvalExpr: c.Query("eval"), }
 }
 
 func response(err error, c *gin.Context) {

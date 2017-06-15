@@ -2,13 +2,12 @@ package core
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 	"gee/as"
+	"gopkg.in/Knetic/govaluate.v2"
 )
 
 var disallowedSqlKeywords = []string{" UNION ", " LIMIT ", ";"}
@@ -137,6 +136,7 @@ func (o *MySqlService) pingByQuery() error {
 	}
 }
 
+/*
 func (o *MySqlService) jsonBytes(sql string) (ret QueryResult, err error) {
 	var data []map[string]interface{}
 	if data, err = o.queryToMap(sql); err == nil && len(data) > 0 {
@@ -151,20 +151,20 @@ func (o *MySqlService) json(sql string) (json string, err error) {
 		json = string(data)
 	}
 	return
-}
+}*/
 
-func (o *MySqlService) queryToMap(sql string) ([]map[string]interface{}, error) {
+func (o *MySqlService) queryToMap(sql string) (ret QueryResults, err error) {
 	rows, err := o.query(sql)
 	if err != nil {
-		return nil, err
+		return
 	}
 	defer rows.Close()
 	columns, err := rows.Columns()
 	if err != nil {
-		return nil, err
+		return
 	}
 	count := len(columns)
-	tableData := make([]map[string]interface{}, 0)
+	ret = make([]QueryResult, 0)
 	values := make([]interface{}, count)
 	valuePtrs := make([]interface{}, count)
 	for rows.Next() {
@@ -184,9 +184,9 @@ func (o *MySqlService) queryToMap(sql string) ([]map[string]interface{}, error) 
 			}
 			entry[col] = v
 		}
-		tableData = append(tableData, entry)
+		ret = append(ret, &MapQueryResult{entry})
 	}
-	return tableData, nil
+	return
 }
 
 func (o *MySqlService) query(sql string) (*sql.Rows, error) {
@@ -198,14 +198,19 @@ func (o *MySqlService) query(sql string) (*sql.Rows, error) {
 }
 
 func (o *MySqlService) NewСheck(req *ValidationRequest) (ret Check, err error) {
-	var pattern *regexp.Regexp
-	if pattern, err = compilePattern(req.Expr); err == nil {
-		if err = o.validateQuery(req.Query); err == nil {
-			query := o.limitQuery(req.Query)
-			ret = mySqlCheck{info: req.CheckKey(o.Name()), query: query,
-				pattern:       pattern, service: o, not: req.Not}
-		}
+	var eval *govaluate.EvaluableExpression
+	if eval, err = compileEval(req.EvalExpr); err != nil {
+		return
 	}
+
+	if err = o.validateQuery(req.Query); err != nil {
+		return
+	}
+
+	query := o.limitQuery(req.Query)
+	ret = &mySqlCheck{
+		info: req.CheckKey(o.Name()), query: query, service: o,
+		eval: eval, all: req.All}
 	return
 }
 
@@ -217,8 +222,8 @@ func (o *MySqlService) NewExporter(req *ExportRequest) (ret Exporter, err error)
 type mySqlCheck struct {
 	info    string
 	query   string
-	not     bool
-	pattern *regexp.Regexp
+	all     bool
+	eval    *govaluate.EvaluableExpression
 	service *MySqlService
 }
 
@@ -227,13 +232,12 @@ func (o mySqlCheck) Info() string {
 }
 
 func (o mySqlCheck) Validate() error {
-	return validate(o, o.pattern, o.not)
+	return validate(o, o.eval, o.all)
 }
 
-func (o mySqlCheck) Query() (data QueryResult, err error) {
+func (o mySqlCheck) Query() (data QueryResults, err error) {
 	if err = o.service.Init(); err == nil {
-		data, err = o.service.jsonBytes(o.query)
-		Log.Debug(string(data))
+		data, err = o.service.queryToMap(o.query)
 	}
 	return
 }

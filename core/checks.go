@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"regexp"
 )
 
 func (o *Eye) registerValidateChecks() {
@@ -29,8 +28,6 @@ func (o *Eye) registerValidateCheck(checkName string, serviceName string, reques
 		Log.Info("Can't build check '%v' because of '%v'", checkName, err)
 	}
 }
-
-
 
 func (o *Eye) registerMultiPing() {
 	for _, item := range o.config.PingAll {
@@ -85,8 +82,7 @@ func (o *Eye) registerCompares() {
 	}
 }
 
-
-func (o *Eye) getOrBuildCompareCheck(checkKey string, serviceNames []string, onlyRunning bool, req *CompareRequest,
+func (o *Eye) getOrBuildCompareCheck(checkKey string, serviceNames []string, onlyRunning bool, req *ValidationRequest,
 	validator func(map[string]QueryResultInfo) error) (check Check, err error) {
 	var value interface{}
 
@@ -98,24 +94,16 @@ func (o *Eye) getOrBuildCompareCheck(checkKey string, serviceNames []string, onl
 	return
 }
 
-func (o *Eye) buildCompareCheck(checkKey string, serviceNames []string, onlyRunning bool, req *CompareRequest,
+func (o *Eye) buildCompareCheck(checkKey string, serviceNames []string, onlyRunning bool, req *ValidationRequest,
 	validator func(map[string]QueryResultInfo) error) (check Check, err error) {
 
-	var pattern *regexp.Regexp
-	if len(req.ValidationRequest.Expr) > 0 {
-		pattern, err = regexp.Compile(req.ValidationRequest.Expr)
-		if err != nil {
-			return
-		}
-	}
-
 	checks := make([]Check, len(serviceNames))
-	check = MultiCheck{info: checkKey, query: req.ValidationRequest.Query, pattern: pattern, checks: checks,
+	check = MultiCheck{info: checkKey, query: req.Query, checks: checks,
 		onlyRunning:     onlyRunning, validator: validator}
 
 	var serviceCheck Check
 	for i, serviceName := range serviceNames {
-		serviceCheck, err = o.buildCheck(serviceName, req.ValidationRequest)
+		serviceCheck, err = o.buildCheck(serviceName, req)
 		if err != nil {
 			break
 		}
@@ -124,7 +112,7 @@ func (o *Eye) buildCompareCheck(checkKey string, serviceNames []string, onlyRunn
 	return
 }
 
-func (o *Eye) query(serviceName string, req *ValidationRequest) (data QueryResult, err error) {
+func (o *Eye) query(serviceName string, req *ValidationRequest) (data QueryResults, err error) {
 	var buildCheck Check
 	buildCheck, err = o.buildCheck(serviceName, req)
 	if err == nil {

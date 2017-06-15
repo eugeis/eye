@@ -1,12 +1,11 @@
 package core
 
 import (
-	"regexp"
 	"github.com/shirou/gopsutil/process"
-	"encoding/json"
 	"eye/integ"
 	"runtime"
 	"github.com/StackExchange/wmi"
+	"gopkg.in/Knetic/govaluate.v2"
 )
 
 type Ps struct {
@@ -59,13 +58,12 @@ func (o *PsService) NewСheck(req *ValidationRequest) (ret Check, err error) {
 }
 
 func (o *PsService) newСheck(req *ValidationRequest) (ret *PsCheck, err error) {
-	var pattern []*regexp.Regexp
-
-	pattern, err = compilePatterns(req.Query, req.Expr)
-	if err == nil {
-		ret = &PsCheck{info: req.CheckKey("Ps"), service: o,
-			query:       pattern[0], pattern: pattern[1], not: req.Not}
+	var eval *govaluate.EvaluableExpression
+	if eval, err = compileEval(req.EvalExpr); err != nil {
+		return
 	}
+
+	ret = &PsCheck{info: req.CheckKey("Ps"), service: o, eval: eval, all: req.All}
 	return
 }
 
@@ -122,9 +120,8 @@ func (o PsService) buildProcesses() (ret []*Proc, err error) {
 type PsCheck struct {
 	info    string
 	service *PsService
-	not     bool
-	query   *regexp.Regexp
-	pattern *regexp.Regexp
+	all     bool
+	eval    *govaluate.EvaluableExpression
 }
 
 func (o PsCheck) Info() string {
@@ -132,18 +129,16 @@ func (o PsCheck) Info() string {
 }
 
 func (o PsCheck) Validate() (err error) {
-	return validate(o, o.pattern, o.not)
+	return validate(o, o.eval, o.all)
 }
 
-func (o PsCheck) Query() (ret QueryResult, err error) {
-	var procs []*Proc
-	if o.query != nil {
-		procs, err = o.service.Processes()
-	} else {
-		procs, err = o.service.Processes()
-	}
-	if err == nil {
-		ret, err = json.Marshal(procs)
+func (o PsCheck) Query() (ret QueryResults, err error) {
+	var items []*Proc
+	if items, err = o.service.Processes(); err == nil {
+		ret = make([]QueryResult, len(items))
+		for i, fileInfo := range items {
+			ret[i] = &MapQueryResult{fileInfo.ToMap()}
+		}
 	}
 	return
 }
@@ -154,4 +149,9 @@ type Proc struct {
 	Status  string
 	Cmdline string
 	Path    string
+}
+
+func (o *Proc) ToMap() (ret map[string]interface{}) {
+	return map[string]interface{}{
+		"Id": o.Id, "Name": o.Name, "Status": o.Status, "Cmdline": o.Cmdline, "Path": o.Path}
 }
