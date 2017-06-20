@@ -136,8 +136,8 @@ func (o PsCheck) Query() (ret QueryResults, err error) {
 	var items []*Proc
 	if items, err = o.service.Processes(); err == nil {
 		ret = make([]QueryResult, len(items))
-		for i, fileInfo := range items {
-			ret[i] = &MapQueryResult{fileInfo.ToMap()}
+		for i, item := range items {
+			ret[i] = &MapQueryResult{item.ToMap()}
 		}
 	}
 	return

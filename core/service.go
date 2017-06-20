@@ -10,6 +10,7 @@ import (
 	"io"
 	"gopkg.in/Knetic/govaluate.v2"
 	"strconv"
+	"encoding/json"
 )
 
 type Service interface {
@@ -71,26 +72,41 @@ func (o *ExportRequest) ExportKey(serviceName string) string {
 type QueryResults []QueryResult
 type QueryResult interface {
 	Get(name string) (interface{}, error)
+	String() string
+}
+
+func (o *QueryResults) String() (ret string) {
+	if data, err := json.Marshal(o); err == nil {
+		ret = string(data)
+	}
+	return
 }
 
 type MapQueryResult struct {
-	data map[string]interface{}
+	Data map[string]interface{}
 }
 
 func (o *MapQueryResult) Get(name string) (ret interface{}, err error) {
-	ret = o.data[name]
+	ret = o.Data[name]
+	return
+}
+
+func (o *MapQueryResult) String() (ret string) {
+	if data, err := json.Marshal(o.Data); err == nil {
+		ret = string(data)
+	}
 	return
 }
 
 type CompositeQueryResult struct {
-	splitter *regexp.Regexp
-	data     []QueryResult
+	Splitter *regexp.Regexp
+	Data     []QueryResult
 }
 
 func NewCompositeQueryResult(separator string, data []QueryResult) (ret *CompositeQueryResult, err error) {
 	var splitter *regexp.Regexp
 	if splitter, err = buildSplitter(separator); err == nil {
-		ret = &CompositeQueryResult{splitter: splitter, data: data}
+		ret = &CompositeQueryResult{Splitter: splitter, Data: data}
 	}
 	return
 }
@@ -99,16 +115,23 @@ func buildSplitter(separator string) (ret *regexp.Regexp, err error) {
 }
 
 func (o *CompositeQueryResult) Get(name string) (ret interface{}, err error) {
-	if indexKey := o.splitter.Split(name, 2); len(indexKey) == 2 {
+	if indexKey := o.Splitter.Split(name, 2); len(indexKey) == 2 {
 		index, _ := strconv.Atoi(indexKey[0])
-		if index > 0 && index <= len(o.data) {
-			current := o.data[index]
+		if index > 0 && index <= len(o.Data) {
+			current := o.Data[index]
 			ret, err = current.Get(indexKey[1])
 		} else {
-			err = errors.New(fmt.Sprintf("The index '%v' is not in range of '[1-%v]: ", index, len(o.data)))
+			err = errors.New(fmt.Sprintf("The index '%v' is not in range of '[1-%v]: ", index, len(o.Data)))
 		}
 	} else {
-		err = errors.New("The key does not apply to the pattern: " + o.splitter.String())
+		err = errors.New("The key does not apply to the pattern: " + o.Splitter.String())
+	}
+	return
+}
+
+func (o *CompositeQueryResult) String() (ret string) {
+	if data, err := json.Marshal(o.Data); err == nil {
+		ret = string(data)
 	}
 	return
 }
@@ -130,7 +153,7 @@ func ComposeQueryResults(separator string, results ...QueryResults) (ret QueryRe
 	resultsCount := len(results)
 	for i := 0; i < maxLen; i++ {
 		data := make([]QueryResult, resultsCount)
-		ret[i] = &CompositeQueryResult{splitter: splitter, data: data}
+		ret[i] = &CompositeQueryResult{Splitter: splitter, Data: data}
 		for y, item := range results {
 			if i < len(item) {
 				data[y] = item[i]
@@ -207,7 +230,7 @@ func ChecksKey(strictness string, serviceNames []string) string {
 }
 
 func buildQueryResult(pattern *regexp.Regexp, data []byte) (ret QueryResults, err error) {
-	//Log.Debug(string(data))
+	//Log.Debug(string(Data))
 	if pattern != nil {
 		if pattern != nil {
 			matches := pattern.FindAllSubmatch(data, -1)
@@ -219,7 +242,7 @@ func buildQueryResult(pattern *regexp.Regexp, data []byte) (ret QueryResults, er
 						entry[name] = match[i]
 					}
 				}
-				ret[l] = &MapQueryResult{data: entry}
+				ret[l] = &MapQueryResult{Data: entry}
 			}
 		}
 	}
@@ -229,24 +252,32 @@ func buildQueryResult(pattern *regexp.Regexp, data []byte) (ret QueryResults, er
 func validate(check Check, eval *govaluate.EvaluableExpression, all bool) (err error) {
 	var items QueryResults
 	if items, err = check.Query(); err == nil {
-		validateData(items, eval, all, check.Info())
+		err = validateData(items, eval, all, check.Info())
 	}
 	return
 }
 
 func validateData(items QueryResults, eval *govaluate.EvaluableExpression, all bool, info string) (err error) {
 	valid := true
-	for _, item := range items {
-		if evalResult, err := eval.Eval(item); err != nil {
-			valid = false
-		} else if evalResult != nil {
-			_, valid = evalResult.(bool)
-		} else {
-			valid = false
+	if eval != nil && len(items) > 0 {
+		for _, item := range items {
+			var evalResult interface{}
+			println(item.String())
+			if evalResult, err = eval.Eval(item); err != nil {
+				valid = false
+			} else if evalResult != nil {
+				if boolResult, ok := evalResult.(bool); ok {
+					valid = boolResult
+				}
+			} else {
+				valid = false
+			}
+			if (!valid && all) || valid {
+				break
+			}
 		}
-		if (!valid && all) || valid {
-			break
-		}
+	} else if len(items) == 0 {
+		err = errors.New(fmt.Sprintf("No valid, because empty result for %v", info))
 	}
 	if !valid {
 		err = errors.New(fmt.Sprintf("No valid for %v", info))

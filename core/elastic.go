@@ -137,7 +137,7 @@ func (o elasticCheck) Query() (data QueryResults, err error) {
 		if o.search == nil {
 			o.search = o.service.client.Search(o.service.elastic.Index).Size(5).Source(o.query)
 		}
-		//l.Debug(string(data))
+		//l.Debug(string(Data))
 		var res *elastic.SearchResult
 		if res, err = o.search.Do(o.service.context); err != nil {
 			return
@@ -152,7 +152,7 @@ func (o elasticCheck) Query() (data QueryResults, err error) {
 				Log.Info("Error %v, at unmarshal of %v", err, hit)
 			}
 		}
-		Log.Debug("elastic data: %s", data)
+		Log.Debug("elastic Data: %s", data)
 	}
 	return
 }

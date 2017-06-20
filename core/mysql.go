@@ -8,6 +8,7 @@ import (
 	"time"
 	"gee/as"
 	"gopkg.in/Knetic/govaluate.v2"
+	"strconv"
 )
 
 var disallowedSqlKeywords = []string{" UNION ", " LIMIT ", ";"}
@@ -47,6 +48,9 @@ func (o *MySqlService) validateQuery(query string) error {
 			err = errors.New(fmt.Sprintf("'%v' is disallowed for Query", keyword))
 			break
 		}
+	}
+	if len(queryLowCase) == 0 {
+		err = errors.New("Query is empOnly SELECT/SHOW queries allowed")
 	}
 	if !(strings.HasPrefix(queryLowCase, "SELECT ") || strings.HasPrefix(queryLowCase, "SHOW ")) {
 		err = errors.New("Only SELECT/SHOW queries allowed")
@@ -138,17 +142,17 @@ func (o *MySqlService) pingByQuery() error {
 
 /*
 func (o *MySqlService) jsonBytes(sql string) (ret QueryResult, err error) {
-	var data []map[string]interface{}
-	if data, err = o.queryToMap(sql); err == nil && len(data) > 0 {
-		ret, err = json.Marshal(data)
+	var Data []map[string]interface{}
+	if Data, err = o.queryToMap(sql); err == nil && len(Data) > 0 {
+		ret, err = json.Marshal(Data)
 	}
 	return
 }
 
 func (o *MySqlService) json(sql string) (json string, err error) {
-	var data QueryResult
-	if data, err = o.jsonBytes(sql); err == nil && len(data) > 0 {
-		json = string(data)
+	var Data QueryResult
+	if Data, err = o.jsonBytes(sql); err == nil && len(Data) > 0 {
+		json = string(Data)
 	}
 	return
 }*/
@@ -172,13 +176,20 @@ func (o *MySqlService) queryToMap(sql string) (ret QueryResults, err error) {
 			valuePtrs[i] = &values[i]
 		}
 		rows.Scan(valuePtrs...)
+		ct, _ := rows.ColumnTypes()
+		println(ct)
 		entry := make(map[string]interface{})
 		for i, col := range columns {
 			var v interface{}
 			val := values[i]
 			b, ok := val.([]byte)
 			if ok {
-				v = string(b)
+				str := string(b)
+				if d, conErr := strconv.Atoi(str); conErr == nil {
+					v = d
+				} else {
+					v = str
+				}
 			} else {
 				v = val
 			}

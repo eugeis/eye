@@ -113,9 +113,9 @@ func (o FsCheck) Files() (ret []*FileInfo, err error) {
 		if file.IsDir() {
 			var files []os.FileInfo
 			files, err = ioutil.ReadDir(o.file)
-			list := make([]*FileInfo, len(files))
+			ret = make([]*FileInfo, len(files))
 			for i, entry := range files {
-				list[i] = toFileInfo(entry)
+				ret[i] = toFileInfo(entry)
 			}
 		} else {
 			ret = make([]*FileInfo, 1)

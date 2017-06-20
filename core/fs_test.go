@@ -7,17 +7,14 @@ import (
 )
 
 func TestFileSystemService(t *testing.T) {
-	service := FsService{Fs: &Fs{File:"D:/views"}}
+	service := FsService{Fs: &Fs{File: "D:/TC_CACHE"}}
 	err := service.Init()
 	var check Check
-	var data QueryResult
+	var data QueryResults
 	if check, err = service.NewСheck(&ValidationRequest{}); err == nil {
-		for i := 1; i <= 10; i++ {
-			if data, err = check.Query(); err == nil {
-				println(fmt.Sprintf("%v - %v", time.Now(), string(data)))
-			}
+		if data, err = check.Query(); err == nil {
+			println(fmt.Sprintf("%v - %v", time.Now(), data.String()))
 		}
-
 	}
 
 	if err != nil {
