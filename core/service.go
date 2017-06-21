@@ -49,6 +49,10 @@ type ValidationRequest struct {
 	All      bool
 }
 
+func NewValidationRequest(query string, evalExp string) *ValidationRequest {
+	return &ValidationRequest{Query: query, EvalExpr: evalExp, All: true}
+}
+
 type ExportRequest struct {
 	Query     string
 	Converter func(map[string]interface{}) []byte
@@ -56,13 +60,24 @@ type ExportRequest struct {
 }
 
 func (o *ValidationRequest) CheckKey(serviceName string) string {
-	return fmt.Sprintf("%v.q(%v).e(%v).eval(%v)",
-		serviceName, o.Query, o.RegExpr, o.EvalExpr)
+	if o.All {
+		return fmt.Sprintf("%v.q(%v).e(%v).all[eval(%v)]",
+			serviceName, o.Query, o.RegExpr, o.EvalExpr)
+	} else {
+		return fmt.Sprintf("%v.q(%v).e(%v).any[eval(%v)]",
+			serviceName, o.Query, o.RegExpr, o.EvalExpr)
+	}
 }
 
 func (o *ValidationRequest) ChecksKey(strictness string, serviceNames []string) string {
-	return fmt.Sprintf("%v(%v.q(%v).e(%v).eval(%v))", strictness,
-		strings.Join(serviceNames, "-"), o.Query, o.RegExpr, o.EvalExpr)
+	if o.All {
+		return fmt.Sprintf("%v(%v.q(%v).e(%v).eval(%v))", strictness,
+			strings.Join(serviceNames, "-"), o.Query, o.RegExpr, o.EvalExpr)
+	} else {
+		return fmt.Sprintf("%v(%v.q(%v).e(%v).eval(%v))", strictness,
+			strings.Join(serviceNames, "-"), o.Query, o.RegExpr, o.EvalExpr)
+	}
+
 }
 
 func (o *ExportRequest) ExportKey(serviceName string) string {
@@ -262,7 +277,6 @@ func validateData(items QueryResults, eval *govaluate.EvaluableExpression, all b
 	if eval != nil && len(items) > 0 {
 		for _, item := range items {
 			var evalResult interface{}
-			println(item.String())
 			if evalResult, err = eval.Eval(item); err != nil {
 				valid = false
 			} else if evalResult != nil {
@@ -272,15 +286,15 @@ func validateData(items QueryResults, eval *govaluate.EvaluableExpression, all b
 			} else {
 				valid = false
 			}
-			if (!valid && all) || valid {
+			if !valid && all {
+				err = errors.New(fmt.Sprintf("Validation of '%v' failed agains %v", item, info))
+				break
+			} else if valid && !all {
 				break
 			}
 		}
 	} else if len(items) == 0 {
 		err = errors.New(fmt.Sprintf("No valid, because empty result for %v", info))
-	}
-	if !valid {
-		err = errors.New(fmt.Sprintf("No valid for %v", info))
 	}
 	return
 }
