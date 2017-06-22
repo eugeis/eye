@@ -26,6 +26,11 @@ type Service interface {
 	NewExporter(req *ExportRequest) (Exporter, error)
 }
 
+type Query interface {
+	Info() string
+	Query() (QueryResults, error)
+}
+
 type Check interface {
 	Info() string
 	Query() (QueryResults, error)
@@ -126,20 +131,21 @@ func NewCompositeQueryResult(separator string, data []QueryResult) (ret *Composi
 	return
 }
 func buildSplitter(separator string) (ret *regexp.Regexp, err error) {
-	return regexp.Compile(fmt.Sprintf("(\\d*)%v(.*)", separator))
+	return regexp.Compile(fmt.Sprintf("(.*)%v(\\d*)", separator))
 }
 
 func (o *CompositeQueryResult) Get(name string) (ret interface{}, err error) {
-	if indexKey := o.Splitter.Split(name, 2); len(indexKey) == 2 {
-		index, _ := strconv.Atoi(indexKey[0])
+	if key_index := o.Splitter.FindStringSubmatch(name); len(key_index) == 3 {
+		index, _ := strconv.Atoi(key_index[2])
 		if index > 0 && index <= len(o.Data) {
-			current := o.Data[index]
-			ret, err = current.Get(indexKey[1])
+			current := o.Data[index-1]
+			ret, err = current.Get(key_index[1])
 		} else {
-			err = errors.New(fmt.Sprintf("The index '%v' is not in range of '[1-%v]: ", index, len(o.Data)))
+			err = errors.New(fmt.Sprintf("The composite key '%v'is not compatible with the available data, "+
+				"the index '%v' is not in range of '[1-%v]' composite ", name, index, len(o.Data)))
 		}
 	} else {
-		err = errors.New("The key does not apply to the pattern: " + o.Splitter.String())
+		err = errors.New("The composite key does not apply to the pattern: " + o.Splitter.String())
 	}
 	return
 }
@@ -151,7 +157,7 @@ func (o *CompositeQueryResult) String() (ret string) {
 	return
 }
 
-func ComposeQueryResults(separator string, results ...QueryResults) (ret QueryResults, err error) {
+func ComposeQueryResults(separator string, results []QueryResults) (ret QueryResults, err error) {
 	var splitter *regexp.Regexp
 	if splitter, err = buildSplitter(separator); err != nil {
 		return
@@ -188,8 +194,8 @@ type SimpleServiceFactory struct {
 	services map[string]Service
 }
 
-func NewFactory() SimpleServiceFactory {
-	return SimpleServiceFactory{services: make(map[string]Service)}
+func NewFactory() *SimpleServiceFactory {
+	return &SimpleServiceFactory{services: make(map[string]Service)}
 }
 
 func (o *SimpleServiceFactory) Find(name string) (ret Service, err error) {
@@ -202,8 +208,12 @@ func (o *SimpleServiceFactory) Find(name string) (ret Service, err error) {
 }
 
 func (o *SimpleServiceFactory) Add(service Service) {
-	nameLowCase := strings.ToLower(service.Name())
-	o.services[nameLowCase] = service
+	o.add(service.Name(), service)
+}
+
+func (o *SimpleServiceFactory) add(key string, service Service) {
+	keyLowCase := strings.ToLower(key)
+	o.services[keyLowCase] = service
 }
 
 func (o *SimpleServiceFactory) Close() {
@@ -222,7 +232,9 @@ func compileRegExpr(pattern string) (ret *regexp.Regexp, err error) {
 
 func compileEval(evalExpr string) (ret *govaluate.EvaluableExpression, err error) {
 	if len(evalExpr) > 0 {
-		ret, err = govaluate.NewEvaluableExpression(evalExpr)
+		if ret, err = govaluate.NewEvaluableExpression(evalExpr); err != nil {
+			Log.Err("The compilation of evaluable expression '%v' failed because of '%'", evalExpr, err)
+		}
 	}
 	return
 }
@@ -292,6 +304,9 @@ func validateData(items QueryResults, eval *govaluate.EvaluableExpression, all b
 			} else if valid && !all {
 				break
 			}
+		}
+		if err == nil && !valid {
+			err = errors.New(fmt.Sprintf("Validation of '%v' failed agains %v", items, info))
 		}
 	} else if len(items) == 0 {
 		err = errors.New(fmt.Sprintf("No valid, because empty result for %v", info))

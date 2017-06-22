@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"gopkg.in/Knetic/govaluate.v2"
 )
 
 func (o *Eye) registerValidateChecks() {
@@ -55,17 +56,7 @@ func (o *Eye) registerMultiValidates() {
 
 func (o *Eye) registerCompares() {
 	for _, item := range o.config.CompareAll {
-		if check, err := o.buildCompareCheck(item.Name, item.Services, false, item.Request,
-			item.Request.compareValidator); err == nil {
-			o.checks[item.Name] = check
-		} else {
-			item.logBuildCheckNotPossible(err)
-		}
-	}
-
-	for _, item := range o.config.CompareAny {
-		if check, err := o.buildCompareCheck(item.Name, item.Services, true, item.Request,
-			item.Request.compareAnyValidator); err == nil {
+		if check, err := o.buildCompareCheck(item.Name, item.Services, false, item.Request); err == nil {
 			o.checks[item.Name] = check
 		} else {
 			item.logBuildCheckNotPossible(err)
@@ -73,8 +64,7 @@ func (o *Eye) registerCompares() {
 	}
 
 	for _, item := range o.config.CompareRunning {
-		if check, err := o.buildCompareCheck(item.Name, item.Services, true, item.Request,
-			item.Request.compareValidator); err == nil {
+		if check, err := o.buildCompareCheck(item.Name, item.Services, true, item.Request); err == nil {
 			o.checks[item.Name] = check
 		} else {
 			item.logBuildCheckNotPossible(err)
@@ -82,32 +72,36 @@ func (o *Eye) registerCompares() {
 	}
 }
 
-func (o *Eye) getOrBuildCompareCheck(checkKey string, serviceNames []string, onlyRunning bool, req *ValidationRequest,
-	validator func(map[string]QueryResultInfo) error) (check Check, err error) {
+func (o *Eye) getOrBuildCompareCheck(checkKey string, serviceNames []string, onlyRunning bool, req *ValidationRequest) (check Check, err error) {
 	var value interface{}
 
 	if value, err = o.liveChecks.GetOrBuild(checkKey, func() (interface{}, error) {
-		return o.buildCompareCheck(checkKey, serviceNames, onlyRunning, req, validator)
+		return o.buildCompareCheck(checkKey, serviceNames, onlyRunning, req)
 	}); err == nil {
 		check = value.(Check)
 	}
 	return
 }
 
-func (o *Eye) buildCompareCheck(checkKey string, serviceNames []string, onlyRunning bool, req *ValidationRequest,
-	validator func(map[string]QueryResultInfo) error) (check Check, err error) {
+func (o *Eye) buildCompareCheck(checkKey string, serviceNames []string, onlyRunning bool, req *ValidationRequest) (ret Check, err error) {
 
-	checks := make([]Check, len(serviceNames))
-	check = MultiCheck{info: checkKey, query: req.Query, checks: checks,
-		onlyRunning:     onlyRunning, validator: validator}
+	var eval *govaluate.EvaluableExpression
+	if eval, err = compileEval(req.EvalExpr); err != nil {
+		return
+	}
+	queries := make([]Query, len(serviceNames))
 
-	var serviceCheck Check
+	var serviceQuery Check
 	for i, serviceName := range serviceNames {
-		serviceCheck, err = o.buildCheck(serviceName, req)
+		serviceQuery, err = o.buildCheck(serviceName, req)
 		if err != nil {
 			break
 		}
-		checks[i] = serviceCheck
+		queries[i] = serviceQuery
+	}
+
+	if err == nil {
+		ret = MultiCheck{info: checkKey, queries: queries, eval: eval, onlyRunning: onlyRunning}
 	}
 	return
 }

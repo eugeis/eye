@@ -185,10 +185,6 @@ func defineRoutes(engine *gin.Engine, controller *core.Eye, config *core.Config)
 			response(controller.ValidateAll(servicesQuery(c)), c)
 		})
 
-		servicesGroup.GET("/any/compare", func(c *gin.Context) {
-			response(controller.CompareAny(servicesCompare(c)), c)
-		})
-
 		servicesGroup.GET("/running/compare", func(c *gin.Context) {
 			response(controller.CompareRunning(servicesCompare(c)), c)
 		})

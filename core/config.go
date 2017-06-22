@@ -32,7 +32,6 @@ type Config struct {
 	ValidateRunning []*ValidateCheck
 	ValidateAll     []*ValidateCheck
 
-	CompareAny     []*ValidateCheck
 	CompareRunning []*ValidateCheck
 	CompareAll     []*ValidateCheck
 
@@ -49,8 +48,8 @@ type PingCheck struct {
 
 type ValidateCheck struct {
 	Name     string
-	Request  *ValidationRequest
 	Services []string
+	Request  *ValidationRequest
 }
 
 type FieldsExporter struct {

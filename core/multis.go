@@ -1,26 +1,21 @@
 package core
 
-import (
-	"errors"
-	"fmt"
-	"gopkg.in/Knetic/govaluate.v2"
-)
-
-type QueryResultInfo struct {
-	result QueryResults
-	err    error
-}
+import "gopkg.in/Knetic/govaluate.v2"
 
 type MultiCheck struct {
 	info        string
-	query       string
-	checks      []Check
+	queries     []Query
+	eval        *govaluate.EvaluableExpression
+	all         bool
 	onlyRunning bool
-	validator   func(map[string]QueryResultInfo) error
 }
 
-func (o MultiCheck) Validate() error {
-	return o.validator(o.checksData())
+func (o MultiCheck) Validate() (err error) {
+	var data QueryResults
+	if data, err = o.checksData(); err == nil {
+		err = validateData(data, o.eval, o.all, o.info)
+	}
+	return
 }
 
 func (o MultiCheck) Query() (data QueryResults, err error) {
@@ -31,15 +26,19 @@ func (o MultiCheck) Info() string {
 	return o.info
 }
 
-func (o MultiCheck) checksData() (checksData map[string]QueryResultInfo) {
-	checksData = make(map[string]QueryResultInfo)
-	for _, check := range o.checks {
-		data, err := check.Query()
-		if err == nil {
-			checksData[check.Info()] = QueryResultInfo{result: data}
-		} else if !o.onlyRunning {
-			checksData[check.Info()] = QueryResultInfo{result: data, err: err}
+func (o MultiCheck) checksData() (ret QueryResults, err error) {
+	querysData := make([]QueryResults, 0)
+	for _, check := range o.queries {
+		data, queryErr := check.Query()
+		if queryErr == nil {
+			querysData = append(querysData, data)
+		} else if o.onlyRunning {
+			err = queryErr
+			break
 		}
+	}
+	if err == nil {
+		ret, err = ComposeQueryResults("_", querysData)
 	}
 	return
 }
@@ -78,69 +77,6 @@ func (o MultiValidate) Info() string {
 	return o.check.Name
 }
 
-func (o *ValidationRequest) compareAnyValidator(checksData map[string]QueryResultInfo) (err error) {
-	var firstName string
-	var firstData QueryResults
-	for serviceName, data := range checksData {
-		if data.err != nil {
-			if len(firstName) > 0 {
-				firstData = data.result
-				firstName = serviceName
-			} else {
-				matchError := match(firstData, data.result, o)
-				if matchError != nil {
-					err = errors.New(fmt.Sprintf("%v ~ %v => %v",
-						firstName, serviceName, matchError))
-				} else {
-					err = nil
-					break
-				}
-			}
-		}
-	}
-	return
-}
-
-func (o *ValidationRequest) compareValidator(checksData map[string]QueryResultInfo) error {
-	return matchChecksData(checksData, o)
-}
-
 func (o *ValidateCheck) logBuildCheckNotPossible(err error) {
 	Log.Info("Can't build check '%v' because of '%v'", o.Name, err)
-}
-
-func matchChecksData(checksData map[string]QueryResultInfo, req *ValidationRequest) (err error) {
-	var firstName string
-	var firstData QueryResults
-	for serviceName, queryResult := range checksData {
-		if queryResult.err == nil {
-			if len(firstName) == 0 {
-				firstData = queryResult.result
-				firstName = serviceName
-			} else {
-				matchError := match(firstData, queryResult.result, req)
-				if matchError != nil {
-					err = errors.New(fmt.Sprintf("%v ~ %v failed: %v",
-						firstName, serviceName, matchError))
-					break
-				}
-			}
-		} else {
-			err = errors.New(fmt.Sprintf("%v failed: %v", serviceName, queryResult.err.Error()))
-		}
-	}
-	return
-}
-
-func match(data1 QueryResults, data2 QueryResults, req *ValidationRequest) (err error) {
-	var evalExpr *govaluate.EvaluableExpression
-	if evalExpr, err = compileEval(req.EvalExpr); err != nil {
-		return
-	}
-
-	var results QueryResults
-	if results, err = ComposeQueryResults("_", data1, data2); err == nil {
-		err = validateData(results, evalExpr, true, "ib")
-	}
-	return
 }

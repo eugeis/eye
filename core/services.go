@@ -15,7 +15,7 @@ func (o *Eye) reloadServiceFactory() {
 
 	o.checks = make(map[string]Check)
 
-	//register checks
+	//register queries
 	o.registerMultiPing()
 	o.registerValidateChecks()
 	o.registerMultiValidates()
@@ -48,5 +48,5 @@ func (o *Eye) buildServiceFactory() Factory {
 	for _, item := range o.config.Elastic {
 		serviceFactory.Add(&ElasticService{elastic: item})
 	}
-	return &serviceFactory
+	return serviceFactory
 }

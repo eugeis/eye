@@ -202,7 +202,7 @@ func (o elasticExporter) Export(params map[string]string) (err error) {
 			if err == nil {
 				out.Write(o.req.Converter(item))
 			} else {
-				println(err)
+				Log.Err("Can't unmarshal because of %v", err)
 			}
 		}
 	}

@@ -176,8 +176,6 @@ func (o *MySqlService) queryToMap(sql string) (ret QueryResults, err error) {
 			valuePtrs[i] = &values[i]
 		}
 		rows.Scan(valuePtrs...)
-		ct, _ := rows.ColumnTypes()
-		println(ct)
 		entry := make(map[string]interface{})
 		for i, col := range columns {
 			var v interface{}

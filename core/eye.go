@@ -129,19 +129,10 @@ func (o *Eye) ValidateAll(serviceNames []string, req *ValidationRequest) (err er
 	return
 }
 
-func (o *Eye) CompareAny(serviceNames []string, req *ValidationRequest) (err error) {
-	var check Check
-	if check, err = o.getOrBuildCompareCheck(req.ChecksKey("any", serviceNames), serviceNames,
-		true, req, req.compareAnyValidator); err == nil {
-		err = check.Validate()
-	}
-	return
-}
-
 func (o *Eye) CompareRunning(serviceNames []string, req *ValidationRequest) (err error) {
 	var check Check
 	check, err = o.getOrBuildCompareCheck(req.ChecksKey("running", serviceNames), serviceNames,
-		true, req, req.compareValidator)
+		true, req)
 
 	if err == nil {
 		err = check.Validate()
@@ -152,7 +143,7 @@ func (o *Eye) CompareRunning(serviceNames []string, req *ValidationRequest) (err
 func (o *Eye) CompareAll(serviceNames []string, req *ValidationRequest) (err error) {
 	var check Check
 	if check, err = o.getOrBuildCompareCheck(req.ChecksKey("all", serviceNames), serviceNames,
-		false, req, req.compareValidator); err == nil {
+		false, req); err == nil {
 		err = check.Validate()
 	}
 	return
