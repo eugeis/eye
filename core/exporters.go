@@ -32,7 +32,7 @@ func (o *Eye) registerFieldExporter(exporterFullName string, serviceName string,
 	var service Service
 	if service, err = o.serviceFactory.Find(serviceName); err == nil {
 		var item Exporter
-		request := &ExportRequest{Query: exporter.Query, Converter: func(row map[string]interface{}) []byte {
+		request := &ExportRequest{Query: exporter.Query, Convert: func(row map[string]interface{}) []byte {
 			var line bytes.Buffer
 			for _, field := range exporter.Fields {
 				if val, ok := row[field]; ok {
@@ -49,7 +49,7 @@ func (o *Eye) registerFieldExporter(exporterFullName string, serviceName string,
 			line.WriteString("\n")
 			return []byte(line.String())
 		},
-			Out: func(params map[string]string) (ret io.WriteCloser, err error) {
+			CreateOut: func(params map[string]string) (ret io.WriteCloser, err error) {
 				var fileName string
 				if params != nil && len(params) > 0 {
 					var nameBuffer bytes.Buffer

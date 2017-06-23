@@ -9,6 +9,7 @@ import (
 	"gee/as"
 	"gopkg.in/Knetic/govaluate.v2"
 	"strconv"
+	"io"
 )
 
 var disallowedSqlKeywords = []string{" UNION ", " LIMIT ", ";"}
@@ -143,7 +144,7 @@ func (o *MySqlService) pingByQuery() error {
 /*
 func (o *MySqlService) jsonBytes(sql string) (ret QueryResult, err error) {
 	var Data []map[string]interface{}
-	if Data, err = o.queryToMap(sql); err == nil && len(Data) > 0 {
+	if Data, err = o.queryToWriter(sql); err == nil && len(Data) > 0 {
 		ret, err = json.Marshal(Data)
 	}
 	return
@@ -157,7 +158,7 @@ func (o *MySqlService) json(sql string) (json string, err error) {
 	return
 }*/
 
-func (o *MySqlService) queryToMap(sql string) (ret QueryResults, err error) {
+func (o *MySqlService) queryToWriter(sql string, writer MapWriter) (err error) {
 	rows, err := o.query(sql)
 	if err != nil {
 		return
@@ -168,7 +169,6 @@ func (o *MySqlService) queryToMap(sql string) (ret QueryResults, err error) {
 		return
 	}
 	count := len(columns)
-	ret = make([]QueryResult, 0)
 	values := make([]interface{}, count)
 	valuePtrs := make([]interface{}, count)
 	for rows.Next() {
@@ -193,7 +193,9 @@ func (o *MySqlService) queryToMap(sql string) (ret QueryResults, err error) {
 			}
 			entry[col] = v
 		}
-		ret = append(ret, &MapQueryResult{entry})
+		if err = writer.WriteMap(entry); err != nil {
+			break;
+		}
 	}
 	return
 }
@@ -224,6 +226,7 @@ func (o *MySqlService) NewСheck(req *ValidationRequest) (ret Check, err error) 
 }
 
 func (o *MySqlService) NewExporter(req *ExportRequest) (ret Exporter, err error) {
+	ret = mySqlExporter{info: req.ExportKey(o.Name()), req: req, service: o}
 	return
 }
 
@@ -246,7 +249,35 @@ func (o mySqlCheck) Validate() error {
 
 func (o mySqlCheck) Query() (data QueryResults, err error) {
 	if err = o.service.Init(); err == nil {
-		data, err = o.service.queryToMap(o.query)
+		writer := NewQueryResultMapWriter()
+		if err = o.service.queryToWriter(o.query, writer); err == nil {
+			data = writer.Data
+		}
 	}
+	return
+}
+
+type mySqlExporter struct {
+	info    string
+	req     *ExportRequest
+	service *MySqlService
+}
+
+func (o mySqlExporter) Info() string {
+	return o.info
+}
+
+func (o mySqlExporter) Export(params map[string]string) (err error) {
+	if err = o.service.Init(); err != nil {
+		return
+	}
+
+	var out io.WriteCloser
+	if out, err = o.req.CreateOut(params); err != nil {
+		return
+	}
+	defer out.Close()
+
+	err = o.service.queryToWriter(o.req.Query, &WriteCloserMapWriter{Convert: o.req.Convert, Out: out})
 	return
 }

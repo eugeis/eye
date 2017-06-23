@@ -42,6 +42,33 @@ type Exporter interface {
 	Export(params map[string]string) error
 }
 
+type MapWriter interface {
+	WriteMap(data map[string]interface{}) error
+}
+
+type QueryResultMapWriter struct {
+	Data []QueryResult
+}
+
+func NewQueryResultMapWriter() *QueryResultMapWriter {
+	return &QueryResultMapWriter{Data: make([]QueryResult, 0)}
+}
+
+func (o *QueryResultMapWriter) WriteMap(data map[string]interface{}) error {
+	o.Data = append(o.Data, &MapQueryResult{data})
+	return nil
+}
+
+type WriteCloserMapWriter struct {
+	Convert func(map[string]interface{}) []byte
+	Out     io.WriteCloser
+}
+
+func (o *WriteCloserMapWriter) WriteMap(data map[string]interface{}) (err error) {
+	_, err = o.Out.Write(o.Convert(data))
+	return
+}
+
 type Factory interface {
 	Find(name string) (Service, error)
 	Close()
@@ -60,8 +87,8 @@ func NewValidationRequest(query string, evalExp string) *ValidationRequest {
 
 type ExportRequest struct {
 	Query     string
-	Converter func(map[string]interface{}) []byte
-	Out       func(params map[string]string) (io.WriteCloser, error)
+	Convert   func(map[string]interface{}) []byte
+	CreateOut func(params map[string]string) (io.WriteCloser, error)
 }
 
 func (o *ValidationRequest) CheckKey(serviceName string) string {

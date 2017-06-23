@@ -177,7 +177,7 @@ func (o elasticExporter) Export(params map[string]string) (err error) {
 	}
 
 	var out io.WriteCloser
-	if out, err = o.req.Out(params); err != nil {
+	if out, err = o.req.CreateOut(params); err != nil {
 		return
 	}
 	defer out.Close()
@@ -187,6 +187,8 @@ func (o elasticExporter) Export(params map[string]string) (err error) {
 	query := prepareQuery(o.req.Query, params)
 
 	o.scroll.Body(query)
+
+	convert := o.req.Convert
 
 	for {
 		if res, err = o.search(); err != nil {
@@ -200,7 +202,7 @@ func (o elasticExporter) Export(params map[string]string) (err error) {
 			item := make(map[string]interface{})
 			err := json.Unmarshal(*hit.Source, &item)
 			if err == nil {
-				out.Write(o.req.Converter(item))
+				out.Write(convert(item))
 			} else {
 				Log.Err("Can't unmarshal because of %v", err)
 			}
