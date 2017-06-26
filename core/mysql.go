@@ -226,7 +226,7 @@ func (o *MySqlService) NewСheck(req *ValidationRequest) (ret Check, err error) 
 }
 
 func (o *MySqlService) NewExporter(req *ExportRequest) (ret Exporter, err error) {
-	ret = mySqlExporter{info: req.ExportKey(o.Name()), req: req, service: o}
+	ret = &mySqlExporter{info: req.ExportKey(o.Name()), req: req, service: o}
 	return
 }
 
@@ -243,15 +243,15 @@ func (o mySqlCheck) Info() string {
 	return o.info
 }
 
-func (o mySqlCheck) Validate() error {
+func (o *mySqlCheck) Validate() error {
 	return validate(o, o.eval, o.all)
 }
 
-func (o mySqlCheck) Query() (data QueryResults, err error) {
+func (o *mySqlCheck) Query() (ret QueryResults, err error) {
 	if err = o.service.Init(); err == nil {
 		writer := NewQueryResultMapWriter()
 		if err = o.service.queryToWriter(o.query, writer); err == nil {
-			data = writer.Data
+			ret = writer.Data
 		}
 	}
 	return
@@ -263,11 +263,11 @@ type mySqlExporter struct {
 	service *MySqlService
 }
 
-func (o mySqlExporter) Info() string {
+func (o *mySqlExporter) Info() string {
 	return o.info
 }
 
-func (o mySqlExporter) Export(params map[string]string) (err error) {
+func (o *mySqlExporter) Export(params map[string]string) (err error) {
 	if err = o.service.Init(); err != nil {
 		return
 	}

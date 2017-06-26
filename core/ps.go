@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"github.com/StackExchange/wmi"
 	"gopkg.in/Knetic/govaluate.v2"
+	"io"
 )
 
 type Ps struct {
@@ -68,10 +69,11 @@ func (o *PsService) newСheck(req *ValidationRequest) (ret *PsCheck, err error) 
 }
 
 func (o *PsService) NewExporter(req *ExportRequest) (ret Exporter, err error) {
+	ret = &psExporter{info: req.ExportKey(o.Name()), req: req, service: o}
 	return
 }
 
-func (o PsService) Processes() (ret []*Proc, err error) {
+func (o *PsService) Processes() (ret []*Proc, err error) {
 	value, err := o.procs.Get()
 	if err == nil {
 		ret = value.([]*Proc)
@@ -79,7 +81,17 @@ func (o PsService) Processes() (ret []*Proc, err error) {
 	return
 }
 
-func (o PsService) buildProcesses() (ret []*Proc, err error) {
+func (o *PsService) queryToWriter(writer MapWriter) (err error) {
+	var items []*Proc
+	if items, err = o.Processes(); err == nil {
+		for _, fileInfo := range items {
+			writer.WriteMap(fileInfo.ToMap())
+		}
+	}
+	return
+}
+
+func (o *PsService) buildProcesses() (ret []*Proc, err error) {
 	if runtime.GOOS == "windows" {
 		var dst []process.Win32_Process
 		q := wmi.CreateQuery(&dst, "")
@@ -124,20 +136,19 @@ type PsCheck struct {
 	eval    *govaluate.EvaluableExpression
 }
 
-func (o PsCheck) Info() string {
+func (o *PsCheck) Info() string {
 	return o.info
 }
 
-func (o PsCheck) Validate() (err error) {
+func (o *PsCheck) Validate() (err error) {
 	return validate(o, o.eval, o.all)
 }
 
-func (o PsCheck) Query() (ret QueryResults, err error) {
-	var items []*Proc
-	if items, err = o.service.Processes(); err == nil {
-		ret = make([]QueryResult, len(items))
-		for i, item := range items {
-			ret[i] = &MapQueryResult{item.ToMap()}
+func (o *PsCheck) Query() (ret QueryResults, err error) {
+	if err = o.service.Init(); err == nil {
+		writer := NewQueryResultMapWriter()
+		if err = o.service.queryToWriter(writer); err == nil {
+			ret = writer.Data
 		}
 	}
 	return
@@ -154,4 +165,29 @@ type Proc struct {
 func (o *Proc) ToMap() (ret map[string]interface{}) {
 	return map[string]interface{}{
 		"Id": o.Id, "Name": o.Name, "Status": o.Status, "Cmdline": o.Cmdline, "Path": o.Path}
+}
+
+type psExporter struct {
+	info    string
+	req     *ExportRequest
+	service *PsService
+}
+
+func (o *psExporter) Info() string {
+	return o.info
+}
+
+func (o *psExporter) Export(params map[string]string) (err error) {
+	if err = o.service.Init(); err != nil {
+		return
+	}
+
+	var out io.WriteCloser
+	if out, err = o.req.CreateOut(params); err != nil {
+		return
+	}
+	defer out.Close()
+
+	err = o.service.queryToWriter(&WriteCloserMapWriter{Convert: o.req.Convert, Out: out})
+	return
 }

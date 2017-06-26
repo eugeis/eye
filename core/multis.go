@@ -10,7 +10,7 @@ type MultiCheck struct {
 	onlyRunning bool
 }
 
-func (o MultiCheck) Validate() (err error) {
+func (o *MultiCheck) Validate() (err error) {
 	var data QueryResults
 	if data, err = o.checksData(); err == nil {
 		err = validateData(data, o.eval, o.all, o.info)
@@ -18,15 +18,15 @@ func (o MultiCheck) Validate() (err error) {
 	return
 }
 
-func (o MultiCheck) Query() (data QueryResults, err error) {
+func (o *MultiCheck) Query() (data QueryResults, err error) {
 	return
 }
 
-func (o MultiCheck) Info() string {
+func (o *MultiCheck) Info() string {
 	return o.info
 }
 
-func (o MultiCheck) checksData() (ret QueryResults, err error) {
+func (o *MultiCheck) checksData() (ret QueryResults, err error) {
 	querysData := make([]QueryResults, 0)
 	for _, check := range o.queries {
 		data, queryErr := check.Query()
@@ -52,11 +52,11 @@ func (o *MultiPing) Validate() (err error) {
 	return o.validator(o.check.Services)
 }
 
-func (o MultiPing) Query() (data QueryResults, err error) {
+func (o *MultiPing) Query() (data QueryResults, err error) {
 	return
 }
 
-func (o MultiPing) Info() string {
+func (o *MultiPing) Info() string {
 	return o.check.Name
 }
 
@@ -69,11 +69,11 @@ func (o *MultiValidate) Validate() (err error) {
 	return o.validator(o.check.Services, o.check.Request)
 }
 
-func (o MultiValidate) Query() (data QueryResults, err error) {
+func (o *MultiValidate) Query() (data QueryResults, err error) {
 	return
 }
 
-func (o MultiValidate) Info() string {
+func (o *MultiValidate) Info() string {
 	return o.check.Name
 }
 

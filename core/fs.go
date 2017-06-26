@@ -7,6 +7,7 @@ import (
 	"time"
 	"eye/integ"
 	"gopkg.in/Knetic/govaluate.v2"
+	"io"
 )
 
 type Fs struct {
@@ -49,6 +50,45 @@ func (o *FsService) Ping() (err error) {
 	return
 }
 
+func (o FsService) Files(file string) (ret []*FileInfo, err error) {
+	var fileInfo os.FileInfo
+
+	if fileInfo, err = os.Stat(file); err == nil {
+		if fileInfo.IsDir() {
+			var files []os.FileInfo
+			files, err = ioutil.ReadDir(file)
+			ret = make([]*FileInfo, len(files))
+			for i, entry := range files {
+				ret[i] = toFileInfo(entry)
+			}
+		} else {
+			ret = make([]*FileInfo, 1)
+			ret[0] = toFileInfo(fileInfo)
+		}
+	}
+	return
+}
+
+func (o *FsService) buildPath(pathElement string) string {
+	var filePath string
+	if len(pathElement) > 0 {
+		filePath = filepath.Join(o.Fs.File, pathElement)
+	} else {
+		filePath = o.Fs.File
+	}
+	return filePath
+}
+
+func (o *FsService) queryToWriter(file string, writer MapWriter) (err error) {
+	var items []*FileInfo
+	if items, err = o.Files(file); err == nil {
+		for _, fileInfo := range items {
+			writer.WriteMap(fileInfo.ToMap())
+		}
+	}
+	return
+}
+
 func (o *FsService) NewСheck(req *ValidationRequest) (ret Check, err error) {
 	return o.newСheck(req)
 }
@@ -59,70 +99,49 @@ func (o *FsService) newСheck(req *ValidationRequest) (ret *FsCheck, err error) 
 		return
 	}
 
-	if req.Query != "" {
-		ret = &FsCheck{
-			info: req.CheckKey("Fs"),
-			file: filepath.Join(o.Fs.File, req.Query),
-			eval: eval, all: req.All}
-	} else {
-		ret = &FsCheck{
-			info: req.CheckKey("Fs"),
-			file: o.Fs.File,
-			eval: eval, all: req.All}
-	}
+	ret = &FsCheck{
+		info: req.CheckKey("Fs"),
+		file: o.buildPath(req.Query),
+		eval: eval, all: req.All}
 	ret.files = integ.NewObjectCache(func() (interface{}, error) { return ret.Files() })
-
 	return
 }
 
 func (o *FsService) NewExporter(req *ExportRequest) (ret Exporter, err error) {
+	ret = &fsExporter{info: req.ExportKey(o.Name()), req: req, service: o}
 	return
 }
 
 //buildCheck
 type FsCheck struct {
-	info  string
-	file  string
-	all   bool
-	eval  *govaluate.EvaluableExpression
-	files integ.ObjectCache
+	info    string
+	file    string
+	all     bool
+	service *FsService
+	eval    *govaluate.EvaluableExpression
+	files   integ.ObjectCache
 }
 
-func (o FsCheck) Info() string {
+func (o *FsCheck) Info() string {
 	return o.info
 }
 
-func (o FsCheck) Validate() (err error) {
+func (o *FsCheck) Validate() (err error) {
 	return validate(o, o.eval, o.all)
 }
 
-func (o FsCheck) Query() (ret QueryResults, err error) {
-	var items []*FileInfo
-	if items, err = o.Files(); err == nil {
-		ret = make([]QueryResult, len(items))
-		for i, fileInfo := range items {
-			ret[i] = &MapQueryResult{fileInfo.ToMap()}
+func (o *FsCheck) Query() (ret QueryResults, err error) {
+	if err = o.service.Init(); err == nil {
+		writer := NewQueryResultMapWriter()
+		if err = o.service.queryToWriter(o.file, writer); err == nil {
+			ret = writer.Data
 		}
 	}
 	return
 }
 
-func (o FsCheck) Files() (ret []*FileInfo, err error) {
-	var file os.FileInfo
-	if file, err = os.Stat(o.file); err == nil {
-		if file.IsDir() {
-			var files []os.FileInfo
-			files, err = ioutil.ReadDir(o.file)
-			ret = make([]*FileInfo, len(files))
-			for i, entry := range files {
-				ret[i] = toFileInfo(entry)
-			}
-		} else {
-			ret = make([]*FileInfo, 1)
-			ret[0] = toFileInfo(file)
-		}
-	}
-	return
+func (o *FsCheck) Files() (ret []*FileInfo, err error) {
+	return o.service.Files(o.file)
 }
 
 func toFileInfo(item os.FileInfo) *FileInfo {
@@ -147,4 +166,29 @@ type FileInfo struct {
 func (o *FileInfo) ToMap() (ret map[string]interface{}) {
 	return map[string]interface{}{
 		"Name": o.Name, "Size": o.Size, "Mode": o.Mode, "ModTime": o.ModTime, "IsDir": o.IsDir}
+}
+
+type fsExporter struct {
+	info    string
+	req     *ExportRequest
+	service *FsService
+}
+
+func (o *fsExporter) Info() string {
+	return o.info
+}
+
+func (o *fsExporter) Export(params map[string]string) (err error) {
+	if err = o.service.Init(); err != nil {
+		return
+	}
+
+	var out io.WriteCloser
+	if out, err = o.req.CreateOut(params); err != nil {
+		return
+	}
+	defer out.Close()
+
+	err = o.service.queryToWriter(o.service.buildPath(o.req.Query), &WriteCloserMapWriter{Convert: o.req.Convert, Out: out})
+	return
 }

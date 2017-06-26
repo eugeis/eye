@@ -1,7 +1,6 @@
 package core
 
 import (
-	"errors"
 	"eye/digest"
 	"fmt"
 	"io/ioutil"
@@ -10,6 +9,7 @@ import (
 	"time"
 	"gee/as"
 	"gopkg.in/Knetic/govaluate.v2"
+	"io"
 )
 
 type Http struct {
@@ -65,6 +65,54 @@ func (o *HttpService) Ping() error {
 	return err
 }
 
+func (o *HttpService) query(req *digest.Request) (ret []byte, err error) {
+	err = o.Init()
+	if err != nil {
+		return
+	}
+	resp, err := req.Execute(o.client)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	ret, err = ioutil.ReadAll(resp.Body)
+	return
+}
+
+func (o *HttpService) queryToWriter(req *digest.Request, pattern *regexp.Regexp, writer MapWriter) (err error) {
+	if err = o.Init(); err != nil {
+		return
+	}
+	var resp *http.Response
+	if resp, err = req.Execute(o.client); err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	var data []byte
+	if data, err = ioutil.ReadAll(resp.Body); err != nil {
+		return
+	}
+
+	//Log.Debug(string(Data))
+	if pattern != nil {
+		if pattern != nil {
+			matches := pattern.FindAllSubmatch(data, -1)
+			for _, match := range matches {
+				entry := make(map[string]interface{})
+				for i, name := range pattern.SubexpNames() {
+					if i != 0 {
+						entry[name] = match[i]
+					}
+				}
+				writer.WriteMap(entry)
+			}
+		}
+	}
+	return
+}
+
 func body(resp *http.Response) string {
 	body, _ := ioutil.ReadAll(resp.Body)
 	ret := fmt.Sprintf("%v", body)
@@ -99,6 +147,7 @@ func (o *HttpService) newСheck(req *ValidationRequest) (ret *httpCheck, err err
 }
 
 func (o *HttpService) NewExporter(req *ExportRequest) (ret Exporter, err error) {
+	ret = &httpExporter{info: req.ExportKey(o.Name()), req: req, service: o}
 	return
 }
 
@@ -113,34 +162,45 @@ type httpCheck struct {
 	service *HttpService
 }
 
-func (o httpCheck) Info() string {
+func (o *httpCheck) Info() string {
 	return o.info
 }
 
-func (o httpCheck) Validate() error {
+func (o *httpCheck) Validate() error {
 	return validate(o, o.eval, o.all)
 }
 
-func (o httpCheck) Query() (ret QueryResults, err error) {
-	err = o.service.Init()
-	if err != nil {
-		return
+func (o *httpCheck) Query() (ret QueryResults, err error) {
+	writer := NewQueryResultMapWriter()
+	if err = o.service.queryToWriter(o.req, o.pattern, writer); err == nil {
+		ret = writer.Data
 	}
-	resp, err := o.req.Execute(o.service.client)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
+	return
+}
 
-	var data []byte
-	if data, err = ioutil.ReadAll(resp.Body); err != nil {
+type httpExporter struct {
+	info    string
+	httpReq *digest.Request
+	req     *ExportRequest
+	pattern *regexp.Regexp
+	service *HttpService
+}
+
+func (o *httpExporter) Info() string {
+	return o.info
+}
+
+func (o *httpExporter) Export(params map[string]string) (err error) {
+	if err = o.service.Init(); err != nil {
 		return
 	}
-	ret, err = buildQueryResult(o.pattern, data)
-	Log.Debug("http ret: %s", ret)
 
-	if resp.StatusCode != http.StatusOK {
-		err = errors.New(fmt.Sprintf("Status %d", resp.StatusCode))
+	var out io.WriteCloser
+	if out, err = o.req.CreateOut(params); err != nil {
+		return
 	}
+	defer out.Close()
+
+	err = o.service.queryToWriter(o.httpReq, o.pattern, &WriteCloserMapWriter{Convert: o.req.Convert, Out: out})
 	return
 }

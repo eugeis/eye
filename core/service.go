@@ -283,26 +283,6 @@ func ChecksKey(strictness string, serviceNames []string) string {
 	return fmt.Sprintf("%v(%v)", strictness, strings.Join(serviceNames, "-"))
 }
 
-func buildQueryResult(pattern *regexp.Regexp, data []byte) (ret QueryResults, err error) {
-	//Log.Debug(string(Data))
-	if pattern != nil {
-		if pattern != nil {
-			matches := pattern.FindAllSubmatch(data, -1)
-			ret = make([]QueryResult, len(matches))
-			for l, match := range matches {
-				entry := make(map[string]interface{})
-				for i, name := range pattern.SubexpNames() {
-					if i != 0 {
-						entry[name] = match[i]
-					}
-				}
-				ret[l] = &MapQueryResult{Data: entry}
-			}
-		}
-	}
-	return
-}
-
 func validate(check Check, eval *govaluate.EvaluableExpression, all bool) (err error) {
 	var items QueryResults
 	if items, err = check.Query(); err == nil {

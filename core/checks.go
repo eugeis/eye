@@ -101,7 +101,7 @@ func (o *Eye) buildCompareCheck(checkKey string, serviceNames []string, onlyRunn
 	}
 
 	if err == nil {
-		ret = MultiCheck{info: checkKey, queries: queries, eval: eval, onlyRunning: onlyRunning}
+		ret = &MultiCheck{info: checkKey, queries: queries, eval: eval, onlyRunning: onlyRunning}
 	}
 	return
 }
