@@ -101,6 +101,7 @@ func (o *FsService) newСheck(req *ValidationRequest) (ret *FsCheck, err error) 
 
 	ret = &FsCheck{
 		info: req.CheckKey("Fs"),
+		service: o,
 		file: o.buildPath(req.Query),
 		eval: eval, all: req.All}
 	ret.files = integ.NewObjectCache(func() (interface{}, error) { return ret.Files() })

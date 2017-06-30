@@ -97,18 +97,20 @@ func (o *HttpService) queryToWriter(req *digest.Request, pattern *regexp.Regexp,
 
 	//Log.Debug(string(Data))
 	if pattern != nil {
-		if pattern != nil {
-			matches := pattern.FindAllSubmatch(data, -1)
-			for _, match := range matches {
-				entry := make(map[string]interface{})
-				for i, name := range pattern.SubexpNames() {
-					if i != 0 {
-						entry[name] = match[i]
-					}
+		matches := pattern.FindAllSubmatch(data, -1)
+		for _, match := range matches {
+			entry := make(map[string]interface{})
+			for i, name := range pattern.SubexpNames() {
+				if i != 0 {
+					entry[name] = match[i]
 				}
-				writer.WriteMap(entry)
 			}
+			writer.WriteMap(entry)
 		}
+	} else {
+		entry := make(map[string]interface{})
+		entry["data"] = string(data)
+		writer.WriteMap(entry)
 	}
 	return
 }

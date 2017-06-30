@@ -143,9 +143,10 @@ func start(config *core.Config, accessFinder as.AccessFinder) (err error) {
 }
 
 func defineRoutes(engine *gin.Engine, controller *core.Eye, config *core.Config) {
+	currentConfig := config
 	engine.Static("/html", "html")
 	//engine.StaticFS("/log", LocalFs{})
-	engine.Static("/log", fmt.Sprintf("%v/log", config.AppHome))
+	engine.Static("/log", fmt.Sprintf("%v/log", currentConfig.AppHome))
 	engine.StaticFile("/", "html/doc.html")
 
 	engine.GET("/ping", func(c *gin.Context) {
@@ -220,6 +221,7 @@ func defineRoutes(engine *gin.Engine, controller *core.Eye, config *core.Config)
 		adminGroup.GET("/reload", func(c *gin.Context) {
 			config, err := config.Reload()
 			if err == nil {
+				currentConfig =config
 				controller.UpdateConfig(config)
 			}
 			response(err, c)
@@ -227,7 +229,7 @@ func defineRoutes(engine *gin.Engine, controller *core.Eye, config *core.Config)
 
 		adminGroup.GET("/config", func(c *gin.Context) {
 			c.Header("Content-Type", "application/json; charset=UTF-8")
-			c.IndentedJSON(http.StatusOK, config)
+			c.IndentedJSON(http.StatusOK, currentConfig)
 		})
 	}
 }
