@@ -1,13 +1,13 @@
 package core
 
 import (
-	"os"
-	"io/ioutil"
-	"path/filepath"
-	"time"
 	"eye/integ"
 	"gopkg.in/Knetic/govaluate.v2"
 	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"time"
 )
 
 type Fs struct {
@@ -59,11 +59,11 @@ func (o FsService) Files(file string) (ret []*FileInfo, err error) {
 			files, err = ioutil.ReadDir(file)
 			ret = make([]*FileInfo, len(files))
 			for i, entry := range files {
-				ret[i] = toFileInfo(entry)
+				ret[i] = toFileInfo(entry, file)
 			}
 		} else {
 			ret = make([]*FileInfo, 1)
-			ret[0] = toFileInfo(fileInfo)
+			ret[0] = toFileInfo(fileInfo, file)
 		}
 	}
 	return
@@ -100,10 +100,10 @@ func (o *FsService) newСheck(req *ValidationRequest) (ret *FsCheck, err error) 
 	}
 
 	ret = &FsCheck{
-		info: req.CheckKey("Fs"),
+		info:    req.CheckKey("Fs"),
 		service: o,
-		file: o.buildPath(req.Query),
-		eval: eval, all: req.All}
+		file:    o.buildPath(req.Query),
+		eval:    eval, all: req.All}
 	ret.files = integ.NewObjectCache(func() (interface{}, error) { return ret.Files() })
 	return
 }
@@ -145,13 +145,14 @@ func (o *FsCheck) Files() (ret []*FileInfo, err error) {
 	return o.service.Files(o.file)
 }
 
-func toFileInfo(item os.FileInfo) *FileInfo {
+func toFileInfo(item os.FileInfo, parent string) *FileInfo {
 	f := &FileInfo{
 		Name:    item.Name(),
 		Size:    item.Size(),
 		Mode:    item.Mode(),
 		ModTime: item.ModTime(),
 		IsDir:   item.IsDir(),
+		Path:    parent,
 	}
 	return f
 }
@@ -162,11 +163,12 @@ type FileInfo struct {
 	Mode    os.FileMode
 	ModTime time.Time
 	IsDir   bool
+	Path    string
 }
 
 func (o *FileInfo) ToMap() (ret map[string]interface{}) {
 	return map[string]interface{}{
-		"Name": o.Name, "Size": o.Size, "Mode": o.Mode, "ModTime": o.ModTime, "IsDir": o.IsDir}
+		"Name": o.Name, "Size": o.Size, "Mode": o.Mode, "ModTime": o.ModTime, "IsDir": o.IsDir, "Path": o.Path}
 }
 
 type fsExporter struct {

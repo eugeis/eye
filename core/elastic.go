@@ -1,23 +1,23 @@
 package core
 
 import (
-	"gopkg.in/olivere/elastic.v5"
-	"gee/as"
-	"fmt"
-	"golang.org/x/net/context"
-	"time"
 	"encoding/json"
 	"errors"
-	"strings"
-	"io"
+	"fmt"
+	"gee/as"
+	"golang.org/x/net/context"
 	"gopkg.in/Knetic/govaluate.v2"
+	"gopkg.in/olivere/elastic.v5"
+	"io"
+	"strings"
+	"time"
 )
 
 type Elastic struct {
 	Name       string `default:"elastic"`
 	Host       string `default:"localhost"`
 	Port       int    `default:"9200"`
-	ScrollSize int `default:"500"`
+	ScrollSize int    `default:"500"`
 
 	Index string
 
@@ -202,7 +202,7 @@ func (o elasticExporter) Export(params map[string]string) (err error) {
 			item := make(map[string]interface{})
 			err := json.Unmarshal(*hit.Source, &item)
 			if err == nil {
-				out.Write(convert(item))
+				io.Copy(out, convert(item))
 			} else {
 				Log.Err("Can't unmarshal because of %v", err)
 			}

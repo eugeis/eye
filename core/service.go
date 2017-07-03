@@ -1,16 +1,16 @@
 package core
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"gopkg.in/Knetic/govaluate.v2"
+	"io"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
-	"errors"
-	"context"
-	"regexp"
-	"io"
-	"gopkg.in/Knetic/govaluate.v2"
-	"strconv"
-	"encoding/json"
 )
 
 type Service interface {
@@ -60,12 +60,12 @@ func (o *QueryResultMapWriter) WriteMap(data map[string]interface{}) error {
 }
 
 type WriteCloserMapWriter struct {
-	Convert func(map[string]interface{}) []byte
+	Convert func(map[string]interface{}) io.Reader
 	Out     io.WriteCloser
 }
 
 func (o *WriteCloserMapWriter) WriteMap(data map[string]interface{}) (err error) {
-	_, err = o.Out.Write(o.Convert(data))
+	_, err = io.Copy(o.Out, o.Convert(data))
 	return
 }
 
@@ -87,7 +87,7 @@ func NewValidationRequest(query string, evalExp string) *ValidationRequest {
 
 type ExportRequest struct {
 	Query     string
-	Convert   func(map[string]interface{}) []byte
+	Convert   func(map[string]interface{}) io.Reader
 	CreateOut func(params map[string]string) (io.WriteCloser, error)
 }
 

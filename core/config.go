@@ -37,6 +37,8 @@ type Config struct {
 
 	FieldsExporter []*FieldsExporter
 
+	FileExporter []*FileExporter
+
 	ConfigFiles    []string
 	ConfigSuffixes []string
 }
@@ -58,6 +60,14 @@ type FieldsExporter struct {
 	Fields    []string
 	Separator string
 	Services  []string
+}
+
+type FileExporter struct {
+	Name     string
+	Query    string
+	Fields   []string
+	EvalExpr string
+	Services []string
 }
 
 func LoadConfig(files []string, suffixes []string, appHome string) (ret *Config, err error) {

@@ -2,12 +2,12 @@ package core
 
 import (
 	"bytes"
-	"strings"
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 	"path/filepath"
+	"regexp"
+	"strings"
 )
 
 var fileNamePattern, _ = regexp.Compile("[^a-zA-Z0-9.-]")
@@ -32,7 +32,7 @@ func (o *Eye) registerFieldExporter(exporterFullName string, serviceName string,
 	var service Service
 	if service, err = o.serviceFactory.Find(serviceName); err == nil {
 		var item Exporter
-		request := &ExportRequest{Query: exporter.Query, Convert: func(row map[string]interface{}) []byte {
+		request := &ExportRequest{Query: exporter.Query, Convert: func(row map[string]interface{}) io.Reader {
 			var line bytes.Buffer
 			for _, field := range exporter.Fields {
 				if val, ok := row[field]; ok {
@@ -47,7 +47,7 @@ func (o *Eye) registerFieldExporter(exporterFullName string, serviceName string,
 				line.WriteString(exporter.Separator)
 			}
 			line.WriteString("\n")
-			return []byte(line.String())
+			return strings.NewReader(line.String())
 		},
 			CreateOut: func(params map[string]string) (ret io.WriteCloser, err error) {
 				var fileName string
