@@ -63,11 +63,12 @@ type FieldsExporter struct {
 }
 
 type FileExporter struct {
-	Name     string
-	Query    string
-	Fields   []string
-	EvalExpr string
-	Services []string
+	Name           string
+	Query          string
+	EvalExpr       string
+	Fields         []string
+	SourceFileExpr string
+	Services       []string
 }
 
 func LoadConfig(files []string, suffixes []string, appHome string) (ret *Config, err error) {

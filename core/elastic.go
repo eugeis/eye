@@ -198,11 +198,16 @@ func (o elasticExporter) Export(params map[string]string) (err error) {
 			break
 		}
 
+		var reader io.Reader
 		for _, hit := range res.Hits.Hits {
 			item := make(map[string]interface{})
 			err := json.Unmarshal(*hit.Source, &item)
 			if err == nil {
-				io.Copy(out, convert(item))
+				if reader, err = convert(item); err == nil {
+					io.Copy(out, reader)
+				} else {
+					Log.Err("Can't convert item to reader because of %v", err)
+				}
 			} else {
 				Log.Err("Can't unmarshal because of %v", err)
 			}

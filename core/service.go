@@ -60,13 +60,20 @@ func (o *QueryResultMapWriter) WriteMap(data map[string]interface{}) error {
 }
 
 type WriteCloserMapWriter struct {
-	Convert func(map[string]interface{}) io.Reader
+	Convert func(map[string]interface{}) (io.Reader, error)
 	Out     io.WriteCloser
 }
 
 func (o *WriteCloserMapWriter) WriteMap(data map[string]interface{}) (err error) {
-	_, err = io.Copy(o.Out, o.Convert(data))
+	var reader io.Reader
+	if reader, err = o.Convert(data); err == nil {
+		_, err = io.Copy(o.Out, reader)
+	}
 	return
+}
+
+func (o *WriteCloserMapWriter) GetIOWriter() io.Writer {
+	return o.Out
 }
 
 type Factory interface {
@@ -87,7 +94,8 @@ func NewValidationRequest(query string, evalExp string) *ValidationRequest {
 
 type ExportRequest struct {
 	Query     string
-	Convert   func(map[string]interface{}) io.Reader
+	EvalExpr  string
+	Convert   func(map[string]interface{}) (io.Reader, error)
 	CreateOut func(params map[string]string) (io.WriteCloser, error)
 }
 

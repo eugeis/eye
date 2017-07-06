@@ -1,6 +1,7 @@
 package core
 
 import (
+	"archive/zip"
 	"eye/integ"
 	"gopkg.in/Knetic/govaluate.v2"
 	"io"
@@ -50,7 +51,7 @@ func (o *FsService) Ping() (err error) {
 	return
 }
 
-func (o FsService) Files(file string) (ret []*FileInfo, err error) {
+func (o *FsService) Files(file string) (ret []*FileInfo, err error) {
 	var fileInfo os.FileInfo
 
 	if fileInfo, err = os.Stat(file); err == nil {
@@ -64,6 +65,29 @@ func (o FsService) Files(file string) (ret []*FileInfo, err error) {
 		} else {
 			ret = make([]*FileInfo, 1)
 			ret[0] = toFileInfo(fileInfo, file)
+		}
+	}
+	return
+}
+
+func (o *FsService) FilesWithFilter(file string, eval *govaluate.EvaluableExpression) (ret []*FileInfo, err error) {
+	var fileInfo os.FileInfo
+	if fileInfo, err = os.Stat(file); err == nil {
+		ret = make([]*FileInfo, 0)
+		if fileInfo.IsDir() {
+			err = filepath.Walk(file, func(path string, f os.FileInfo, e error) (err error) {
+				fileInfo := toFileInfo(f, file)
+
+				var evalResult interface{}
+				if evalResult, err = eval.Eval(&MapQueryResult{fileInfo.ToMap()}); err == nil && !fileInfo.IsDir {
+					if evalResult.(bool) {
+						ret = append(ret, fileInfo)
+						Log.Debug("added %s", fileInfo.Name)
+					}
+				}
+
+				return err
+			})
 		}
 	}
 	return
@@ -84,6 +108,32 @@ func (o *FsService) queryToWriter(file string, writer MapWriter) (err error) {
 	if items, err = o.Files(file); err == nil {
 		for _, fileInfo := range items {
 			writer.WriteMap(fileInfo.ToMap())
+		}
+	}
+	return
+}
+
+func (o *FsService) queryEvalToWriter(file string, eval *govaluate.EvaluableExpression, writer io.Writer) (err error) {
+	var items []*FileInfo
+	var osFileInfo os.FileInfo
+	var header *zip.FileHeader
+	var zipWriter io.Writer
+	var fileToZip *os.File
+
+	archive := zip.NewWriter(writer)
+	defer archive.Close()
+	defer fileToZip.Close()
+
+	if items, err = o.FilesWithFilter(file, eval); err == nil {
+		for _, fileInfo := range items {
+			fullpath := fileInfo.Path + "/" + fileInfo.Name
+			osFileInfo, err = os.Stat(fullpath)
+			header, err = zip.FileInfoHeader(osFileInfo)
+			header.Method = zip.Deflate
+
+			zipWriter, err = archive.CreateHeader(header)
+			fileToZip, err = os.Open(fullpath)
+			_, err = io.Copy(zipWriter, fileToZip)
 		}
 	}
 	return
@@ -190,8 +240,14 @@ func (o *fsExporter) Export(params map[string]string) (err error) {
 	if out, err = o.req.CreateOut(params); err != nil {
 		return
 	}
-	defer out.Close()
+	writeCloseMapWriter := &WriteCloserMapWriter{Convert: o.req.Convert, Out: out}
 
-	err = o.service.queryToWriter(o.service.buildPath(o.req.Query), &WriteCloserMapWriter{Convert: o.req.Convert, Out: out})
+	defer out.Close()
+	if o.req.EvalExpr != "" {
+		evalExpr, _ := compileEval(o.req.EvalExpr)
+		err = o.service.queryEvalToWriter(o.service.buildPath(o.req.Query), evalExpr, writeCloseMapWriter.GetIOWriter())
+	} else {
+		err = o.service.queryToWriter(o.service.buildPath(o.req.Query), writeCloseMapWriter)
+	}
 	return
 }

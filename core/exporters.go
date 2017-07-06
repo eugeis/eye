@@ -3,11 +3,15 @@ package core
 import (
 	"bytes"
 	"fmt"
+	"github.com/ngaut/log"
+	"github.com/pkg/errors"
+	"gopkg.in/Knetic/govaluate.v2"
 	"io"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var fileNamePattern, _ = regexp.Compile("[^a-zA-Z0-9.-]")
@@ -25,6 +29,60 @@ func (o *Eye) registerExporters() {
 			Log.Info("No service defined for the exporter %v", item.Name)
 		}
 	}
+	for _, item := range o.config.FileExporter {
+		if len(item.Services) > 1 {
+			for _, serviceName := range item.Services {
+				o.registerFileExporter(fmt.Sprintf("%v-%v", serviceName, item.Name),
+					serviceName, item)
+			}
+		} else if len(item.Services) > 0 {
+			o.registerFileExporter(item.Name, item.Services[0], item)
+		} else {
+			Log.Info("No service defined for the exporter %v", item.Name)
+		}
+	}
+
+}
+
+func (o *Eye) registerFileExporter(exporterFullName string, serviceName string, exporter *FileExporter) {
+	var err error
+	var service Service
+	if service, err = o.serviceFactory.Find(serviceName); err == nil {
+		var item Exporter
+		var eval *govaluate.EvaluableExpression
+		eval, err = compileEval(exporter.SourceFileExpr)
+		request := &ExportRequest{Query: exporter.Query, EvalExpr: exporter.EvalExpr, Convert: func(row map[string]interface{}) (ret io.Reader, err error) {
+			var evalResult interface{}
+			if evalResult, err = eval.Eval(&MapQueryResult{row}); err == nil {
+				var fileName string
+				if evalResult != nil {
+					if stringResult, ok := evalResult.(string); ok {
+						fileName = stringResult
+					}
+				}
+				if len(fileName) > 0 {
+					ret, err = os.Create(fileName)
+				} else {
+					err = errors.New(fmt.Sprintf(
+						"No file name computed based on source file expression '%v' and query result %v",
+						exporter.SourceFileExpr, row))
+				}
+			}
+			if err != nil {
+				log.Error("Can't convert because of '%v'", err)
+			}
+			return
+		},
+			CreateOut: func(params map[string]string) (ret io.WriteCloser, err error) {
+				fileName := filepath.Join(o.config.ExportFolder, fmt.Sprintf("%v_%v.zip", exporterFullName, time.Now().Unix()))
+				return os.Create(fileName)
+			},
+		}
+		if item, err = service.NewExporter(request); err == nil {
+			o.exporters[exporterFullName] = item
+		}
+	}
+
 }
 
 func (o *Eye) registerFieldExporter(exporterFullName string, serviceName string, exporter *FieldsExporter) {
@@ -32,7 +90,7 @@ func (o *Eye) registerFieldExporter(exporterFullName string, serviceName string,
 	var service Service
 	if service, err = o.serviceFactory.Find(serviceName); err == nil {
 		var item Exporter
-		request := &ExportRequest{Query: exporter.Query, Convert: func(row map[string]interface{}) io.Reader {
+		request := &ExportRequest{Query: exporter.Query, Convert: func(row map[string]interface{}) (ret io.Reader, err error) {
 			var line bytes.Buffer
 			for _, field := range exporter.Fields {
 				if val, ok := row[field]; ok {
@@ -47,7 +105,7 @@ func (o *Eye) registerFieldExporter(exporterFullName string, serviceName string,
 				line.WriteString(exporter.Separator)
 			}
 			line.WriteString("\n")
-			return strings.NewReader(line.String())
+			return strings.NewReader(line.String()), nil
 		},
 			CreateOut: func(params map[string]string) (ret io.WriteCloser, err error) {
 				var fileName string
