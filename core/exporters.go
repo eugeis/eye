@@ -3,7 +3,6 @@ package core
 import (
 	"bytes"
 	"fmt"
-	"github.com/ngaut/log"
 	"github.com/pkg/errors"
 	"gopkg.in/Knetic/govaluate.v2"
 	"io"
@@ -69,7 +68,7 @@ func (o *Eye) registerFileExporter(exporterFullName string, serviceName string, 
 				}
 			}
 			if err != nil {
-				log.Error("Can't convert because of '%v'", err)
+				Log.Err("Can't convert because of '%v'", err)
 			}
 			return
 		},
