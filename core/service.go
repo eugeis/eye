@@ -72,10 +72,6 @@ func (o *WriteCloserMapWriter) WriteMap(data map[string]interface{}) (err error)
 	return
 }
 
-func (o *WriteCloserMapWriter) GetIOWriter() io.Writer {
-	return o.Out
-}
-
 type Factory interface {
 	Find(name string) (Service, error)
 	Close()

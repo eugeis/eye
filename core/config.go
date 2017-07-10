@@ -57,6 +57,7 @@ type ValidateCheck struct {
 type FieldsExporter struct {
 	Name      string
 	Query     string
+	EvalExpr  string
 	Fields    []string
 	Separator string
 	Services  []string

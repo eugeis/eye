@@ -240,13 +240,13 @@ func (o *fsExporter) Export(params map[string]string) (err error) {
 	if out, err = o.req.CreateOut(params); err != nil {
 		return
 	}
-	writeCloseMapWriter := &WriteCloserMapWriter{Convert: o.req.Convert, Out: out}
 
 	defer out.Close()
 	if o.req.EvalExpr != "" {
 		evalExpr, _ := compileEval(o.req.EvalExpr)
-		err = o.service.queryEvalToWriter(o.service.buildPath(o.req.Query), evalExpr, writeCloseMapWriter.GetIOWriter())
+		err = o.service.queryEvalToWriter(o.service.buildPath(o.req.Query), evalExpr, out)
 	} else {
+		writeCloseMapWriter := &WriteCloserMapWriter{Convert: o.req.Convert, Out: out}
 		err = o.service.queryToWriter(o.service.buildPath(o.req.Query), writeCloseMapWriter)
 	}
 	return
