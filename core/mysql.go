@@ -208,6 +208,10 @@ func (o *MySqlService) query(sql string) (*sql.Rows, error) {
 	}
 }
 
+func (o *MySqlService) NewExecutor(req *CommandRequest) (ret Executor, err error) {
+	return nil, errors.New(fmt.Sprintf("Not implemented yet in %v", o.Name()))
+}
+
 func (o *MySqlService) NewСheck(req *ValidationRequest) (ret Check, err error) {
 	var eval *govaluate.EvaluableExpression
 	if eval, err = compileEval(req.EvalExpr); err != nil {

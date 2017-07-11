@@ -14,6 +14,7 @@ type Eye struct {
 	serviceFactory Factory
 	checks         map[string]Check
 	exporters      map[string]Exporter
+	executors      map[string]Executor
 	liveChecks     integ.Cache
 }
 
@@ -58,6 +59,15 @@ func (o *Eye) Export(exportName string, params map[string]string) (err error) {
 		err = exporter.Export(params)
 	} else {
 		err = errors.New(fmt.Sprintf("There is no exporter '%v' available", exportName))
+	}
+	return
+}
+
+func (o *Eye) Execute(executorName string, params map[string]string) (err error) {
+	if executor, ok := o.executors[executorName]; ok {
+		err = executor.Execute(params)
+	} else {
+		err = errors.New(fmt.Sprintf("There is no executer '%v' available", executorName))
 	}
 	return
 }

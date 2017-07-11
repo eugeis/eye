@@ -10,6 +10,7 @@ import (
 	"gee/as"
 	"gopkg.in/Knetic/govaluate.v2"
 	"io"
+	"errors"
 )
 
 type Http struct {
@@ -119,6 +120,10 @@ func body(resp *http.Response) string {
 	body, _ := ioutil.ReadAll(resp.Body)
 	ret := fmt.Sprintf("%v", body)
 	return ret
+}
+
+func (o *HttpService) NewExecutor(req *CommandRequest) (ret Executor, err error) {
+	return nil, errors.New(fmt.Sprintf("Not implemented yet in %v", o.Name()))
 }
 
 func (o *HttpService) NewСheck(req *ValidationRequest) (ret Check, err error) {

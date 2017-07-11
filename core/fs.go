@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"fmt"
+	"errors"
 )
 
 type Fs struct {
@@ -137,6 +139,10 @@ func (o *FsService) queryEvalToWriter(file string, eval *govaluate.EvaluableExpr
 		}
 	}
 	return
+}
+
+func (o *FsService) NewExecutor(req *CommandRequest) (ret Executor, err error) {
+	return nil, errors.New(fmt.Sprintf("Not implemented yet in %v", o.Name()))
 }
 
 func (o *FsService) NewСheck(req *ValidationRequest) (ret Check, err error) {

@@ -18,12 +18,11 @@ type Service interface {
 
 	Init() error
 	Close()
-
 	Ping() error
 
 	NewСheck(req *ValidationRequest) (Check, error)
-
 	NewExporter(req *ExportRequest) (Exporter, error)
+	NewExecutor(req *CommandRequest) (Executor, error)
 }
 
 type Query interface {
@@ -40,6 +39,11 @@ type Check interface {
 type Exporter interface {
 	Info() string
 	Export(params map[string]string) error
+}
+
+type Executor interface {
+	Info() string
+	Execute(params map[string]string) error
 }
 
 type MapWriter interface {
@@ -93,6 +97,9 @@ type ExportRequest struct {
 	EvalExpr  string
 	Convert   func(map[string]interface{}) (io.Reader, error)
 	CreateOut func(params map[string]string) (io.WriteCloser, error)
+}
+
+type CommandRequest struct {
 }
 
 func (o *ValidationRequest) CheckKey(serviceName string) string {

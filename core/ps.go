@@ -7,6 +7,8 @@ import (
 	"github.com/StackExchange/wmi"
 	"gopkg.in/Knetic/govaluate.v2"
 	"io"
+	"errors"
+	"fmt"
 )
 
 type Ps struct {
@@ -52,6 +54,10 @@ func (o *PsService) Ping() (err error) {
 		err = o.pingCheck.Validate()
 	}
 	return
+}
+
+func (o *PsService) NewExecutor(req *CommandRequest) (ret Executor, err error) {
+	return nil, errors.New(fmt.Sprintf("Not implemented yet in %v", o.Name()))
 }
 
 func (o *PsService) NewСheck(req *ValidationRequest) (ret Check, err error) {
