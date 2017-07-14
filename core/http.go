@@ -1,13 +1,13 @@
 package core
 
 import (
-	"eye/digest"
+	"github.com/eugeis/eye/digest"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"regexp"
 	"time"
-	"gee/as"
+	"github.com/eugeis/gee/as"
 	"gopkg.in/Knetic/govaluate.v2"
 	"io"
 	"errors"

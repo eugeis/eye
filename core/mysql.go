@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"gee/as"
+	"github.com/eugeis/gee/as"
 	"gopkg.in/Knetic/govaluate.v2"
 	"strconv"
 	"io"

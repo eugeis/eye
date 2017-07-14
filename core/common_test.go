@@ -1,7 +1,7 @@
 package core
 
 import (
-	"gee/as"
+	"github.com/eugeis/gee/as"
 	"fmt"
 	"testing"
 )

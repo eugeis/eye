@@ -2,9 +2,9 @@ package core
 
 import (
 	"github.com/shirou/gopsutil/process"
-	"eye/integ"
+	"github.com/eugeis/eye/integ"
 	"runtime"
-	"github.com/StackExchange/wmi"
+	//"github.com/StackExchange/wmi"
 	"gopkg.in/Knetic/govaluate.v2"
 	"io"
 	"errors"
@@ -99,6 +99,7 @@ func (o *PsService) queryToWriter(writer MapWriter) (err error) {
 
 func (o *PsService) buildProcesses() (ret []*Proc, err error) {
 	if runtime.GOOS == "windows" {
+		/*
 		var dst []process.Win32_Process
 		q := wmi.CreateQuery(&dst, "")
 		if err = wmi.Query(q, &dst); err == nil {
@@ -113,6 +114,7 @@ func (o *PsService) buildProcesses() (ret []*Proc, err error) {
 				proc.Path = *wp.ExecutablePath
 			}
 		}
+		*/
 	} else {
 		var pids []int32
 		if pids, err = process.Pids(); err == nil {

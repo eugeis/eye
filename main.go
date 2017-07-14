@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"eye/core"
+	"github.com/eugeis/eye/core"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
@@ -11,10 +11,11 @@ import (
 	"strconv"
 	"strings"
 	"github.com/urfave/cli"
-	"gee/as"
-	"gee/lg"
+	"github.com/eugeis/gee/as"
+	"github.com/eugeis/gee/as/vault"
 	"errors"
 	"path/filepath"
+	"github.com/eugeis/gee/lg"
 )
 
 var l = core.Log
@@ -61,7 +62,7 @@ func main() {
 				if err != nil {
 					return err
 				}
-				accessFinder, err := as.BuildAccessFinderFromVault("eye",
+				accessFinder, err := vault.BuildAccessFinderFromVault("eye",
 					c.String("vault_token"), c.String("vault_address"),
 					config.Name, config.ExtractAccessKeys())
 				if err != nil {

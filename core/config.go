@@ -2,8 +2,8 @@ package core
 
 import (
 	"encoding/json"
-	"gee/cfg"
-	"gee/lg"
+	"github.com/eugeis/gee/cfg"
+	"github.com/eugeis/gee/lg"
 	"path/filepath"
 	"strings"
 )

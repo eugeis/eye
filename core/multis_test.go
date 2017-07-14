@@ -3,8 +3,8 @@ package core
 import (
 	"testing"
 	_ "github.com/go-sql-driver/mysql"
-	"gee/as"
-	"eye/integ"
+	"github.com/eugeis/gee/as"
+	"github.com/eugeis/eye/integ"
 )
 
 func TestMultiService(t *testing.T) {

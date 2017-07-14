@@ -2,9 +2,9 @@ package core
 
 import (
 	"errors"
-	"eye/integ"
+	"github.com/eugeis/eye/integ"
 	"fmt"
-	"gee/as"
+	"github.com/eugeis/gee/as"
 )
 
 type Eye struct {

@@ -2,7 +2,7 @@ package core
 
 import (
 	"archive/zip"
-	"eye/integ"
+	"github.com/eugeis/eye/integ"
 	"gopkg.in/Knetic/govaluate.v2"
 	"io"
 	"io/ioutil"

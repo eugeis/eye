@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gee/as"
+	"github.com/eugeis/gee/as"
 	"golang.org/x/net/context"
 	"gopkg.in/Knetic/govaluate.v2"
 	"gopkg.in/olivere/elastic.v5"
