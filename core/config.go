@@ -3,12 +3,12 @@ package core
 import (
 	"encoding/json"
 	"github.com/eugeis/gee/cfg"
-	"github.com/eugeis/gee/lg"
+	"github.com/eugeis/gee"
 	"path/filepath"
 	"strings"
 )
 
-var Log = lg.NewLogger("EYE ")
+var Log = gee.NewLogger("EYE ")
 
 type Config struct {
 	Name         string `default:"Eye"`

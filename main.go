@@ -12,10 +12,10 @@ import (
 	"strings"
 	"github.com/urfave/cli"
 	"github.com/eugeis/gee/as"
+	"github.com/eugeis/gee"
 	"github.com/eugeis/gee/as/vault"
 	"errors"
 	"path/filepath"
-	"github.com/eugeis/gee/lg"
 )
 
 var l = core.Log
@@ -129,7 +129,7 @@ func loadConfig(c *cli.Context) (ret *core.Config, err error) {
 func prepareDebug(config *core.Config) {
 	if !config.Debug {
 		gin.SetMode(gin.ReleaseMode)
-		lg.Debug = false
+		gee.Debug = false
 	}
 	return
 }
