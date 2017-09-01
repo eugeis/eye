@@ -7,7 +7,7 @@ import (
 )
 
 func AccessFinder() as.AccessFinder {
-	return &as.Security{Access: map[string]as.Access{"mysql": as.Access{User: "root", Password: "***"}}}
+	return &as.Security{data: map[string]as.Access{"mysql": as.Access{User: "root", Password: "***"}}}
 }
 
 func AssertEqual(t *testing.T, a interface{}, b interface{}, messageBuilder func(a interface{}, b interface{}) string) {

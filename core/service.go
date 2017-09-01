@@ -46,10 +46,6 @@ type Executor interface {
 	Execute(params map[string]string) error
 }
 
-type MapWriter interface {
-	WriteMap(data map[string]interface{}) error
-}
-
 type QueryResultMapWriter struct {
 	Data []QueryResult
 }
@@ -61,19 +57,6 @@ func NewQueryResultMapWriter() *QueryResultMapWriter {
 func (o *QueryResultMapWriter) WriteMap(data map[string]interface{}) error {
 	o.Data = append(o.Data, &MapQueryResult{data})
 	return nil
-}
-
-type WriteCloserMapWriter struct {
-	Convert func(map[string]interface{}) (io.Reader, error)
-	Out     io.WriteCloser
-}
-
-func (o *WriteCloserMapWriter) WriteMap(data map[string]interface{}) (err error) {
-	var reader io.Reader
-	if reader, err = o.Convert(data); err == nil {
-		_, err = io.Copy(o.Out, reader)
-	}
-	return
 }
 
 type Factory interface {

@@ -10,6 +10,7 @@ import (
 	"gopkg.in/Knetic/govaluate.v2"
 	"strconv"
 	"io"
+	"github.com/eugeis/gee/eio"
 )
 
 var disallowedSqlKeywords = []string{" UNION ", " LIMIT ", ";"}
@@ -158,7 +159,7 @@ func (o *MySqlService) json(sql string) (json string, err error) {
 	return
 }*/
 
-func (o *MySqlService) queryToWriter(sql string, writer MapWriter) (err error) {
+func (o *MySqlService) queryToWriter(sql string, writer eio.MapWriter) (err error) {
 	rows, err := o.query(sql)
 	if err != nil {
 		return
@@ -282,6 +283,6 @@ func (o *mySqlExporter) Export(params map[string]string) (err error) {
 	}
 	defer out.Close()
 
-	err = o.service.queryToWriter(o.req.Query, &WriteCloserMapWriter{Convert: o.req.Convert, Out: out})
+	err = o.service.queryToWriter(o.req.Query, &eio.WriteCloserMapWriter{Convert: o.req.Convert, Out: out})
 	return
 }

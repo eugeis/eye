@@ -12,7 +12,7 @@ import (
 	"strings"
 	"github.com/urfave/cli"
 	"github.com/eugeis/gee/as"
-	"github.com/eugeis/gee"
+	"github.com/eugeis/gee/lg"
 	"github.com/eugeis/gee/as/vault"
 	"errors"
 	"path/filepath"
@@ -80,7 +80,7 @@ func main() {
 				if err != nil {
 					return err
 				}
-				accessFinder, err := as.BuildAccessFinderFromConsole(config.ExtractAccessKeys())
+				accessFinder, err := as.NewAccessFinderFromConsole(config.ExtractAccessKeys())
 				if err != nil {
 					return err
 				}
@@ -102,7 +102,7 @@ func main() {
 				if err != nil {
 					return err
 				}
-				accessFinder, err := as.BuildAccessFinderFromFile(c.String("security"))
+				accessFinder, err := as.NewAccessFinderFromFile(c.String("security"))
 				if err != nil {
 					return err
 				}
@@ -129,7 +129,7 @@ func loadConfig(c *cli.Context) (ret *core.Config, err error) {
 func prepareDebug(config *core.Config) {
 	if !config.Debug {
 		gin.SetMode(gin.ReleaseMode)
-		gee.Debug = false
+		lg.Debug = false
 	}
 	return
 }

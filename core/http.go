@@ -11,6 +11,7 @@ import (
 	"gopkg.in/Knetic/govaluate.v2"
 	"io"
 	"errors"
+	"github.com/eugeis/gee/eio"
 )
 
 type Http struct {
@@ -81,7 +82,7 @@ func (o *HttpService) query(req *digest.Request) (ret []byte, err error) {
 	return
 }
 
-func (o *HttpService) queryToWriter(req *digest.Request, pattern *regexp.Regexp, writer MapWriter) (err error) {
+func (o *HttpService) queryToWriter(req *digest.Request, pattern *regexp.Regexp, writer eio.MapWriter) (err error) {
 	if err = o.Init(); err != nil {
 		return
 	}
@@ -208,6 +209,6 @@ func (o *httpExporter) Export(params map[string]string) (err error) {
 	}
 	defer out.Close()
 
-	err = o.service.queryToWriter(o.httpReq, o.pattern, &WriteCloserMapWriter{Convert: o.req.Convert, Out: out})
+	err = o.service.queryToWriter(o.httpReq, o.pattern, &eio.WriteCloserMapWriter{Convert: o.req.Convert, Out: out})
 	return
 }

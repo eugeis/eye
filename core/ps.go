@@ -9,6 +9,7 @@ import (
 	"io"
 	"errors"
 	"fmt"
+	"github.com/eugeis/gee/eio"
 )
 
 type Ps struct {
@@ -87,7 +88,7 @@ func (o *PsService) Processes() (ret []*Proc, err error) {
 	return
 }
 
-func (o *PsService) queryToWriter(writer MapWriter) (err error) {
+func (o *PsService) queryToWriter(writer eio.MapWriter) (err error) {
 	var items []*Proc
 	if items, err = o.Processes(); err == nil {
 		for _, fileInfo := range items {
@@ -196,6 +197,6 @@ func (o *psExporter) Export(params map[string]string) (err error) {
 	}
 	defer out.Close()
 
-	err = o.service.queryToWriter(&WriteCloserMapWriter{Convert: o.req.Convert, Out: out})
+	err = o.service.queryToWriter(&eio.WriteCloserMapWriter{Convert: o.req.Convert, Out: out})
 	return
 }

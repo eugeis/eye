@@ -11,6 +11,7 @@ import (
 	"time"
 	"fmt"
 	"errors"
+	"github.com/eugeis/gee/eio"
 )
 
 type Fs struct {
@@ -105,7 +106,7 @@ func (o *FsService) buildPath(pathElement string) string {
 	return filePath
 }
 
-func (o *FsService) queryToWriter(file string, writer MapWriter) (err error) {
+func (o *FsService) queryToWriter(file string, writer eio.MapWriter) (err error) {
 	var items []*FileInfo
 	if items, err = o.Files(file); err == nil {
 		for _, fileInfo := range items {
@@ -252,7 +253,7 @@ func (o *fsExporter) Export(params map[string]string) (err error) {
 		evalExpr, _ := compileEval(o.req.EvalExpr)
 		err = o.service.queryEvalToWriter(o.service.buildPath(o.req.Query), evalExpr, out)
 	} else {
-		writeCloseMapWriter := &WriteCloserMapWriter{Convert: o.req.Convert, Out: out}
+		writeCloseMapWriter := &eio.WriteCloserMapWriter{Convert: o.req.Convert, Out: out}
 		err = o.service.queryToWriter(o.service.buildPath(o.req.Query), writeCloseMapWriter)
 	}
 	return
