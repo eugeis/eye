@@ -1,0 +1,1 @@
+Diagnosis application for different resource types like database, HTTP, file system.
