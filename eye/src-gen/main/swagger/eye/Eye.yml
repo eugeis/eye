@@ -1,0 +1,251 @@
+openapi: "3.0.0"
+info:
+  title: Eye
+  version: "1.0.0"
+paths:
+  /elastic/elastic-services:
+    get:
+      parameters:
+        - name: operationId
+          in: query
+          description: id of the operation, e.g. findByName
+          required: false
+          schema:
+            type: string
+            enum: 
+              - FindAll
+              - FindById
+            - CountAll
+            - CountById
+            - ExistAll
+            - ExistById
+        - name: operationType
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: 
+              - find
+              - count
+              - exists
+        - name: id
+          in: query
+          required: false
+          schema:            
+            type: string
+      responses:
+        '200':
+          description: fsdfsdf
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ElasticService"
+  /file-system/file-system-services:
+    get:
+      parameters:
+        - name: operationId
+          in: query
+          description: id of the operation, e.g. findByName
+          required: false
+          schema:
+            type: string
+            enum: 
+              - FindAll
+              - FindById
+            - CountAll
+            - CountById
+            - ExistAll
+            - ExistById
+        - name: operationType
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: 
+              - find
+              - count
+              - exists
+        - name: id
+          in: query
+          required: false
+          schema:            
+            type: string
+      responses:
+        '200':
+          description: fsdfsdf
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileSystemService"
+  /http/http-services:
+    get:
+      parameters:
+        - name: operationId
+          in: query
+          description: id of the operation, e.g. findByName
+          required: false
+          schema:
+            type: string
+            enum: 
+              - FindAll
+              - FindById
+            - CountAll
+            - CountById
+            - ExistAll
+            - ExistById
+        - name: operationType
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: 
+              - find
+              - count
+              - exists
+        - name: id
+          in: query
+          required: false
+          schema:            
+            type: string
+      responses:
+        '200':
+          description: fsdfsdf
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpService"
+  /my-sql/my-sql-services:
+    get:
+      parameters:
+        - name: operationId
+          in: query
+          description: id of the operation, e.g. findByName
+          required: false
+          schema:
+            type: string
+            enum: 
+              - FindAll
+              - FindById
+            - CountAll
+            - CountById
+            - ExistAll
+            - ExistById
+        - name: operationType
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: 
+              - find
+              - count
+              - exists
+        - name: id
+          in: query
+          required: false
+          schema:            
+            type: string
+      responses:
+        '200':
+          description: fsdfsdf
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MySqlService"
+  /process/process-services:
+    get:
+      parameters:
+        - name: operationId
+          in: query
+          description: id of the operation, e.g. findByName
+          required: false
+          schema:
+            type: string
+            enum: 
+              - FindAll
+              - FindById
+            - CountAll
+            - CountById
+            - ExistAll
+            - ExistById
+        - name: operationType
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: 
+              - find
+              - count
+              - exists
+        - name: id
+          in: query
+          required: false
+          schema:            
+            type: string
+      responses:
+        '200':
+          description: fsdfsdf
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessService"
+components:
+  schemas:
+    ElasticService:
+      type: object
+      properties:
+        id:          
+          type: string
+        service:          
+          $ref: "#/components/schemas/Service"
+    FileSystemService:
+      type: object
+      properties:
+        id:          
+          type: string
+        service:          
+          $ref: "#/components/schemas/Service"
+    HttpService:
+      type: object
+      properties:
+        id:          
+          type: string
+        service:          
+          $ref: "#/components/schemas/Service"
+    MySqlService:
+      type: object
+      properties:
+        id:          
+          type: string
+        service:          
+          $ref: "#/components/schemas/Service"
+    ProcessService:
+      type: object
+      properties:
+        id:          
+          type: string
+        service:          
+          $ref: "#/components/schemas/Service"
+    CommandRequest:
+      type: object
+      properties:
+    ExportRequest:
+      type: object
+      properties:
+        query:          
+          type: string
+        evalExpr:          
+          type: string
+    QueryResult:
+      type: object
+      properties:
+        info:          
+          type: string
+    ValidationRequest:
+      type: object
+      properties:
+        regExpr:          
+          type: string
+        all:          
+          type: boolean
+        exportRequest:          
+          $ref: "#/components/schemas/ExportRequest"
