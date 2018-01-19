@@ -1,300 +1,300 @@
 {
-  "files" : {
-    "eye\\eye\\src\\main\\go\\ElasticApiBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\ElasticApiBase.go",
-      "date" : 1511184744749
-    },
-    "eye\\eye\\src\\main\\go\\ElasticCommandsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\ElasticCommandsBase.go",
-      "date" : 1511184745549
-    },
-    "eye\\eye\\src\\main\\go\\ElasticEventsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\ElasticEventsBase.go",
-      "date" : 1511184745559
-    },
-    "eye\\eye\\src\\main\\go\\ElasticAggregateBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\ElasticAggregateBase.go",
-      "date" : 1511184745596
-    },
-    "eye\\eye\\src\\main\\go\\ElasticQueryBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\ElasticQueryBase.go",
-      "date" : 1511184745605
-    },
-    "eye\\eye\\src\\main\\go\\ElasticHttpBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\ElasticHttpBase.go",
-      "date" : 1511184745636
-    },
-    "eye\\eye\\src\\main\\go\\FileSystemApiBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\FileSystemApiBase.go",
-      "date" : 1511184745644
-    },
-    "eye\\eye\\src\\main\\go\\FileSystemCommandsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\FileSystemCommandsBase.go",
-      "date" : 1511184745651
-    },
-    "eye\\eye\\src\\main\\go\\FileSystemEventsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\FileSystemEventsBase.go",
-      "date" : 1511184745658
-    },
-    "eye\\eye\\src\\main\\go\\FileSystemAggregateBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\FileSystemAggregateBase.go",
-      "date" : 1511184745711
-    },
-    "eye\\eye\\src\\main\\go\\FileSystemQueryBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\FileSystemQueryBase.go",
-      "date" : 1511184745718
-    },
-    "eye\\eye\\src\\main\\go\\FileSystemHttpBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\FileSystemHttpBase.go",
-      "date" : 1511184745749
-    },
-    "eye\\eye\\src\\main\\go\\HttpApiBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\HttpApiBase.go",
-      "date" : 1511184745756
-    },
-    "eye\\eye\\src\\main\\go\\HttpCommandsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\HttpCommandsBase.go",
-      "date" : 1511184745774
-    },
-    "eye\\eye\\src\\main\\go\\HttpEventsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\HttpEventsBase.go",
-      "date" : 1511184745781
-    },
-    "eye\\eye\\src\\main\\go\\HttpAggregateBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\HttpAggregateBase.go",
-      "date" : 1511184745794
-    },
-    "eye\\eye\\src\\main\\go\\HttpQueryBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\HttpQueryBase.go",
-      "date" : 1511184745802
-    },
-    "eye\\eye\\src\\main\\go\\HttpHttpBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\HttpHttpBase.go",
-      "date" : 1511184745815
-    },
-    "eye\\eye\\src\\main\\go\\MySqlApiBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\MySqlApiBase.go",
-      "date" : 1511184745822
-    },
-    "eye\\eye\\src\\main\\go\\MySqlCommandsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\MySqlCommandsBase.go",
-      "date" : 1511184745828
-    },
-    "eye\\eye\\src\\main\\go\\MySqlEventsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\MySqlEventsBase.go",
-      "date" : 1511184745834
-    },
-    "eye\\eye\\src\\main\\go\\MySqlAggregateBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\MySqlAggregateBase.go",
-      "date" : 1511184745847
-    },
-    "eye\\eye\\src\\main\\go\\MySqlQueryBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\MySqlQueryBase.go",
-      "date" : 1511184745853
-    },
-    "eye\\eye\\src\\main\\go\\MySqlHttpBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\MySqlHttpBase.go",
-      "date" : 1511184745863
-    },
-    "eye\\eye\\src\\main\\go\\ProcessApiBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\ProcessApiBase.go",
-      "date" : 1511184745868
-    },
-    "eye\\eye\\src\\main\\go\\ProcessCommandsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\ProcessCommandsBase.go",
-      "date" : 1511184745874
+  "files": {
+    "eye\\eye\\src\\main\\go\\ElasticApiBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\ElasticApiBase.go",
+      "date": 1511184744749
+    },
+    "eye\\eye\\src\\main\\go\\ElasticCommandsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\ElasticCommandsBase.go",
+      "date": 1511184745549
+    },
+    "eye\\eye\\src\\main\\go\\ElasticEventsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\ElasticEventsBase.go",
+      "date": 1511184745559
+    },
+    "eye\\eye\\src\\main\\go\\ElasticAggregateBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\ElasticAggregateBase.go",
+      "date": 1511184745596
+    },
+    "eye\\eye\\src\\main\\go\\ElasticQueryBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\ElasticQueryBase.go",
+      "date": 1511184745605
+    },
+    "eye\\eye\\src\\main\\go\\ElasticHttpBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\ElasticHttpBase.go",
+      "date": 1511184745636
+    },
+    "eye\\eye\\src\\main\\go\\FileSystemApiBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\FileSystemApiBase.go",
+      "date": 1511184745644
+    },
+    "eye\\eye\\src\\main\\go\\FileSystemCommandsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\FileSystemCommandsBase.go",
+      "date": 1511184745651
+    },
+    "eye\\eye\\src\\main\\go\\FileSystemEventsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\FileSystemEventsBase.go",
+      "date": 1511184745658
+    },
+    "eye\\eye\\src\\main\\go\\FileSystemAggregateBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\FileSystemAggregateBase.go",
+      "date": 1511184745711
+    },
+    "eye\\eye\\src\\main\\go\\FileSystemQueryBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\FileSystemQueryBase.go",
+      "date": 1511184745718
+    },
+    "eye\\eye\\src\\main\\go\\FileSystemHttpBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\FileSystemHttpBase.go",
+      "date": 1511184745749
+    },
+    "eye\\eye\\src\\main\\go\\HttpApiBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\HttpApiBase.go",
+      "date": 1511184745756
+    },
+    "eye\\eye\\src\\main\\go\\HttpCommandsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\HttpCommandsBase.go",
+      "date": 1511184745774
+    },
+    "eye\\eye\\src\\main\\go\\HttpEventsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\HttpEventsBase.go",
+      "date": 1511184745781
+    },
+    "eye\\eye\\src\\main\\go\\HttpAggregateBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\HttpAggregateBase.go",
+      "date": 1511184745794
+    },
+    "eye\\eye\\src\\main\\go\\HttpQueryBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\HttpQueryBase.go",
+      "date": 1511184745802
+    },
+    "eye\\eye\\src\\main\\go\\HttpHttpBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\HttpHttpBase.go",
+      "date": 1511184745815
+    },
+    "eye\\eye\\src\\main\\go\\MySqlApiBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\MySqlApiBase.go",
+      "date": 1511184745822
+    },
+    "eye\\eye\\src\\main\\go\\MySqlCommandsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\MySqlCommandsBase.go",
+      "date": 1511184745828
+    },
+    "eye\\eye\\src\\main\\go\\MySqlEventsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\MySqlEventsBase.go",
+      "date": 1511184745834
+    },
+    "eye\\eye\\src\\main\\go\\MySqlAggregateBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\MySqlAggregateBase.go",
+      "date": 1511184745847
+    },
+    "eye\\eye\\src\\main\\go\\MySqlQueryBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\MySqlQueryBase.go",
+      "date": 1511184745853
+    },
+    "eye\\eye\\src\\main\\go\\MySqlHttpBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\MySqlHttpBase.go",
+      "date": 1511184745863
+    },
+    "eye\\eye\\src\\main\\go\\ProcessApiBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\ProcessApiBase.go",
+      "date": 1511184745868
+    },
+    "eye\\eye\\src\\main\\go\\ProcessCommandsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\ProcessCommandsBase.go",
+      "date": 1511184745874
     },
-    "eye\\eye\\src\\main\\go\\ProcessEventsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\ProcessEventsBase.go",
-      "date" : 1511184745879
+    "eye\\eye\\src\\main\\go\\ProcessEventsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\ProcessEventsBase.go",
+      "date": 1511184745879
     },
-    "eye\\eye\\src\\main\\go\\ProcessAggregateBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\ProcessAggregateBase.go",
-      "date" : 1511184745890
+    "eye\\eye\\src\\main\\go\\ProcessAggregateBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\ProcessAggregateBase.go",
+      "date": 1511184745890
     },
-    "eye\\eye\\src\\main\\go\\ProcessQueryBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\ProcessQueryBase.go",
-      "date" : 1511184745897
+    "eye\\eye\\src\\main\\go\\ProcessQueryBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\ProcessQueryBase.go",
+      "date": 1511184745897
     },
-    "eye\\eye\\src\\main\\go\\ProcessHttpBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\ProcessHttpBase.go",
-      "date" : 1511184745906
+    "eye\\eye\\src\\main\\go\\ProcessHttpBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\ProcessHttpBase.go",
+      "date": 1511184745906
     },
-    "eye\\eye\\src\\main\\go\\SharedApiBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\SharedApiBase.go",
-      "date" : 1511184745911
+    "eye\\eye\\src\\main\\go\\SharedApiBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\SharedApiBase.go",
+      "date": 1511184745911
     },
-    "eye\\eye\\src\\main\\go\\SharedCommandsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\SharedCommandsBase.go",
-      "date" : 1511184745916
+    "eye\\eye\\src\\main\\go\\SharedCommandsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\SharedCommandsBase.go",
+      "date": 1511184745916
     },
-    "eye\\eye\\src\\main\\go\\SharedEventsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\SharedEventsBase.go",
-      "date" : 1511184745921
+    "eye\\eye\\src\\main\\go\\SharedEventsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\SharedEventsBase.go",
+      "date": 1511184745921
     },
-    "eye\\eye\\src\\main\\go\\SharedAggregateBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\SharedAggregateBase.go",
-      "date" : 1511184745925
+    "eye\\eye\\src\\main\\go\\SharedAggregateBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\SharedAggregateBase.go",
+      "date": 1511184745925
     },
-    "eye\\eye\\src\\main\\go\\SharedQueryBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\SharedQueryBase.go",
-      "date" : 1511184745931
+    "eye\\eye\\src\\main\\go\\SharedQueryBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\SharedQueryBase.go",
+      "date": 1511184745931
     },
-    "eye\\eye\\src\\main\\go\\SharedHttpBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\SharedHttpBase.go",
-      "date" : 1511184745935
+    "eye\\eye\\src\\main\\go\\SharedHttpBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\SharedHttpBase.go",
+      "date": 1511184745935
     },
-    "eye\\eye\\src-gen\\main\\swagger\\Eye.yml" : {
-      "path" : "eye\\eye\\src-gen\\main\\swagger\\Eye.yml",
-      "date" : 1511184745959
+    "eye\\eye\\src-gen\\main\\swagger\\Eye.yml": {
+      "path": "eye\\eye\\src-gen\\main\\swagger\\Eye.yml",
+      "date": 1511184745959
     },
-    "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticApiBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticApiBase.go",
-      "date" : 1511185585030
+    "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticApiBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticApiBase.go",
+      "date": 1511185585030
     },
-    "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticCommandsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticCommandsBase.go",
-      "date" : 1511185585079
+    "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticCommandsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticCommandsBase.go",
+      "date": 1511185585079
     },
-    "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticEventsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticEventsBase.go",
-      "date" : 1511185585089
+    "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticEventsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticEventsBase.go",
+      "date": 1511185585089
     },
-    "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticAggregateBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticAggregateBase.go",
-      "date" : 1511185585134
+    "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticAggregateBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticAggregateBase.go",
+      "date": 1511185585134
     },
-    "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticQueryBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticQueryBase.go",
-      "date" : 1511185585153
+    "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticQueryBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticQueryBase.go",
+      "date": 1511185585153
     },
-    "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticHttpBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticHttpBase.go",
-      "date" : 1511185585263
+    "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticHttpBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\elastic\\ElasticHttpBase.go",
+      "date": 1511185585263
     },
-    "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemApiBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemApiBase.go",
-      "date" : 1511185585269
+    "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemApiBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemApiBase.go",
+      "date": 1511185585269
     },
-    "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemCommandsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemCommandsBase.go",
-      "date" : 1511185585283
+    "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemCommandsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemCommandsBase.go",
+      "date": 1511185585283
     },
-    "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemEventsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemEventsBase.go",
-      "date" : 1511185585289
+    "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemEventsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemEventsBase.go",
+      "date": 1511185585289
     },
-    "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemAggregateBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemAggregateBase.go",
-      "date" : 1511185585304
+    "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemAggregateBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemAggregateBase.go",
+      "date": 1511185585304
     },
-    "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemQueryBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemQueryBase.go",
-      "date" : 1511185585311
+    "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemQueryBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemQueryBase.go",
+      "date": 1511185585311
     },
-    "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemHttpBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemHttpBase.go",
-      "date" : 1511185585329
+    "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemHttpBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\filesystem\\FileSystemHttpBase.go",
+      "date": 1511185585329
     },
-    "eye\\eye\\src\\main\\go\\eye\\http\\HttpApiBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\http\\HttpApiBase.go",
-      "date" : 1511185585344
+    "eye\\eye\\src\\main\\go\\eye\\http\\HttpApiBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\http\\HttpApiBase.go",
+      "date": 1511185585344
     },
-    "eye\\eye\\src\\main\\go\\eye\\http\\HttpCommandsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\http\\HttpCommandsBase.go",
-      "date" : 1511185585350
+    "eye\\eye\\src\\main\\go\\eye\\http\\HttpCommandsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\http\\HttpCommandsBase.go",
+      "date": 1511185585350
     },
-    "eye\\eye\\src\\main\\go\\eye\\http\\HttpEventsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\http\\HttpEventsBase.go",
-      "date" : 1511185585356
+    "eye\\eye\\src\\main\\go\\eye\\http\\HttpEventsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\http\\HttpEventsBase.go",
+      "date": 1511185585356
     },
-    "eye\\eye\\src\\main\\go\\eye\\http\\HttpAggregateBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\http\\HttpAggregateBase.go",
-      "date" : 1511185585369
+    "eye\\eye\\src\\main\\go\\eye\\http\\HttpAggregateBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\http\\HttpAggregateBase.go",
+      "date": 1511185585369
     },
-    "eye\\eye\\src\\main\\go\\eye\\http\\HttpQueryBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\http\\HttpQueryBase.go",
-      "date" : 1511185585376
+    "eye\\eye\\src\\main\\go\\eye\\http\\HttpQueryBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\http\\HttpQueryBase.go",
+      "date": 1511185585376
     },
-    "eye\\eye\\src\\main\\go\\eye\\http\\HttpHttpBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\http\\HttpHttpBase.go",
-      "date" : 1511185585388
+    "eye\\eye\\src\\main\\go\\eye\\http\\HttpHttpBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\http\\HttpHttpBase.go",
+      "date": 1511185585388
     },
-    "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlApiBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlApiBase.go",
-      "date" : 1511185585395
+    "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlApiBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlApiBase.go",
+      "date": 1511185585395
     },
-    "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlCommandsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlCommandsBase.go",
-      "date" : 1511185585402
+    "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlCommandsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlCommandsBase.go",
+      "date": 1511185585402
     },
-    "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlEventsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlEventsBase.go",
-      "date" : 1511185585407
+    "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlEventsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlEventsBase.go",
+      "date": 1511185585407
     },
-    "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlAggregateBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlAggregateBase.go",
-      "date" : 1511185585421
+    "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlAggregateBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlAggregateBase.go",
+      "date": 1511185585421
     },
-    "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlQueryBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlQueryBase.go",
-      "date" : 1511185585427
+    "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlQueryBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlQueryBase.go",
+      "date": 1511185585427
     },
-    "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlHttpBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlHttpBase.go",
-      "date" : 1511185585437
+    "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlHttpBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\mysql\\MySqlHttpBase.go",
+      "date": 1511185585437
     },
-    "eye\\eye\\src\\main\\go\\eye\\process\\ProcessApiBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\process\\ProcessApiBase.go",
-      "date" : 1511185585443
+    "eye\\eye\\src\\main\\go\\eye\\process\\ProcessApiBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\process\\ProcessApiBase.go",
+      "date": 1511185585443
     },
-    "eye\\eye\\src\\main\\go\\eye\\process\\ProcessCommandsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\process\\ProcessCommandsBase.go",
-      "date" : 1511185585448
+    "eye\\eye\\src\\main\\go\\eye\\process\\ProcessCommandsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\process\\ProcessCommandsBase.go",
+      "date": 1511185585448
     },
-    "eye\\eye\\src\\main\\go\\eye\\process\\ProcessEventsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\process\\ProcessEventsBase.go",
-      "date" : 1511185585454
+    "eye\\eye\\src\\main\\go\\eye\\process\\ProcessEventsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\process\\ProcessEventsBase.go",
+      "date": 1511185585454
     },
-    "eye\\eye\\src\\main\\go\\eye\\process\\ProcessAggregateBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\process\\ProcessAggregateBase.go",
-      "date" : 1511185585464
+    "eye\\eye\\src\\main\\go\\eye\\process\\ProcessAggregateBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\process\\ProcessAggregateBase.go",
+      "date": 1511185585464
     },
-    "eye\\eye\\src\\main\\go\\eye\\process\\ProcessQueryBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\process\\ProcessQueryBase.go",
-      "date" : 1511185585470
+    "eye\\eye\\src\\main\\go\\eye\\process\\ProcessQueryBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\process\\ProcessQueryBase.go",
+      "date": 1511185585470
     },
-    "eye\\eye\\src\\main\\go\\eye\\process\\ProcessHttpBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\process\\ProcessHttpBase.go",
-      "date" : 1511185585478
+    "eye\\eye\\src\\main\\go\\eye\\process\\ProcessHttpBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\process\\ProcessHttpBase.go",
+      "date": 1511185585478
     },
-    "eye\\eye\\src\\main\\go\\eye\\shared\\SharedApiBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\shared\\SharedApiBase.go",
-      "date" : 1511185585487
+    "eye\\eye\\src\\main\\go\\eye\\shared\\SharedApiBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\shared\\SharedApiBase.go",
+      "date": 1511185585487
     },
-    "eye\\eye\\src\\main\\go\\eye\\shared\\SharedCommandsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\shared\\SharedCommandsBase.go",
-      "date" : 1511185585492
+    "eye\\eye\\src\\main\\go\\eye\\shared\\SharedCommandsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\shared\\SharedCommandsBase.go",
+      "date": 1511185585492
     },
-    "eye\\eye\\src\\main\\go\\eye\\shared\\SharedEventsBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\shared\\SharedEventsBase.go",
-      "date" : 1511185585494
+    "eye\\eye\\src\\main\\go\\eye\\shared\\SharedEventsBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\shared\\SharedEventsBase.go",
+      "date": 1511185585494
     },
-    "eye\\eye\\src\\main\\go\\eye\\shared\\SharedAggregateBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\shared\\SharedAggregateBase.go",
-      "date" : 1511185585498
+    "eye\\eye\\src\\main\\go\\eye\\shared\\SharedAggregateBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\shared\\SharedAggregateBase.go",
+      "date": 1511185585498
     },
-    "eye\\eye\\src\\main\\go\\eye\\shared\\SharedQueryBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\shared\\SharedQueryBase.go",
-      "date" : 1511185585504
+    "eye\\eye\\src\\main\\go\\eye\\shared\\SharedQueryBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\shared\\SharedQueryBase.go",
+      "date": 1511185585504
     },
-    "eye\\eye\\src\\main\\go\\eye\\shared\\SharedHttpBase.go" : {
-      "path" : "eye\\eye\\src\\main\\go\\eye\\shared\\SharedHttpBase.go",
-      "date" : 1511185585509
+    "eye\\eye\\src\\main\\go\\eye\\shared\\SharedHttpBase.go": {
+      "path": "eye\\eye\\src\\main\\go\\eye\\shared\\SharedHttpBase.go",
+      "date": 1511185585509
     },
-    "eye\\eye\\src-gen\\main\\swagger\\eye\\Eye.yml" : {
-      "path" : "eye\\eye\\src-gen\\main\\swagger\\eye\\Eye.yml",
-      "date" : 1511185585542
+    "eye\\eye\\src-gen\\main\\swagger\\eye\\Eye.yml": {
+      "path": "eye\\eye\\src-gen\\main\\swagger\\eye\\Eye.yml",
+      "date": 1511185585542
     }
   }
 }

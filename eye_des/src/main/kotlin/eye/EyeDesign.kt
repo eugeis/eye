@@ -3,7 +3,7 @@ package eye
 import ee.design.*
 import ee.lang.*
 
-object Eye : Comp({namespace("eye")}) {
+object Eye : Comp({ namespace("eye") }) {
     object Shared : Module() {
         object Service : CompilationUnit({ ifc(true) }) {
             val name = propS()
@@ -50,8 +50,7 @@ object Eye : Comp({namespace("eye")}) {
             val all = propB()
         }
 
-        object CommandRequest : Basic() {
-        }
+        object CommandRequest : Basic() {}
 
         object ServiceFactory : CompilationUnit({ ifc(true) }) {
             val find = op(p("name", n.String)) { ret(Service).errorHandling(false) }
@@ -69,27 +68,22 @@ object Eye : Comp({namespace("eye")}) {
     }
 
     object MySql : Module() {
-        object MySqlService : Entity({ superUnit(Shared.Service) }) {
-        }
+        object MySqlService : Entity({ superUnit(Shared.Service) }) {}
     }
 
     object Http : Module() {
-        object HttpService : Entity({ superUnit(Shared.Service) }) {
-        }
+        object HttpService : Entity({ superUnit(Shared.Service) }) {}
     }
 
     object Process : Module() {
-        object ProcessService : Entity({ superUnit(Shared.Service) }) {
-        }
+        object ProcessService : Entity({ superUnit(Shared.Service) }) {}
     }
 
     object FileSystem : Module() {
-        object FileSystemService : Entity({ superUnit(Shared.Service) }) {
-        }
+        object FileSystemService : Entity({ superUnit(Shared.Service) }) {}
     }
 
     object Elastic : Module() {
-        object ElasticService : Entity({ superUnit(Shared.Service) }) {
-        }
+        object ElasticService : Entity({ superUnit(Shared.Service) }) {}
     }
 }
