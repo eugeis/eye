@@ -26,3 +26,4 @@ _testmain.go
 /eye/build/
 /eye_des/build/
 /eye_des/out/production/classes/
+/.gradle/
